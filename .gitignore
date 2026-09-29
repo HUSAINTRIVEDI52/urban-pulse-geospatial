@@ -1,0 +1,29 @@
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.ipynb_checkpoints/
+
+# Environment variables & secrets
+.env
+.env.*
+
+# Data folder & large geospatial raster/vector outputs
+data/*.tif
+data/*.tiff
+data/*.nc
+data/*.parquet
+data/*.geojson
+data/*.gpkg
+data/raw/
+data/processed/
+data/outputs/
+
+# OS specific
+.DS_Store
+Thumbs.db

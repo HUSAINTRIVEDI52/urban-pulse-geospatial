@@ -1,0 +1,28 @@
+city:
+  name: Ahmedabad
+  state: Gujarat
+  country: India
+spatial:
+  bbox:
+  - 71.762428
+  - 21.910413
+  - 72.920548
+  - 23.580932
+  crs: EPSG:4326
+  buffered_distance_km: 8.0
+  boundary_geojson: configs/ahmedabad_boundary.geojson
+temporal:
+  analysis_years:
+    start_year: 2000
+    end_year: 2025
+  dry_season:
+    start_month: 11
+    end_month: 2
+    start_day: 11-01
+    end_day: 02-28
+stac:
+  earth_search_url: https://earth-search.aws.element84.com/v1
+  microsoft_pc_url: https://planetarycomputer.microsoft.com/api/stac/v1
+  collections:
+    sentinel_2: sentinel-2-c1-l2a
+    landsat_c2_l2: landsat-c2-l2

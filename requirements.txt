@@ -1,0 +1,14 @@
+rasterio
+rioxarray
+geopandas
+shapely
+pystac-client
+stackstac
+xarray
+dask
+osmnx
+scikit-learn
+numpy
+pandas
+matplotlib
+pyyaml
