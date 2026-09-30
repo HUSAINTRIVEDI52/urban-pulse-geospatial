@@ -24,7 +24,7 @@
   loop:
     - cni0
     - flannel.1
-  ignore_errors: true
+  failed_when: false
 
 - name: Enable UFW firewall service
   community.general.ufw:

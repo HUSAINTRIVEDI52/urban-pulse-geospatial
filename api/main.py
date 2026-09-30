@@ -41,7 +41,6 @@ app.add_middleware(
 Instrumentator().instrument(app).expose(app, endpoint="/metrics", tags=["Monitoring"])
 
 
-
 def get_db_connection():
     """Returns a psycopg2 database connection if DATABASE_URL is configured and reachable."""
     db_url = os.getenv("DATABASE_URL")

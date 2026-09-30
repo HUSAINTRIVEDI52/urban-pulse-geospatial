@@ -9,13 +9,14 @@ import argparse
 import sys
 from pathlib import Path
 from typing import Any
+
 import geopandas as gpd
 import numpy as np
 import rasterio
+import yaml
 from scipy.ndimage import binary_erosion
 from shapely.geometry import Point
 from sklearn.model_selection import GroupShuffleSplit
-import yaml
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -32,9 +33,7 @@ PROJECT_CLASS_NAMES = {
 }
 
 
-def load_config(
-    city: str = "ahmedabad", config_path: str | Path | None = None
-) -> dict[str, Any]:
+def load_config(city: str = "ahmedabad", config_path: str | Path | None = None) -> dict[str, Any]:
     """Loads city YAML configuration."""
     cfg_file = Path(config_path) if config_path else Path(f"configs/{city.lower()}.yaml")
     if not cfg_file.exists():
@@ -146,7 +145,9 @@ def sample_training_points(
             )
 
         class_counts[class_name] = n_samples
-        print(f"    - Class {cid} ({class_name:<12}): Sampled {n_samples:>4} points (from {n_available:>6} interior pixels)")
+        print(
+            f"    - Class {cid} ({class_name:<12}): Sampled {n_samples:>4} points (from {n_available:>6} interior pixels)"
+        )
 
     if not sampled_records:
         raise ValueError("Failed to extract any valid sample points from the labels raster.")
@@ -154,7 +155,9 @@ def sample_training_points(
     gdf = gpd.GeoDataFrame(sampled_records, crs=raster_crs)
 
     # 3. Spatial Block Partitioning
-    print("\n[Step 3/4] Partitioning points into spatial blocks to avoid spatial autocorrelation...")
+    print(
+        "\n[Step 3/4] Partitioning points into spatial blocks to avoid spatial autocorrelation..."
+    )
     minx, miny, maxx, maxy = gdf.total_bounds
     x_bins = np.linspace(minx, maxx, n_spatial_blocks + 1)
     y_bins = np.linspace(miny, maxy, n_spatial_blocks + 1)
@@ -189,11 +192,21 @@ def sample_training_points(
 
 def main():
     parser = argparse.ArgumentParser(description="Stratified spatial block point sampling.")
-    parser.add_argument("--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)")
-    parser.add_argument("--labels", type=str, default=None, help="Path to WorldCover labels GeoTIFF")
-    parser.add_argument("--samples-per-class", type=int, default=300, help="Target samples per class (default: 300)")
-    parser.add_argument("--train-out", type=str, default=None, help="Output train points GeoJSON path")
-    parser.add_argument("--test-out", type=str, default=None, help="Output test points GeoJSON path")
+    parser.add_argument(
+        "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
+    )
+    parser.add_argument(
+        "--labels", type=str, default=None, help="Path to WorldCover labels GeoTIFF"
+    )
+    parser.add_argument(
+        "--samples-per-class", type=int, default=300, help="Target samples per class (default: 300)"
+    )
+    parser.add_argument(
+        "--train-out", type=str, default=None, help="Output train points GeoJSON path"
+    )
+    parser.add_argument(
+        "--test-out", type=str, default=None, help="Output test points GeoJSON path"
+    )
 
     args = parser.parse_args()
     sample_training_points(

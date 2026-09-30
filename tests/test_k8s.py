@@ -4,8 +4,8 @@ Validates YAML structure, required resources, probes, volume claims, and labels.
 """
 
 from pathlib import Path
-import yaml
 
+import yaml
 
 K8S_BASE_DIR = Path(__file__).resolve().parent.parent / "infra" / "k8s" / "base"
 K8S_LOCAL_DIR = Path(__file__).resolve().parent.parent / "infra" / "k8s" / "overlays" / "local"
@@ -34,7 +34,7 @@ def test_k8s_base_files_exist():
 def test_k8s_manifests_valid_yaml():
     """Parses every YAML manifest in base/ to ensure strict syntax correctness."""
     for yaml_path in K8S_BASE_DIR.glob("*.yaml"):
-        with open(yaml_path, "r", encoding="utf-8") as f:
+        with open(yaml_path, encoding="utf-8") as f:
             docs = list(yaml.safe_load_all(f))
             assert len(docs) > 0, f"Empty YAML file: {yaml_path.name}"
             for doc in docs:
@@ -45,7 +45,7 @@ def test_k8s_manifests_valid_yaml():
 def test_postgis_statefulset_structure():
     """Checks PostGIS StatefulSet specifications (probes, volume claims, port)."""
     postgis_path = K8S_BASE_DIR / "postgis.yaml"
-    with open(postgis_path, "r", encoding="utf-8") as f:
+    with open(postgis_path, encoding="utf-8") as f:
         docs = list(yaml.safe_load_all(f))
 
     statefulset = next(d for d in docs if d.get("kind") == "StatefulSet")
@@ -64,7 +64,7 @@ def test_postgis_statefulset_structure():
 def test_api_deployment_structure():
     """Validates API deployment has 2 replicas, probes on /health, and resource limits."""
     api_path = K8S_BASE_DIR / "api.yaml"
-    with open(api_path, "r", encoding="utf-8") as f:
+    with open(api_path, encoding="utf-8") as f:
         docs = list(yaml.safe_load_all(f))
 
     deployment = next(d for d in docs if d.get("kind") == "Deployment")
@@ -82,13 +82,15 @@ def test_api_deployment_structure():
 def test_web_and_ingress_structure():
     """Validates Web deployment and Traefik Ingress routing."""
     web_path = K8S_BASE_DIR / "web.yaml"
-    with open(web_path, "r", encoding="utf-8") as f:
+    with open(web_path, encoding="utf-8") as f:
         docs = list(yaml.safe_load_all(f))
     deployment = next(d for d in docs if d.get("kind") == "Deployment")
-    assert deployment["spec"]["template"]["spec"]["containers"][0]["ports"][0]["containerPort"] == 80
+    assert (
+        deployment["spec"]["template"]["spec"]["containers"][0]["ports"][0]["containerPort"] == 80
+    )
 
     ingress_path = K8S_BASE_DIR / "ingress.yaml"
-    with open(ingress_path, "r", encoding="utf-8") as f:
+    with open(ingress_path, encoding="utf-8") as f:
         ingress = yaml.safe_load(f)
 
     assert ingress["kind"] == "Ingress"
@@ -100,7 +102,7 @@ def test_web_and_ingress_structure():
 def test_pipeline_cronjob_structure():
     """Validates weekly CronJob with Forbid concurrency and backoff limit."""
     cron_path = K8S_BASE_DIR / "pipeline-cronjob.yaml"
-    with open(cron_path, "r", encoding="utf-8") as f:
+    with open(cron_path, encoding="utf-8") as f:
         cronjob = yaml.safe_load(f)
 
     assert cronjob["kind"] == "CronJob"
@@ -113,7 +115,7 @@ def test_kustomize_overlays():
     """Ensures local Kustomize overlay references base and provides secret generator."""
     local_kust_path = K8S_LOCAL_DIR / "kustomization.yaml"
     assert local_kust_path.exists()
-    with open(local_kust_path, "r", encoding="utf-8") as f:
+    with open(local_kust_path, encoding="utf-8") as f:
         kust = yaml.safe_load(f)
 
     assert "../../base" in kust["resources"]
@@ -154,4 +156,3 @@ def test_deploy_documentation_exists():
     content = deploy_doc.read_text(encoding="utf-8")
     assert "terraform" in content.lower()
     assert "ansible" in content.lower()
-

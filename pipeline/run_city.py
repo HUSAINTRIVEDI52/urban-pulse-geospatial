@@ -10,11 +10,14 @@ Executes the full satellite geospatial intelligence chain for any configured cit
 """
 
 import argparse
-from datetime import datetime, timezone
-from pathlib import Path
+import os
 import sys
 import time
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
+
+import pandas as pd
 import yaml
 
 # Ensure project root is in sys.path
@@ -29,9 +32,7 @@ from pipeline.run_all_years import run_all_years
 from pipeline.sprawl_metrics import run_sprawl_metrics
 
 
-def load_city_config(
-    city: str, config_path: str | Path | None = None
-) -> dict[str, Any]:
+def load_city_config(city: str, config_path: str | Path | None = None) -> dict[str, Any]:
     """Loads city YAML configuration."""
     cfg_file = Path(config_path) if config_path else Path(f"configs/{city.lower()}.yaml")
     if not cfg_file.exists():
@@ -51,6 +52,7 @@ def run_city_pipeline(
     Executes the complete satellite sprawl analytics pipeline for a city.
     """
     city_key = city.lower()
+    data_path = Path(f"data/{city_key}") if Path(f"data/{city_key}").exists() else Path("data")
     config = load_city_config(city=city_key)
     city_name = config.get("city", {}).get("name", city.capitalize())
 
@@ -67,7 +69,7 @@ def run_city_pipeline(
     print("=" * 80)
     print(f"[*] UrbanPulse Complete City Pipeline: {city_name} ({start_year} - {end_year})")
     print(f"    - Bounding Box : {config.get('spatial', {}).get('bbox')}")
-    print(f"    - Started At   : {datetime.now(timezone.utc).isoformat()}")
+    print(f"    - Started At   : {datetime.now(UTC).isoformat()}")
     print("=" * 80)
 
     # --------------------------------------------------------------------------
@@ -92,13 +94,13 @@ def run_city_pipeline(
     # --------------------------------------------------------------------------
     print(f"\n[*] Evaluating Data Quality Gate for {city_name}...")
     try:
-        from pipeline.quality_gate import validate_quality_gate, DataQualityGateError
+        from pipeline.quality_gate import DataQualityGateError, validate_quality_gate
 
         # Evaluate model accuracy if available
         acc = None
         try:
-            import joblib
             import geopandas as gpd
+            import joblib
             import rasterio
             from sklearn.metrics import accuracy_score
 
@@ -108,7 +110,11 @@ def run_city_pipeline(
                 rf_clf = joblib.load(model_file)
                 test_gdf = gpd.read_file(test_file).to_crs(epsg=32643)
                 feats = ["blue", "green", "red", "nir", "swir16", "ndvi", "ndbi", "mndwi"]
-                rasters = {f: rasterio.open(data_path / f"{city_key}_{actual_end_year}_{f}.tif") for f in feats if (data_path / f"{city_key}_{actual_end_year}_{f}.tif").exists()}
+                rasters = {
+                    f: rasterio.open(data_path / f"{city_key}_{actual_end_year}_{f}.tif")
+                    for f in feats
+                    if (data_path / f"{city_key}_{actual_end_year}_{f}.tif").exists()
+                }
                 if len(rasters) == len(feats):
                     coords = [(g.x, g.y) for g in test_gdf.geometry]
                     X_vals = [[s[0] for s in rasters[f].sample(coords)] for f in feats]
@@ -136,7 +142,8 @@ def run_city_pipeline(
 
         # Record failure in pipeline_runs table
         try:
-            from pipeline.load_db import log_pipeline_run, get_db_connection
+            from pipeline.load_db import get_db_connection, log_pipeline_run
+
             db_url = os.getenv("DATABASE_URL")
             if db_url:
                 conn = get_db_connection(db_url)
@@ -156,6 +163,7 @@ def run_city_pipeline(
         # Export failure metrics to Prometheus
         try:
             from pipeline.metrics_exporter import export_pipeline_metrics
+
             export_pipeline_metrics(
                 city=city_key,
                 status="FAILED",
@@ -170,7 +178,9 @@ def run_city_pipeline(
     # --------------------------------------------------------------------------
     # STEP 2: Land Cover Change Detection & Transition Matrix
     # --------------------------------------------------------------------------
-    print(f"\n[PHASE 2/5] Running Urban Land Cover Change Detection ({actual_start_year} -> {actual_end_year})...")
+    print(
+        f"\n[PHASE 2/5] Running Urban Land Cover Change Detection ({actual_start_year} -> {actual_end_year})..."
+    )
     change_res = detect_changes(
         city=city_key,
         start_year=actual_start_year,
@@ -253,7 +263,6 @@ def run_city_pipeline(
         "database": db_res,
         "total_duration_s": total_duration,
     }
-
 
 
 def main():

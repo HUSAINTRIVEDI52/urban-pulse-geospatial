@@ -5,11 +5,13 @@ time-series consistency before allowing a city pipeline run to be approved.
 """
 
 from typing import Any
+
 import pandas as pd
 
 
 class DataQualityGateError(Exception):
     """Raised when pipeline outputs fail quality gate constraints."""
+
     pass
 
 

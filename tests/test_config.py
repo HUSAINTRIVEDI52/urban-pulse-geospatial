@@ -5,6 +5,7 @@ across all configured cities in configs/*.yaml.
 """
 
 from pathlib import Path
+
 import pytest
 import yaml
 
@@ -55,8 +56,12 @@ def test_city_config_structure_and_bbox(config_path: Path):
     min_lon, min_lat, max_lon, max_lat = bbox
 
     # 4. Check geometric validity
-    assert min_lon < max_lon, f"Invalid longitude in {config_path.name}: west ({min_lon}) must be < east ({max_lon})"
-    assert min_lat < max_lat, f"Invalid latitude in {config_path.name}: south ({min_lat}) must be < north ({max_lat})"
+    assert (
+        min_lon < max_lon
+    ), f"Invalid longitude in {config_path.name}: west ({min_lon}) must be < east ({max_lon})"
+    assert (
+        min_lat < max_lat
+    ), f"Invalid latitude in {config_path.name}: south ({min_lat}) must be < north ({max_lat})"
 
     # 5. Check coordinate range limits (WGS84)
     assert -180.0 <= min_lon <= 180.0

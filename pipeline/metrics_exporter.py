@@ -7,7 +7,6 @@ and exports them via Prometheus Pushgateway (if reachable) and local textfile me
 import os
 import time
 from pathlib import Path
-from typing import Any
 
 from prometheus_client import CollectorRegistry, Gauge, push_to_gateway, write_to_textfile
 
@@ -97,4 +96,6 @@ def export_pipeline_metrics(
             )
             print(f"[+] Pushed pipeline metrics to Pushgateway: {pushgateway_url}")
         except Exception as e:
-            print(f"[*] Note: Pushgateway at {pushgateway_url} not reachable ({e}). Textfile metrics preserved.")
+            print(
+                f"[*] Note: Pushgateway at {pushgateway_url} not reachable ({e}). Textfile metrics preserved."
+            )

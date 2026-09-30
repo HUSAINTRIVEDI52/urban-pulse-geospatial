@@ -5,13 +5,12 @@ Validates /metrics FastAPI endpoint, pipeline metrics exporter, alert rules, and
 
 import json
 from pathlib import Path
-import pytest
+
 import yaml
 from fastapi.testclient import TestClient
 
 from api.main import app
 from pipeline.metrics_exporter import export_pipeline_metrics
-
 
 MONITORING_DIR = Path(__file__).resolve().parent.parent / "monitoring"
 
@@ -53,17 +52,19 @@ def test_prometheus_configs_and_alert_rules():
     """Validates Prometheus scrape config and 10-day pipeline alert rule."""
     prom_yaml = MONITORING_DIR / "prometheus" / "prometheus.yml"
     assert prom_yaml.exists()
-    with open(prom_yaml, "r", encoding="utf-8") as f:
+    with open(prom_yaml, encoding="utf-8") as f:
         prom_cfg = yaml.safe_load(f)
     assert "scrape_configs" in prom_cfg
 
     alert_yaml = MONITORING_DIR / "prometheus" / "alert_rules.yml"
     assert alert_yaml.exists()
-    with open(alert_yaml, "r", encoding="utf-8") as f:
+    with open(alert_yaml, encoding="utf-8") as f:
         alert_cfg = yaml.safe_load(f)
 
     rules = alert_cfg["groups"][0]["rules"]
-    pipeline_alert = next((r for r in rules if r.get("alert") == "PipelineNotSucceededIn10Days"), None)
+    pipeline_alert = next(
+        (r for r in rules if r.get("alert") == "PipelineNotSucceededIn10Days"), None
+    )
     assert pipeline_alert is not None
     assert "864000" in pipeline_alert["expr"] or "10" in pipeline_alert["expr"]
 
@@ -72,7 +73,7 @@ def test_grafana_dashboard_json_structure():
     """Validates Grafana dashboard JSON contains required panels and metrics queries."""
     dash_path = MONITORING_DIR / "grafana" / "dashboards" / "urbanpulse_overview.json"
     assert dash_path.exists()
-    with open(dash_path, "r", encoding="utf-8") as f:
+    with open(dash_path, encoding="utf-8") as f:
         dash = json.load(f)
 
     assert dash.get("title") == "UrbanPulse - System & Pipeline Overview"

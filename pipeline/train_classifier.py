@@ -7,13 +7,15 @@ masks nodata pixels, and exports classified map and area statistics.
 """
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any
+
 import geopandas as gpd
 import joblib
 import numpy as np
 import rasterio
+import yaml
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score,
@@ -21,7 +23,6 @@ from sklearn.metrics import (
     cohen_kappa_score,
     confusion_matrix,
 )
-import yaml
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -40,9 +41,7 @@ PROJECT_CLASS_NAMES = {
 FEATURE_NAMES = ["red", "green", "blue", "nir", "swir16", "ndvi", "ndbi", "mndwi"]
 
 
-def load_config(
-    city: str = "ahmedabad", config_path: str | Path | None = None
-) -> dict[str, Any]:
+def load_config(city: str = "ahmedabad", config_path: str | Path | None = None) -> dict[str, Any]:
     """Loads city YAML configuration."""
     cfg_file = Path(config_path) if config_path else Path(f"configs/{city.lower()}.yaml")
     if not cfg_file.exists():
@@ -127,14 +126,22 @@ def train_and_evaluate_classifier(
 
     if train_geojson is None:
         train_path = data_path / f"{city_key}_train_points.geojson"
-        if not train_path.exists() and (data_path / "train_points.geojson").exists() and city_key == "ahmedabad":
+        if (
+            not train_path.exists()
+            and (data_path / "train_points.geojson").exists()
+            and city_key == "ahmedabad"
+        ):
             train_path = data_path / "train_points.geojson"
     else:
         train_path = Path(train_geojson)
 
     if test_geojson is None:
         test_path = data_path / f"{city_key}_test_points.geojson"
-        if not test_path.exists() and (data_path / "test_points.geojson").exists() and city_key == "ahmedabad":
+        if (
+            not test_path.exists()
+            and (data_path / "test_points.geojson").exists()
+            and city_key == "ahmedabad"
+        ):
             test_path = data_path / "test_points.geojson"
     else:
         test_path = Path(test_geojson)
@@ -228,7 +235,9 @@ def train_and_evaluate_classifier(
 
     print("Confusion Matrix (Rows: Ground Truth, Columns: Predicted):")
     col_header = "True \\ Pred"
-    header_str = f"{col_header:<14} | " + " | ".join([f"{PROJECT_CLASS_NAMES[c][:8]:<8}" for c in range(1, 6)])
+    header_str = f"{col_header:<14} | " + " | ".join(
+        [f"{PROJECT_CLASS_NAMES[c][:8]:<8}" for c in range(1, 6)]
+    )
     print("-" * len(header_str))
     print(header_str)
     print("-" * len(header_str))
@@ -264,7 +273,9 @@ def classify_raster(
     classified_path = data_path / f"{city_key}_{year}_classified.tif"
 
     if classified_path.exists() and not force:
-        print(f"[*] Classified raster already exists for {city.capitalize()} {year}: {classified_path.name}")
+        print(
+            f"[*] Classified raster already exists for {city.capitalize()} {year}: {classified_path.name}"
+        )
         with rasterio.open(classified_path) as src:
             data = src.read(1)
             pixel_res_x = abs(src.transform.a)
@@ -305,7 +316,9 @@ def classify_raster(
                 break
 
     if resolved_model_path is None or not resolved_model_path.exists():
-        print(f"[*] No pre-trained model found for {city.capitalize()}. Training fresh city model...")
+        print(
+            f"[*] No pre-trained model found for {city.capitalize()}. Training fresh city model..."
+        )
         rf, _ = train_and_evaluate_classifier(
             city=city_key,
             year=year,
@@ -321,7 +334,9 @@ def classify_raster(
         if not f.exists():
             raise FileNotFoundError(f"Missing required feature file: {f}")
 
-    print(f"[*] Reading and assembling 8 spectral feature rasters for {city.capitalize()} ({year})...")
+    print(
+        f"[*] Reading and assembling 8 spectral feature rasters for {city.capitalize()} ({year})..."
+    )
     feature_arrays = []
     with rasterio.open(feature_files[0]) as ref_src:
         profile = ref_src.profile.copy()
@@ -410,7 +425,9 @@ def classify_raster(
 
 def main():
     parser = argparse.ArgumentParser(description="Train and evaluate city Random Forest model.")
-    parser.add_argument("--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)")
+    parser.add_argument(
+        "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
+    )
     parser.add_argument("--year", type=int, default=2024, help="Target year (default: 2024)")
     parser.add_argument("--n-trees", type=int, default=200, help="Number of trees (default: 200)")
     parser.add_argument("--model-out", type=str, default=None, help="Output model path")

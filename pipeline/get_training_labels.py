@@ -9,12 +9,13 @@ import io
 import sys
 from pathlib import Path
 from typing import Any
+
 import numpy as np
 import rasterio
-from rasterio.enums import Resampling
-from rasterio.warp import calculate_default_transform, reproject
 import requests
 import yaml
+from rasterio.enums import Resampling
+from rasterio.warp import calculate_default_transform, reproject
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -22,9 +23,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 
-WORLDCOVER_V200_S3_BASE = (
-    "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map"
-)
+WORLDCOVER_V200_S3_BASE = "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map"
 
 # WorldCover -> Project Schema
 # 1: Built-up (50), 2: Vegetation (10, 20, 30, 90, 95), 3: Water (80), 4: Agriculture (40), 5: Open land (60, 70)
@@ -42,9 +41,7 @@ WORLDCOVER_REMAP = {
 }
 
 
-def load_config(
-    city: str = "ahmedabad", config_path: str | Path | None = None
-) -> dict[str, Any]:
+def load_config(city: str = "ahmedabad", config_path: str | Path | None = None) -> dict[str, Any]:
     """Loads city YAML configuration."""
     cfg_file = Path(config_path) if config_path else Path(f"configs/{city.lower()}.yaml")
     if not cfg_file.exists():
@@ -141,7 +138,14 @@ def extract_worldcover_labels(
         min_lon, min_lat, max_lon, max_lat = bbox
         dst_crs = target_crs
         dst_transform, dst_width, dst_height = calculate_default_transform(
-            "EPSG:4326", dst_crs, 1000, 1000, left=min_lon, bottom=min_lat, right=max_lon, top=max_lat
+            "EPSG:4326",
+            dst_crs,
+            1000,
+            1000,
+            left=min_lon,
+            bottom=min_lat,
+            right=max_lon,
+            top=max_lat,
         )
 
     destination_arr = np.zeros((dst_height, dst_width), dtype=np.uint8)
@@ -187,9 +191,13 @@ def extract_worldcover_labels(
 
 def main():
     parser = argparse.ArgumentParser(description="Extract WorldCover training labels.")
-    parser.add_argument("--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)")
+    parser.add_argument(
+        "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
+    )
     parser.add_argument("--config", type=str, default=None, help="Path to config YAML")
-    parser.add_argument("--crs", type=str, default="EPSG:32643", help="Target CRS (default: EPSG:32643)")
+    parser.add_argument(
+        "--crs", type=str, default="EPSG:32643", help="Target CRS (default: EPSG:32643)"
+    )
     parser.add_argument("--out", type=str, default=None, help="Output GeoTIFF path")
 
     args = parser.parse_args()
