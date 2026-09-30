@@ -175,9 +175,11 @@
       50% { opacity: 0.4; transform: scale(0.85); }
     }
 
-    /* Floating Side Panel */
-    #sidebar {
-      width: 440px;
+    /* Fixed 420px Desktop Side Panel */
+    #dashboard, #sidebar, .dashboard-panel {
+      width: 420px;
+      min-width: 420px;
+      max-width: 420px;
       height: 100vh;
       height: 100dvh;
       background: var(--bg-surface);
@@ -186,9 +188,13 @@
       border-left: 1px solid var(--border-subtle);
       display: flex;
       flex-direction: column;
+      justify-content: flex-start;
+      position: relative;
       z-index: 30;
-      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: none;
       box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+      overflow-y: auto;
+      border-radius: 0;
     }
 
     .sidebar-header {
@@ -197,6 +203,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-shrink: 0;
     }
 
     .sidebar-title {
@@ -496,14 +503,15 @@
     /* Floating Legend */
     .legend-card {
       position: absolute;
-      bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-      left: 24px;
+      top: calc(72px + env(safe-area-inset-top, 0px));
+      left: 16px;
       z-index: 20;
       padding: 14px 18px;
       display: flex;
       flex-direction: column;
       gap: 10px;
       min-width: 200px;
+      max-width: 260px;
       transition: all 0.25s ease;
     }
 
@@ -700,58 +708,30 @@
       cursor: pointer;
     }
 
-    /* Mobile Dashboard Bottom Sheet Toggle */
+    /* Mobile Bottom Sheet & Control Elements (Default Hidden on Desktop) */
     #dashToggle, .drawer-toggle-btn {
       display: none;
-      position: absolute;
-      bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-      right: 24px;
-      z-index: 90;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: var(--accent-cyan);
-      color: #0f172a;
-      border: none;
-      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.6);
-      cursor: pointer;
-      pointer-events: auto;
     }
 
     .sheet-handle-bar {
       display: none;
-      width: 100%;
-      padding: 8px 0 2px 0;
-      justify-content: center;
-      cursor: pointer;
-    }
-
-    .sheet-handle {
-      width: 42px;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 4px;
     }
 
     .sidebar-close-btn {
       display: none;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      color: #fff;
-      font-size: 16px;
-      width: 28px;
-      height: 28px;
-      line-height: 1;
-      cursor: pointer;
-      align-items: center;
-      justify-content: center;
     }
 
-    /* Responsive Mobile Layout for Screens Under 768px */
-    @media (max-width: 768px) {
+    /* Responsive Mobile Layout strictly for Screens Under 768px */
+    @media (max-width: 767px) {
       body {
         flex-direction: column;
+      }
+
+      #map-wrapper {
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        flex: 1;
       }
 
       /* Stack header: logo and city dropdown on one row, badge hidden */
@@ -837,30 +817,33 @@
         min-width: 55px;
       }
 
-      /* Bottom sheet dashboard */
-      #dashboard, #sidebar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        max-height: 70vh;
-        max-height: 70dvh;
-        height: 70vh;
-        height: 70dvh;
-        overflow-y: auto;
-        transform: translateY(100%);
-        border-radius: 20px 20px 0 0;
-        border-left: none;
-        border-top: 1px solid var(--border-subtle);
-        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
-        z-index: 100;
-        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        padding-bottom: env(safe-area-inset-bottom, 16px);
-        -webkit-overflow-scrolling: touch;
+      /* Bottom sheet dashboard scoped strictly inside mobile */
+      #dashboard, #sidebar, .dashboard-panel {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        top: auto !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        max-height: 70vh !important;
+        max-height: 70dvh !important;
+        height: 70vh !important;
+        height: 70dvh !important;
+        overflow-y: auto !important;
+        transform: translateY(100%) !important;
+        border-radius: 20px 20px 0 0 !important;
+        border-left: none !important;
+        border-top: 1px solid var(--border-subtle) !important;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8) !important;
+        z-index: 100 !important;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        padding-bottom: env(safe-area-inset-bottom, 16px) !important;
+        -webkit-overflow-scrolling: touch !important;
       }
 
-      #dashboard.open, #sidebar.open {
+      #dashboard.open, #sidebar.open, .dashboard-panel.open {
         transform: translateY(0) !important;
       }
 
@@ -887,18 +870,40 @@
 
       .sidebar-close-btn {
         display: flex;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--border-subtle);
+        border-radius: 8px;
+        color: #fff;
+        font-size: 16px;
+        width: 28px;
+        height: 28px;
+        line-height: 1;
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
       }
 
       #dashToggle, .drawer-toggle-btn {
         display: grid;
         place-items: center;
-        bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+        position: absolute;
+        bottom: calc(24px + env(safe-area-inset-bottom, 0px));
         right: 18px;
         z-index: 110;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--accent-cyan);
+        color: #0f172a;
+        border: none;
+        box-shadow: 0 4px 20px rgba(56, 189, 248, 0.6);
+        cursor: pointer;
+        pointer-events: auto;
       }
 
-      /* Legend collapsed by default on mobile with extra bottom toolbar margin */
+      /* Legend collapsed by default on mobile */
       .legend-card {
+        top: auto;
         bottom: calc(88px + env(safe-area-inset-bottom, 0px));
         left: 10px;
         padding: 8px 12px;
@@ -930,16 +935,77 @@
       }
     }
 
-    /* Desktop View (768px and up) */
+    /* Desktop View (768px and up): Two-Column Layout */
     @media (min-width: 768px) {
+      body {
+        display: flex;
+        flex-direction: row;
+      }
+
+      #map-wrapper {
+        flex: 1;
+        min-width: 0;
+        height: 100vh;
+        height: 100dvh;
+        position: relative;
+      }
+
+      #dashboard, #sidebar, .dashboard-panel {
+        position: relative !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: 420px !important;
+        min-width: 420px !important;
+        max-width: 420px !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-height: none !important;
+        transform: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        overflow-y: auto !important;
+        border-radius: 0 !important;
+        border-top: none !important;
+        border-left: 1px solid var(--border-subtle) !important;
+        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5) !important;
+        padding-bottom: 0 !important;
+        z-index: 30 !important;
+      }
+
       #dashToggle, .drawer-toggle-btn {
         display: none !important;
       }
-      #dashboard, #sidebar {
-        transform: none !important;
-        display: flex !important;
-        max-height: none !important;
+
+      .sheet-handle-bar {
+        display: none !important;
       }
+
+      .sidebar-close-btn {
+        display: none !important;
+      }
+
+      .legend-card {
+        top: calc(72px + env(safe-area-inset-top, 0px)) !important;
+        left: 16px !important;
+        bottom: auto !important;
+        right: auto !important;
+        max-width: 260px;
+        min-width: 200px;
+        display: flex !important;
+      }
+
+      .timeline-bar {
+        bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: calc(100% - 48px) !important;
+        max-width: 680px !important;
+        display: flex !important;
+      }
+
       body.sheet-open #timeline-container,
       body.sheet-open #legend-card {
         display: flex !important;
@@ -1352,6 +1418,11 @@
           } catch (err) {
             showError("Map Load Data", err);
           }
+          requestAnimationFrame(() => {
+            if (map) { try { map.resize(); } catch (e) {} }
+            if (timeSeriesChart) { try { timeSeriesChart.resize(); } catch (e) {} }
+            if (ringDensityChart) { try { ringDensityChart.resize(); } catch (e) {} }
+          });
         });
 
       } catch (err) {
@@ -2248,8 +2319,10 @@
         const legendCard = document.getElementById('legend-card');
         const legendHeader = document.getElementById('legend-header');
         if (legendCard) {
-          if (window.innerWidth <= 768) {
+          if (window.innerWidth < 768) {
             legendCard.classList.add('collapsed');
+          } else {
+            legendCard.classList.remove('collapsed');
           }
           if (legendHeader) {
             legendHeader.addEventListener('click', () => {
@@ -2349,10 +2422,12 @@
           }
         });
 
-        // Responsive map viewport adaptation for mobile toolbars
+        // Responsive viewport adaptation for map and charts
         function handleViewportResize() {
-          if (window.innerWidth >= 768) {
+          const isDesktop = window.innerWidth >= 768;
+          if (isDesktop) {
             closeDashboard();
+            if (legendCard) legendCard.classList.remove('collapsed');
           }
           if (map) {
             try { map.resize(); } catch (e) {}
@@ -2360,6 +2435,12 @@
           if (isCompareModeActive) {
             if (mapBefore) { try { mapBefore.resize(); } catch (e) {} }
             if (mapAfter) { try { mapAfter.resize(); } catch (e) {} }
+          }
+          if (timeSeriesChart) {
+            try { timeSeriesChart.resize(); } catch (e) {}
+          }
+          if (ringDensityChart) {
+            try { ringDensityChart.resize(); } catch (e) {}
           }
         }
 

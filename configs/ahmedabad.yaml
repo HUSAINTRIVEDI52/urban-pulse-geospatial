@@ -19,10 +19,10 @@ temporal:
     start_year: 2000
     end_year: 2025
   dry_season:
-    start_month: 11
-    end_month: 2
-    start_day: 11-01
-    end_day: 02-28
+    start_month: 10
+    end_month: 3
+    start_day: 10-01
+    end_day: 03-31
 stac:
   earth_search_url: https://earth-search.aws.element84.com/v1
   microsoft_pc_url: https://planetarycomputer.microsoft.com/api/stac/v1
