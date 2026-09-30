@@ -9,14 +9,14 @@ import re
 import sys
 from pathlib import Path
 from typing import Any
+
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
 import rasterio
-from pyproj import Transformer
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import matplotlib.ticker as ticker
 import yaml
+from pyproj import Transformer
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -24,12 +24,14 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 
-def load_city_config(city: str = "ahmedabad", config_path: str | Path | None = None) -> dict[str, Any]:
+def load_city_config(
+    city: str = "ahmedabad", config_path: str | Path | None = None
+) -> dict[str, Any]:
     """Loads city YAML configuration."""
     cfg_file = Path(config_path) if config_path else Path(f"configs/{city.lower()}.yaml")
     if not cfg_file.exists():
         raise FileNotFoundError(f"City configuration file not found: {cfg_file.resolve()}")
-    with open(cfg_file, "r", encoding="utf-8") as f:
+    with open(cfg_file, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -146,8 +148,16 @@ def plot_ring_curves(
         color="#f8fafc",
         pad=16,
     )
-    ax.set_xlabel("Distance from City Center (km)", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=10)
-    ax.set_ylabel("Built-up Land Share (%)", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=10)
+    ax.set_xlabel(
+        "Distance from City Center (km)",
+        fontsize=11,
+        fontweight="bold",
+        color="#cbd5e1",
+        labelpad=10,
+    )
+    ax.set_ylabel(
+        "Built-up Land Share (%)", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=10
+    )
 
     # Ticks & Styling
     max_dist = df["ring_end_km"].max()
@@ -197,7 +207,9 @@ def plot_ring_growth_bar(
 
     years = sorted(df["year"].unique())
     if len(years) < 2:
-        print("[!] Warning: Need at least 2 years for ring growth comparison. Skipping growth bar chart.")
+        print(
+            "[!] Warning: Need at least 2 years for ring growth comparison. Skipping growth bar chart."
+        )
         return out_file
 
     start_year = years[0]
@@ -206,7 +218,9 @@ def plot_ring_growth_bar(
     df_start = df[df["year"] == start_year].sort_values("ring_start_km").reset_index(drop=True)
     df_end = df[df["year"] == end_year].sort_values("ring_start_km").reset_index(drop=True)
 
-    rings = [f"{int(r['ring_start_km'])}-{int(r['ring_end_km'])} km" for _, r in df_start.iterrows()]
+    rings = [
+        f"{int(r['ring_start_km'])}-{int(r['ring_end_km'])} km" for _, r in df_start.iterrows()
+    ]
     growth_km2 = df_end["builtup_km2"].values - df_start["builtup_km2"].values
     pct_point_growth = df_end["builtup_pct"].values - df_start["builtup_pct"].values
 
@@ -244,7 +258,9 @@ def plot_ring_growth_bar(
             fontsize=8.5,
             fontweight="bold",
             color="#f8fafc",
-            bbox=dict(boxstyle="round,pad=0.2", facecolor="#0f172a", edgecolor="#475569", alpha=0.8),
+            bbox=dict(
+                boxstyle="round,pad=0.2", facecolor="#0f172a", edgecolor="#475569", alpha=0.8
+            ),
             zorder=5,
         )
 
@@ -257,8 +273,16 @@ def plot_ring_growth_bar(
         color="#f8fafc",
         pad=16,
     )
-    ax.set_xlabel("Concentric Distance Ring from City Center", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=10)
-    ax.set_ylabel("Net Built-up Expansion (km²)", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=10)
+    ax.set_xlabel(
+        "Concentric Distance Ring from City Center",
+        fontsize=11,
+        fontweight="bold",
+        color="#cbd5e1",
+        labelpad=10,
+    )
+    ax.set_ylabel(
+        "Net Built-up Expansion (km²)", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=10
+    )
 
     ax.tick_params(colors="#94a3b8", labelsize=9.5)
     plt.xticks(rotation=30, ha="right")
@@ -403,11 +427,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Concentric distance ring & urban density gradient analysis."
     )
-    parser.add_argument("--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)")
-    parser.add_argument("--ring-width", type=float, default=2.0, help="Ring width in km (default: 2.0)")
-    parser.add_argument("--max-dist", type=float, default=22.0, help="Maximum radial distance in km (default: 22.0)")
+    parser.add_argument(
+        "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
+    )
+    parser.add_argument(
+        "--ring-width", type=float, default=2.0, help="Ring width in km (default: 2.0)"
+    )
+    parser.add_argument(
+        "--max-dist", type=float, default=22.0, help="Maximum radial distance in km (default: 22.0)"
+    )
     parser.add_argument("--config", type=str, default=None, help="Custom city config file path")
-    parser.add_argument("--data-dir", type=str, default="data", help="Directory for data files (default: data)")
+    parser.add_argument(
+        "--data-dir", type=str, default="data", help="Directory for data files (default: data)"
+    )
 
     args = parser.parse_args()
     run_ring_analysis(

@@ -6,11 +6,11 @@ saves configs/ahmedabad_boundary.geojson, and syncs configs/ahmedabad.yaml.
 
 import argparse
 from pathlib import Path
-from typing import Any
-import osmnx as ox
+
 import geopandas as gpd
-from shapely.geometry import box, Point
+import osmnx as ox
 import yaml
+from shapely.geometry import Point, box
 
 
 def extract_city_boundary(
@@ -73,7 +73,7 @@ def extract_city_boundary(
     ]
 
     print("\n" + "=" * 55)
-    print(f"[*] UrbanPulse 45x45 km Bounding Box (EPSG:4326):")
+    print("[*] UrbanPulse 45x45 km Bounding Box (EPSG:4326):")
     print(f"   min_lon (West) : {bbox[0]}")
     print(f"   min_lat (South): {bbox[1]}")
     print(f"   max_lon (East) : {bbox[2]}")
@@ -83,7 +83,7 @@ def extract_city_boundary(
 
     # Update configs/ahmedabad.yaml
     if config_path.exists():
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             config_data = yaml.safe_load(f) or {}
 
         if "spatial" not in config_data:
@@ -104,9 +104,15 @@ def extract_city_boundary(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate 45x45 km Ahmedabad AOI boundary.")
-    parser.add_argument("--size-km", type=float, default=45.0, help="AOI side length in km (default: 45.0)")
-    parser.add_argument("--config", type=str, default="configs/ahmedabad.yaml", help="Path to config YAML")
-    parser.add_argument("--out", type=str, default="configs/ahmedabad_boundary.geojson", help="Output GeoJSON path")
+    parser.add_argument(
+        "--size-km", type=float, default=45.0, help="AOI side length in km (default: 45.0)"
+    )
+    parser.add_argument(
+        "--config", type=str, default="configs/ahmedabad.yaml", help="Path to config YAML"
+    )
+    parser.add_argument(
+        "--out", type=str, default="configs/ahmedabad_boundary.geojson", help="Output GeoJSON path"
+    )
 
     args = parser.parse_args()
     extract_city_boundary(

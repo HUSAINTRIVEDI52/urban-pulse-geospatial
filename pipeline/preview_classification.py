@@ -8,11 +8,11 @@ Agriculture=Yellow, Open land=Tan) and exports data/preview_2024_classified.png.
 import argparse
 import sys
 from pathlib import Path
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap, BoundaryNorm
+
 import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 import rasterio
+from matplotlib.colors import BoundaryNorm, ListedColormap
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -23,11 +23,11 @@ if str(PROJECT_ROOT) not in sys.path:
 # Curated, vibrant categorical color palette for publication-grade cartography
 CLASS_COLORS = {
     0: ("#0d0d0d", "NoData"),
-    1: ("#e41a1c", "Built-up"),          # Bright Red
-    2: ("#238b45", "Vegetation"),        # Lush Forest Green
-    3: ("#1f78b4", "Water"),             # Deep Cerulean Blue
-    4: ("#ffd92f", "Agriculture"),       # Golden Yellow
-    5: ("#d2b48c", "Open land"),         # Warm Sand Tan
+    1: ("#e41a1c", "Built-up"),  # Bright Red
+    2: ("#238b45", "Vegetation"),  # Lush Forest Green
+    3: ("#1f78b4", "Water"),  # Deep Cerulean Blue
+    4: ("#ffd92f", "Agriculture"),  # Golden Yellow
+    5: ("#d2b48c", "Open land"),  # Warm Sand Tan
 }
 
 
@@ -50,14 +50,13 @@ def plot_classified_map(
         )
 
     print("=" * 75)
-    print(f"[*] Rendering Land Cover Classification Map")
+    print("[*] Rendering Land Cover Classification Map")
     print(f"    - Input Raster : {raster_path.resolve()}")
     print(f"    - Output Image : {out_path.resolve()}")
     print("=" * 75)
 
     with rasterio.open(raster_path) as src:
         data = src.read(1)
-        bounds = src.bounds
         crs = src.crs
 
     print(f"[+] Loaded raster shape: {data.shape[0]} rows x {data.shape[1]} cols in {crs}")
@@ -74,7 +73,7 @@ def plot_classified_map(
     fig.patch.set_facecolor("#ffffff")
     ax.set_facecolor("#0d0d0d")
 
-    im = ax.imshow(data, cmap=cmap, norm=norm, interpolation="nearest")
+    ax.imshow(data, cmap=cmap, norm=norm, interpolation="nearest")
 
     # Extract year/city from filename if possible
     stem = raster_path.stem

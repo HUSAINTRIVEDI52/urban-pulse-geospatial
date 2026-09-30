@@ -7,9 +7,10 @@ and city metadata from web/data/ for interactive web applications.
 import json
 from pathlib import Path
 from typing import Any
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 
 # Project paths
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -51,7 +52,7 @@ def list_cities() -> list[dict[str, Any]]:
             meta_path = city_dir / "meta.json"
             if meta_path.exists():
                 try:
-                    with open(meta_path, "r", encoding="utf-8") as f:
+                    with open(meta_path, encoding="utf-8") as f:
                         meta = json.load(f)
                     cities.append(
                         {
@@ -84,7 +85,7 @@ def get_city_meta(city: str) -> dict[str, Any]:
             detail=f"City metadata for '{city}' not found in web catalog ({meta_path.name}).",
         )
 
-    with open(meta_path, "r", encoding="utf-8") as f:
+    with open(meta_path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -100,7 +101,7 @@ def get_city_stats(city: str) -> dict[str, Any]:
             detail=f"Analytics dataset for '{city}' not found in web catalog ({stats_path.name}).",
         )
 
-    with open(stats_path, "r", encoding="utf-8") as f:
+    with open(stats_path, encoding="utf-8") as f:
         return json.load(f)
 
 

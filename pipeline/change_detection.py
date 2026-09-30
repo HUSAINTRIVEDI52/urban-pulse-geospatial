@@ -8,13 +8,14 @@ import argparse
 import sys
 from pathlib import Path
 from typing import Any
+
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import rasterio
+from matplotlib.colors import BoundaryNorm, ListedColormap
 from scipy import ndimage
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap, BoundaryNorm
-import matplotlib.patches as mpatches
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -35,7 +36,12 @@ def compute_transition_matrix(
     Computes a transition matrix (rows = from_class, columns = to_class) in km2.
     Excludes any pixels where start or end raster equals nodata_val.
     """
-    valid_mask = (start_arr != nodata_val) & (end_arr != nodata_val) & np.isfinite(start_arr) & np.isfinite(end_arr)
+    valid_mask = (
+        (start_arr != nodata_val)
+        & (end_arr != nodata_val)
+        & np.isfinite(start_arr)
+        & np.isfinite(end_arr)
+    )
     matrix = np.zeros((num_classes, num_classes), dtype=np.float64)
 
     for i in range(1, num_classes + 1):
@@ -129,13 +135,14 @@ def detect_changes(
     total_valid_pixels = int(np.sum(valid_mask))
     total_aoi_km2 = total_valid_pixels * pixel_area_km2
 
-    print(f"\n[+] Aligned Rasters Verified: {start_shape[0]} x {start_shape[1]} pixels ({pixel_res_x:.1f}m resolution)")
+    print(
+        f"\n[+] Aligned Rasters Verified: {start_shape[0]} x {start_shape[1]} pixels ({pixel_res_x:.1f}m resolution)"
+    )
     print(f"[+] Total Valid Analyzed Area: {total_aoi_km2:.2f} km² ({total_valid_pixels:,} pixels)")
 
     # 4. Filter small change clusters using connected-component labelling
     if min_patch_size > 1:
         raw_changes = valid_mask & (start_arr != end_arr)
-        raw_change_count = int(np.sum(raw_changes))
 
         structure = np.ones((3, 3), dtype=int)  # 8-connectivity
         labeled_arr, num_features = ndimage.label(raw_changes, structure=structure)
@@ -144,7 +151,9 @@ def detect_changes(
             component_sizes = np.bincount(labeled_arr.ravel())
             small_comp_mask = np.isin(
                 labeled_arr,
-                np.where((component_sizes < min_patch_size) & (np.arange(len(component_sizes)) > 0))[0],
+                np.where(
+                    (component_sizes < min_patch_size) & (np.arange(len(component_sizes)) > 0)
+                )[0],
             )
             # Revert isolated small change patches back to start class
             filtered_end_arr = np.where(small_comp_mask, start_arr, end_arr)
@@ -182,7 +191,12 @@ def detect_changes(
     print("\n" + "=" * 80)
     print(f"[*] TRANSITION MATRIX: {start_year} -> {end_year} (Area in km²)")
     print("=" * 80)
-    header_str = f"{'From \\ To':<22} | " + " | ".join([f"{c[:10]:>10}" for c in class_names]) + " | {'Total':>10}"
+    col_from_to = "From \\ To"
+    header_str = (
+        f"{col_from_to:<22} | "
+        + " | ".join([f"{c[:10]:>10}" for c in class_names])
+        + " | {'Total':>10}"
+    )
     print(header_str)
     print("-" * len(header_str))
     for i, c_start in enumerate(class_names):
@@ -197,7 +211,9 @@ def detect_changes(
     # 6. Save change raster: pixel = from_class * 10 + to_class
     change_raster_path = data_path / f"{city_key}_change_{start_year}_{end_year}.tif"
     change_arr = np.zeros_like(start_arr, dtype=np.uint8)
-    change_arr[valid_mask] = (start_arr[valid_mask] * 10 + filtered_end_arr[valid_mask]).astype(np.uint8)
+    change_arr[valid_mask] = (start_arr[valid_mask] * 10 + filtered_end_arr[valid_mask]).astype(
+        np.uint8
+    )
 
     start_profile.update(
         {
@@ -218,16 +234,28 @@ def detect_changes(
     start_builtup_km2 = float(np.sum(valid_mask & (start_arr == 1)) * pixel_area_km2)
     end_builtup_km2 = float(np.sum(valid_mask & (filtered_end_arr == 1)) * pixel_area_km2)
 
-    gross_gain_km2 = float(np.sum(valid_mask & (start_arr != 1) & (filtered_end_arr == 1)) * pixel_area_km2)
-    gross_loss_km2 = float(np.sum(valid_mask & (start_arr == 1) & (filtered_end_arr != 1)) * pixel_area_km2)
+    gross_gain_km2 = float(
+        np.sum(valid_mask & (start_arr != 1) & (filtered_end_arr == 1)) * pixel_area_km2
+    )
+    gross_loss_km2 = float(
+        np.sum(valid_mask & (start_arr == 1) & (filtered_end_arr != 1)) * pixel_area_km2
+    )
     net_change_km2 = end_builtup_km2 - start_builtup_km2
     pct_change = (net_change_km2 / start_builtup_km2 * 100.0) if start_builtup_km2 > 0 else 0.0
 
     # Sources of Built-up Gain
-    gain_veg_km2 = float(np.sum(valid_mask & (start_arr == 2) & (filtered_end_arr == 1)) * pixel_area_km2)
-    gain_agri_km2 = float(np.sum(valid_mask & (start_arr == 4) & (filtered_end_arr == 1)) * pixel_area_km2)
-    gain_open_km2 = float(np.sum(valid_mask & (start_arr == 5) & (filtered_end_arr == 1)) * pixel_area_km2)
-    gain_water_km2 = float(np.sum(valid_mask & (start_arr == 3) & (filtered_end_arr == 1)) * pixel_area_km2)
+    gain_veg_km2 = float(
+        np.sum(valid_mask & (start_arr == 2) & (filtered_end_arr == 1)) * pixel_area_km2
+    )
+    gain_agri_km2 = float(
+        np.sum(valid_mask & (start_arr == 4) & (filtered_end_arr == 1)) * pixel_area_km2
+    )
+    gain_open_km2 = float(
+        np.sum(valid_mask & (start_arr == 5) & (filtered_end_arr == 1)) * pixel_area_km2
+    )
+    gain_water_km2 = float(
+        np.sum(valid_mask & (start_arr == 3) & (filtered_end_arr == 1)) * pixel_area_km2
+    )
 
     share_veg = (gain_veg_km2 / gross_gain_km2 * 100.0) if gross_gain_km2 > 0 else 0.0
     share_agri = (gain_agri_km2 / gross_gain_km2 * 100.0) if gross_gain_km2 > 0 else 0.0
@@ -239,16 +267,30 @@ def detect_changes(
     print("=" * 80)
     print(f"  - Total Built-up ({start_year})           : {start_builtup_km2:>8.2f} km²")
     print(f"  - Total Built-up ({end_year})             : {end_builtup_km2:>8.2f} km²")
-    print(f"  - Gross Built-up Gain              : +{gross_gain_km2:>7.2f} km² (Non-built-up -> Built-up)")
-    print(f"  - Gross Built-up Loss              : -{gross_loss_km2:>7.2f} km² (Built-up -> Non-built-up)")
-    print(f"  - Net Built-up Change              : {net_change_km2:>+8.2f} km² ({pct_change:>+6.2f}%)")
+    print(
+        f"  - Gross Built-up Gain              : +{gross_gain_km2:>7.2f} km² (Non-built-up -> Built-up)"
+    )
+    print(
+        f"  - Gross Built-up Loss              : -{gross_loss_km2:>7.2f} km² (Built-up -> Non-built-up)"
+    )
+    print(
+        f"  - Net Built-up Change              : {net_change_km2:>+8.2f} km² ({pct_change:>+6.2f}%)"
+    )
     print("-" * 80)
-    print(f"  - Sources of New Built-up Land:")
-    print(f"      * Agriculture -> Built-up      : {gain_agri_km2:>7.2f} km² ({share_agri:>5.1f}% of total gain)")
-    print(f"      * Vegetation  -> Built-up      : {gain_veg_km2:>7.2f} km² ({share_veg:>5.1f}% of total gain)")
-    print(f"      * Open Land   -> Built-up      : {gain_open_km2:>7.2f} km² ({share_open:>5.1f}% of total gain)")
+    print("  - Sources of New Built-up Land:")
+    print(
+        f"      * Agriculture -> Built-up      : {gain_agri_km2:>7.2f} km² ({share_agri:>5.1f}% of total gain)"
+    )
+    print(
+        f"      * Vegetation  -> Built-up      : {gain_veg_km2:>7.2f} km² ({share_veg:>5.1f}% of total gain)"
+    )
+    print(
+        f"      * Open Land   -> Built-up      : {gain_open_km2:>7.2f} km² ({share_open:>5.1f}% of total gain)"
+    )
     if gain_water_km2 > 0:
-        print(f"      * Water       -> Built-up      : {gain_water_km2:>7.2f} km² ({share_water:>5.1f}% of total gain)")
+        print(
+            f"      * Water       -> Built-up      : {gain_water_km2:>7.2f} km² ({share_water:>5.1f}% of total gain)"
+        )
     print("=" * 80 + "\n")
 
     # 8. Generate Map: Vegetation->Built-up, Agriculture->Built-up, Open land->Built-up, Built-up->Loss
@@ -285,7 +327,7 @@ def detect_changes(
     fig.patch.set_facecolor("#ffffff")
     ax.set_facecolor("#cbd5e1")
 
-    im = ax.imshow(vis_arr, cmap=cmap, norm=norm, interpolation="nearest")
+    ax.imshow(vis_arr, cmap=cmap, norm=norm, interpolation="nearest")
 
     ax.set_title(
         f"{city.capitalize()} Urban Land Cover Change ({start_year} – {end_year})\n"
@@ -299,10 +341,26 @@ def detect_changes(
 
     # Legend Patches
     legend_patches = [
-        mpatches.Patch(facecolor="#2e7d32", edgecolor="#1b5e20", label=f"Vegetation -> Built-up (+{gain_veg_km2:.1f} km², {share_veg:.1f}%)"),
-        mpatches.Patch(facecolor="#ea580c", edgecolor="#c2410c", label=f"Agriculture -> Built-up (+{gain_agri_km2:.1f} km², {share_agri:.1f}%)"),
-        mpatches.Patch(facecolor="#8b5cf6", edgecolor="#6d28d9", label=f"Open land -> Built-up (+{gain_open_km2:.1f} km², {share_open:.1f}%)"),
-        mpatches.Patch(facecolor="#0f172a", edgecolor="#000000", label=f"Built-up Loss -> Other (-{gross_loss_km2:.1f} km²)"),
+        mpatches.Patch(
+            facecolor="#2e7d32",
+            edgecolor="#1b5e20",
+            label=f"Vegetation -> Built-up (+{gain_veg_km2:.1f} km², {share_veg:.1f}%)",
+        ),
+        mpatches.Patch(
+            facecolor="#ea580c",
+            edgecolor="#c2410c",
+            label=f"Agriculture -> Built-up (+{gain_agri_km2:.1f} km², {share_agri:.1f}%)",
+        ),
+        mpatches.Patch(
+            facecolor="#8b5cf6",
+            edgecolor="#6d28d9",
+            label=f"Open land -> Built-up (+{gain_open_km2:.1f} km², {share_open:.1f}%)",
+        ),
+        mpatches.Patch(
+            facecolor="#0f172a",
+            edgecolor="#000000",
+            label=f"Built-up Loss -> Other (-{gross_loss_km2:.1f} km²)",
+        ),
         mpatches.Patch(facecolor="#e2e8f0", edgecolor="#94a3b8", label="Unchanged / Other Classes"),
     ]
 
@@ -350,10 +408,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="UrbanPulse Land Cover Change Detection & Urban Expansion Analytics."
     )
-    parser.add_argument("--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)")
+    parser.add_argument(
+        "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
+    )
     parser.add_argument("--start", type=int, default=2018, help="Start year (default: 2018)")
     parser.add_argument("--end", type=int, default=2024, help="End year (default: 2024)")
-    parser.add_argument("--min-patch", type=int, default=3, help="Minimum patch size in pixels (default: 3)")
+    parser.add_argument(
+        "--min-patch", type=int, default=3, help="Minimum patch size in pixels (default: 3)"
+    )
     parser.add_argument("--data-dir", type=str, default="data", help="Directory for data rasters")
     parser.add_argument("--out-map", type=str, default=None, help="Custom path for output PNG map")
 

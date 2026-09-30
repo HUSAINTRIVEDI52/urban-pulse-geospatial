@@ -11,9 +11,10 @@ import time
 import traceback
 from pathlib import Path
 from typing import Any
-import pandas as pd
+
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import pandas as pd
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -94,7 +95,9 @@ def plot_builtup_trend(
             fontsize=9.5,
             fontweight="bold",
             color="#f8fafc",
-            bbox=dict(boxstyle="round,pad=0.2", facecolor="#0f172a", edgecolor="#475569", alpha=0.85),
+            bbox=dict(
+                boxstyle="round,pad=0.2", facecolor="#0f172a", edgecolor="#475569", alpha=0.85
+            ),
             zorder=5,
         )
 
@@ -108,7 +111,9 @@ def plot_builtup_trend(
         pad=16,
     )
     ax.set_xlabel("Year", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=10)
-    ax.set_ylabel("Built-up Area (km²)", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=10)
+    ax.set_ylabel(
+        "Built-up Area (km²)", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=10
+    )
 
     # X-axis ticks
     ax.set_xticks(years)
@@ -208,7 +213,7 @@ def run_all_years(
             errors_log[yr] = err_msg
             print(f"\n[!] ERROR processing year {yr}: {err_msg}")
             traceback.print_exc()
-            print(f"[*] Continuing with next year in batch...\n")
+            print("[*] Continuing with next year in batch...\n")
 
     # ---------------------------------------------------------
     # COMPILE & DISPLAY RESULTS TABLE
@@ -224,9 +229,24 @@ def run_all_years(
         print("=" * 80)
 
         # Print formatted summary table
-        cols_to_print = ["Year", "Built-up", "Vegetation", "Water", "Agriculture", "Open land", "Total_Area_km2"]
+        cols_to_print = [
+            "Year",
+            "Built-up",
+            "Vegetation",
+            "Water",
+            "Agriculture",
+            "Open land",
+            "Total_Area_km2",
+        ]
         fmt_df = df[cols_to_print].copy()
-        for col in ["Built-up", "Vegetation", "Water", "Agriculture", "Open land", "Total_Area_km2"]:
+        for col in [
+            "Built-up",
+            "Vegetation",
+            "Water",
+            "Agriculture",
+            "Open land",
+            "Total_Area_km2",
+        ]:
             fmt_df[col] = fmt_df[col].map(lambda x: f"{x:>8.2f} km²")
 
         print(fmt_df.to_string(index=False))

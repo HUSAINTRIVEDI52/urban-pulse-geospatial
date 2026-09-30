@@ -1,0 +1,39 @@
+# ==============================================================================
+# UrbanPulse - Satellite Geospatial Pipeline Container
+# ==============================================================================
+FROM python:3.11-slim
+
+# Prevent Python from writing .pyc files and buffer stdout/stderr
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH="/app"
+
+# Install system dependencies needed for geospatial / C extensions
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root system user
+RUN useradd -m -u 1000 appuser
+
+WORKDIR /app
+
+# Install Python requirements
+COPY requirements-pipeline.txt /app/
+RUN pip install --no-cache-dir -r requirements-pipeline.txt
+
+# Copy pipeline application and city configuration files
+COPY pipeline/ /app/pipeline/
+COPY configs/ /app/configs/
+
+# Create data and cache mount points with appropriate ownership
+RUN mkdir -p /app/data /app/cache /app/web/data && \
+    chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+# Default entrypoint runs the annual pipeline orchestrator
+ENTRYPOINT ["python", "-m", "pipeline.run_year"]
+CMD ["--city", "ahmedabad", "--year", "2024"]

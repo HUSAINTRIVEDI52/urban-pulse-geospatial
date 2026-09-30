@@ -4,7 +4,7 @@ Validates required top-level keys, coordinate reference systems, and bounding bo
 """
 
 from pathlib import Path
-import pytest
+
 import yaml
 
 
@@ -19,7 +19,7 @@ def test_ahmedabad_config_structure_and_bbox():
     config_path = Path("configs/ahmedabad.yaml")
     assert config_path.exists(), f"Configuration file not found: {config_path.resolve()}"
 
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
     assert isinstance(config, dict), "Configuration must load as a dictionary."
@@ -34,13 +34,17 @@ def test_ahmedabad_config_structure_and_bbox():
     assert "bbox" in spatial, "Missing 'spatial.bbox' in configuration."
     bbox = spatial["bbox"]
     assert isinstance(bbox, list), "spatial.bbox must be a list."
-    assert len(bbox) == 4, f"spatial.bbox must have 4 elements [min_lon, min_lat, max_lon, max_lat], got {len(bbox)}."
+    assert (
+        len(bbox) == 4
+    ), f"spatial.bbox must have 4 elements [min_lon, min_lat, max_lon, max_lat], got {len(bbox)}."
 
     min_lon, min_lat, max_lon, max_lat = bbox
 
     # 3. Check bounding box geometric integrity
     assert min_lon < max_lon, f"Invalid bbox longitude: west ({min_lon}) must be < east ({max_lon})"
-    assert min_lat < max_lat, f"Invalid bbox latitude: south ({min_lat}) must be < north ({max_lat})"
+    assert (
+        min_lat < max_lat
+    ), f"Invalid bbox latitude: south ({min_lat}) must be < north ({max_lat})"
 
     # 4. Check coordinate range limits for Ahmedabad region (WGS84)
     assert -180.0 <= min_lon <= 180.0

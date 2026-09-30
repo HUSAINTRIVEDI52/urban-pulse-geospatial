@@ -9,6 +9,7 @@ import argparse
 import sys
 from pathlib import Path
 from typing import Any
+
 import numpy as np
 import rasterio
 import yaml
@@ -23,7 +24,7 @@ from pipeline.build_composite import build_composite
 
 def load_config(config_path: str | Path = "configs/ahmedabad.yaml") -> dict[str, Any]:
     """Loads city YAML configuration."""
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -119,7 +120,9 @@ def compute_indices(
 
     # Check if all indices already exist
     if not force and all(p.exists() for p in index_paths.values()):
-        print(f"[+] All spectral indices for {city} ({year}) already exist in {data_path.resolve()}. Skipping computation.")
+        print(
+            f"[+] All spectral indices for {city} ({year}) already exist in {data_path.resolve()}. Skipping computation."
+        )
         stats_summary = {}
         for name, out_path in index_paths.items():
             with rasterio.open(out_path) as src:
@@ -138,8 +141,12 @@ def compute_indices(
     band_paths = {b: data_path / f"{city_key}_{year}_{b}.tif" for b in band_names}
     missing_bands = [b for b, p in band_paths.items() if not p.exists()]
     if missing_bands:
-        print(f"[*] Missing required bands for {city} ({year}): {missing_bands}. Triggering build_composite...")
-        build_composite(city=city, year=year, config_path=config_path, data_dir=data_path, force=force)
+        print(
+            f"[*] Missing required bands for {city} ({year}): {missing_bands}. Triggering build_composite..."
+        )
+        build_composite(
+            city=city, year=year, config_path=config_path, data_dir=data_path, force=force
+        )
 
     print(f"\n[*] Loading raster bands for {city.capitalize()} ({year})...")
     with rasterio.open(band_paths["red"]) as src:
@@ -207,7 +214,9 @@ def compute_indices(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Compute spectral indices (NDVI, NDBI, MNDWI).")
-    parser.add_argument("--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)")
+    parser.add_argument(
+        "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
+    )
     parser.add_argument("--year", type=int, default=2024, help="Target year (default: 2024)")
     parser.add_argument("--force", action="store_true", help="Force recalculate indices")
     parser.add_argument("--config", type=str, default=None, help="Path to config YAML")
@@ -221,4 +230,3 @@ if __name__ == "__main__":
         config_path=args.config,
         data_dir=args.data_dir,
     )
-

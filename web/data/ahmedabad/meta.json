@@ -1,0 +1,89 @@
+{
+  "city": "Ahmedabad",
+  "state": "Gujarat",
+  "country": "India",
+  "center": [
+    23.0225,
+    72.5714
+  ],
+  "bounds": [
+    72.348186,
+    22.807987,
+    72.809943,
+    23.23531
+  ],
+  "years": [
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "classes": {
+    "1": {
+      "name": "Built-up",
+      "color": "#e41a1c",
+      "rgb": [
+        228,
+        26,
+        28
+      ]
+    },
+    "2": {
+      "name": "Vegetation",
+      "color": "#238b45",
+      "rgb": [
+        35,
+        139,
+        69
+      ]
+    },
+    "3": {
+      "name": "Water",
+      "color": "#1f78b4",
+      "rgb": [
+        31,
+        120,
+        180
+      ]
+    },
+    "4": {
+      "name": "Agriculture",
+      "color": "#ffd92f",
+      "rgb": [
+        255,
+        217,
+        47
+      ]
+    },
+    "5": {
+      "name": "Open land",
+      "color": "#d2b48c",
+      "rgb": [
+        210,
+        180,
+        140
+      ]
+    }
+  },
+  "change_legend": {
+    "veg_to_built": {
+      "label": "Vegetation -> Built-up",
+      "color": "#2e7d32"
+    },
+    "agri_to_built": {
+      "label": "Agriculture -> Built-up",
+      "color": "#ea580c"
+    },
+    "open_to_built": {
+      "label": "Open land -> Built-up",
+      "color": "#8b5cf6"
+    },
+    "built_loss": {
+      "label": "Built-up Loss -> Other",
+      "color": "#0f172a"
+    }
+  }
+}

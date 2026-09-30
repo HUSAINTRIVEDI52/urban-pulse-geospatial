@@ -1,0 +1,8 @@
+city,year,builtup_km2,annual_growth_pct,cagr_from_start_pct,shannon_entropy,core_builtup_0_6km_km2,core_share_0_6km_pct,periphery_builtup_gt_12km_km2,periphery_share_gt_12km_pct
+Ahmedabad,2018,364.24,0.0,0.0,0.9346,89.01,27.18,87.08,26.59
+Ahmedabad,2019,229.86,-36.89,-36.89,0.8876,82.6,37.83,36.13,16.55
+Ahmedabad,2020,339.98,47.91,-3.39,0.9281,90.41,28.76,77.23,24.57
+Ahmedabad,2021,391.82,15.25,2.46,0.9443,90.68,25.64,102.26,28.91
+Ahmedabad,2022,385.75,-1.55,1.44,0.9316,91.9,26.1,91.92,26.11
+Ahmedabad,2023,443.84,15.06,4.03,0.9526,91.73,23.05,128.84,32.38
+Ahmedabad,2024,440.88,-0.67,3.23,0.9516,91.06,22.59,130.07,32.27

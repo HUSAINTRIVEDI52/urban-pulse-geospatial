@@ -15,17 +15,18 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
+import numpy as np
 import rasterio
 import yaml
+from matplotlib.colors import LinearSegmentedColormap
+
 from pipeline.build_composite import build_composite
 
 
 def load_config(config_path: str | Path = "configs/ahmedabad.yaml") -> dict[str, Any]:
     """Loads city YAML configuration."""
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -121,7 +122,17 @@ def generate_previews(
     plt.figure(figsize=(12, 10), dpi=200)
 
     # Brown (urban/bare soil) -> Khaki -> Light Green -> Dark Green (dense vegetation)
-    colors = ["#7f3b08", "#b35806", "#e08214", "#fdb863", "#fee0b6", "#d9ef8b", "#91cf60", "#1a9850", "#006837"]
+    colors = [
+        "#7f3b08",
+        "#b35806",
+        "#e08214",
+        "#fdb863",
+        "#fee0b6",
+        "#d9ef8b",
+        "#91cf60",
+        "#1a9850",
+        "#006837",
+    ]
     earth_cmap = LinearSegmentedColormap.from_list("ndvi_earth", colors, N=256)
     earth_cmap.set_bad(color="#111111")
 
@@ -147,8 +158,12 @@ def generate_previews(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate RGB and NDVI preview maps.")
-    parser.add_argument("year", type=int, nargs="?", default=2024, help="Target year (default: 2024)")
-    parser.add_argument("--config", type=str, default="configs/ahmedabad.yaml", help="Path to config YAML")
+    parser.add_argument(
+        "year", type=int, nargs="?", default=2024, help="Target year (default: 2024)"
+    )
+    parser.add_argument(
+        "--config", type=str, default="configs/ahmedabad.yaml", help="Path to config YAML"
+    )
     parser.add_argument("--data-dir", type=str, default="data", help="Data directory")
 
     args = parser.parse_args()

@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "urbanpulse"
+version = "1.0.0"
+description = "Satellite-derived urban sprawl and land cover analytics system"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Husain Trivedi" }
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  \.git
+  | \.venv
+  | venv
+  | data
+  | cache
+  | web
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "data",
+    "cache",
+    "web",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+]
+ignore = [
+    "E501", # Line too long (handled by Black)
+    "B008", # Do not perform function calls in argument defaults (FastAPI Depends/Query)
+    "E402", # Module level import not at top of file (used for sys.path configuration)
+    "B905", # zip without strict parameter
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["pipeline", "api"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"

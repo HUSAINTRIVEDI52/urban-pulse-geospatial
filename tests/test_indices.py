@@ -5,6 +5,7 @@ Tests pure mathematical correctness, zero-division handling, and boundary clippi
 
 import numpy as np
 import pytest
+
 from pipeline.compute_indices import safe_normalized_difference
 
 

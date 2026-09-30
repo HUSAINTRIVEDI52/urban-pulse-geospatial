@@ -9,13 +9,14 @@ import argparse
 import sys
 from pathlib import Path
 from typing import Any
+
+import geopandas as gpd
 import numpy as np
 import rasterio
+import yaml
 from scipy.ndimage import binary_erosion
-import geopandas as gpd
 from shapely.geometry import Point
 from sklearn.model_selection import GroupShuffleSplit
-import yaml
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -34,7 +35,7 @@ PROJECT_CLASS_NAMES = {
 
 def load_config(config_path: str | Path = "configs/ahmedabad.yaml") -> dict[str, Any]:
     """Loads city YAML configuration."""
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -76,10 +77,12 @@ def sample_training_points(
         )
 
     print("=" * 75)
-    print(f"[*] UrbanPulse Ground Truth Point Sampler")
+    print("[*] UrbanPulse Ground Truth Point Sampler")
     print(f"    - Input Labels Raster : {labels_path.resolve()}")
     print(f"    - Target per Class    : up to {samples_per_class} points")
-    print(f"    - Split Strategy      : Spatial Block Split ({train_ratio*100:.0f}% Train / {(1-train_ratio)*100:.0f}% Test)")
+    print(
+        f"    - Split Strategy      : Spatial Block Split ({train_ratio*100:.0f}% Train / {(1-train_ratio)*100:.0f}% Test)"
+    )
     print(f"    - Spatial Grid Size   : {n_spatial_blocks} x {n_spatial_blocks} blocks")
     print("=" * 75)
 
@@ -145,7 +148,9 @@ def sample_training_points(
     print(f"\n[+] Collected {len(gdf_utm)} total pure ground truth points.")
 
     # 3. Spatial Block Partitioning
-    print("\n[Step 3/4] Partitioning points into spatial blocks to eliminate spatial data leakage...")
+    print(
+        "\n[Step 3/4] Partitioning points into spatial blocks to eliminate spatial data leakage..."
+    )
     minx, miny, maxx, maxy = gdf_utm.total_bounds
     dx = (maxx - minx + 1e-6) / n_spatial_blocks
     dy = (maxy - miny + 1e-6) / n_spatial_blocks
@@ -193,7 +198,9 @@ def sample_training_points(
         te_c = int(np.sum(test_gdf["class_id"] == cid))
         tot_c = tr_c + te_c
         tr_pct = (tr_c / tot_c * 100.0) if tot_c > 0 else 0.0
-        print(f"{cid:<9} | {cname:<15} | {tr_c:>11,} | {te_c:>10,} | {tot_c:>11,} | {tr_pct:>6.1f}%")
+        print(
+            f"{cid:<9} | {cname:<15} | {tr_c:>11,} | {te_c:>10,} | {tot_c:>11,} | {tr_pct:>6.1f}%"
+        )
 
     print("-" * 75)
     tot_tr = len(train_gdf)
@@ -210,13 +217,25 @@ def sample_training_points(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Stratified spatial block point sampling.")
-    parser.add_argument("--labels", type=str, default="data/ahmedabad_worldcover_labels.tif", help="Labels raster")
-    parser.add_argument("--samples", type=int, default=300, help="Max sample points per class (default: 300)")
-    parser.add_argument("--train-ratio", type=float, default=0.70, help="Train split ratio (default: 0.70)")
-    parser.add_argument("--blocks", type=int, default=8, help="Spatial grid block divisions (default: 8)")
+    parser.add_argument(
+        "--labels", type=str, default="data/ahmedabad_worldcover_labels.tif", help="Labels raster"
+    )
+    parser.add_argument(
+        "--samples", type=int, default=300, help="Max sample points per class (default: 300)"
+    )
+    parser.add_argument(
+        "--train-ratio", type=float, default=0.70, help="Train split ratio (default: 0.70)"
+    )
+    parser.add_argument(
+        "--blocks", type=int, default=8, help="Spatial grid block divisions (default: 8)"
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
-    parser.add_argument("--train-out", type=str, default="data/train_points.geojson", help="Train GeoJSON output")
-    parser.add_argument("--test-out", type=str, default="data/test_points.geojson", help="Test GeoJSON output")
+    parser.add_argument(
+        "--train-out", type=str, default="data/train_points.geojson", help="Train GeoJSON output"
+    )
+    parser.add_argument(
+        "--test-out", type=str, default="data/test_points.geojson", help="Test GeoJSON output"
+    )
 
     args = parser.parse_args()
     sample_training_points(

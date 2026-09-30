@@ -13,28 +13,27 @@ import re
 import sys
 from pathlib import Path
 from typing import Any
+
 import numpy as np
 import pandas as pd
 import rasterio
-from rasterio.warp import calculate_default_transform, reproject, Resampling
-from PIL import Image
 import yaml
+from PIL import Image
+from rasterio.warp import Resampling, calculate_default_transform, reproject
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from pipeline.train_classifier import PROJECT_CLASS_NAMES
-
 
 # Standard Palette: RGBA with clean alpha channel
 CLASS_RGBA = {
-    0: (0, 0, 0, 0),          # NoData: Fully transparent
-    1: (228, 26, 28, 240),    # Built-up: Bright Red
-    2: (35, 139, 69, 240),    # Vegetation: Lush Green
-    3: (31, 120, 180, 240),   # Water: Cerulean Blue
-    4: (255, 217, 47, 240),   # Agriculture: Warm Golden Yellow
+    0: (0, 0, 0, 0),  # NoData: Fully transparent
+    1: (228, 26, 28, 240),  # Built-up: Bright Red
+    2: (35, 139, 69, 240),  # Vegetation: Lush Green
+    3: (31, 120, 180, 240),  # Water: Cerulean Blue
+    4: (255, 217, 47, 240),  # Agriculture: Warm Golden Yellow
     5: (210, 180, 140, 240),  # Open land: Sand Tan
 }
 
@@ -47,22 +46,24 @@ CLASS_HEX = {
 }
 
 CHANGE_RGBA = {
-    21: (46, 125, 50, 255),   # Veg -> Built-up (Dark Forest Green)
-    41: (234, 88, 12, 255),   # Agri -> Built-up (Vibrant Orange)
+    21: (46, 125, 50, 255),  # Veg -> Built-up (Dark Forest Green)
+    41: (234, 88, 12, 255),  # Agri -> Built-up (Vibrant Orange)
     51: (139, 92, 246, 255),  # Open land -> Built-up (Purple)
-    12: (15, 23, 42, 255),    # Built-up loss -> Veg (Dark Slate / Black)
-    13: (15, 23, 42, 255),    # Built-up loss -> Water
-    14: (15, 23, 42, 255),    # Built-up loss -> Agri
-    15: (15, 23, 42, 255),    # Built-up loss -> Open land
+    12: (15, 23, 42, 255),  # Built-up loss -> Veg (Dark Slate / Black)
+    13: (15, 23, 42, 255),  # Built-up loss -> Water
+    14: (15, 23, 42, 255),  # Built-up loss -> Agri
+    15: (15, 23, 42, 255),  # Built-up loss -> Open land
 }
 
 
-def load_city_config(city: str = "ahmedabad", config_path: str | Path | None = None) -> dict[str, Any]:
+def load_city_config(
+    city: str = "ahmedabad", config_path: str | Path | None = None
+) -> dict[str, Any]:
     """Loads city YAML configuration."""
     cfg_file = Path(config_path) if config_path else Path(f"configs/{city.lower()}.yaml")
     if not cfg_file.exists():
         raise FileNotFoundError(f"City configuration file not found: {cfg_file.resolve()}")
-    with open(cfg_file, "r", encoding="utf-8") as f:
+    with open(cfg_file, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -103,9 +104,7 @@ def reproject_raster_to_wgs84(
         return dst_data, bounds_wgs84
 
 
-def save_classified_overlay_png(
-    data_2d: np.ndarray, output_png_path: Path
-) -> Path:
+def save_classified_overlay_png(data_2d: np.ndarray, output_png_path: Path) -> Path:
     """
     Converts 2D categorical raster into RGBA image with transparent NoData.
     """
@@ -122,9 +121,7 @@ def save_classified_overlay_png(
     return output_png_path
 
 
-def save_change_overlay_png(
-    data_2d: np.ndarray, output_png_path: Path
-) -> Path:
+def save_change_overlay_png(data_2d: np.ndarray, output_png_path: Path) -> Path:
     """
     Converts 2D change code raster into RGBA image (transparent outside changed pixels).
     """
@@ -175,13 +172,15 @@ def export_web_data(
 
     sorted_years = sorted(year_raster_map.keys())
     if not sorted_years:
-        raise FileNotFoundError(f"No classified rasters found for {city_key} in {data_path.resolve()}")
+        raise FileNotFoundError(
+            f"No classified rasters found for {city_key} in {data_path.resolve()}"
+        )
 
     print(f"[+] Found {len(sorted_years)} classified years: {sorted_years}")
 
     # 2. Export each classified year as transparent WGS84 PNG
     exported_bounds = None
-    print(f"\n[Step 1/4] Reprojecting and exporting annual PNG overlays (EPSG:4326)...")
+    print("\n[Step 1/4] Reprojecting and exporting annual PNG overlays (EPSG:4326)...")
     for yr in sorted_years:
         src_tif = year_raster_map[yr]
         dst_png = web_dest_dir / f"{yr}.png"
@@ -195,7 +194,7 @@ def export_web_data(
         print(f"    - Year {yr}: -> {dst_png.name} ({size_kb:.1f} KB)")
 
     # 3. Export Change Map PNG overlay
-    print(f"\n[Step 2/4] Reprojecting and exporting change detection overlay...")
+    print("\n[Step 2/4] Reprojecting and exporting change detection overlay...")
     change_tifs = list(data_path.glob(f"{city_key}_change_*_*.tif"))
     exported_change_maps = []
     for c_tif in change_tifs:
@@ -210,7 +209,7 @@ def export_web_data(
             exported_change_maps.append((s_yr, e_yr, dst_change_png))
 
     # 4. Generate meta.json
-    print(f"\n[Step 3/4] Compiling metadata into meta.json...")
+    print("\n[Step 3/4] Compiling metadata into meta.json...")
     spatial_cfg = config.get("spatial", {})
     city_cfg = config.get("city", {})
 
@@ -240,7 +239,7 @@ def export_web_data(
     print(f"[+] Saved {meta_file.name} ({meta_file.stat().st_size / 1024:.1f} KB)")
 
     # 5. Generate stats.json combining all tabular datasets
-    print(f"\n[Step 4/4] Compiling multi-year statistics into stats.json...")
+    print("\n[Step 4/4] Compiling multi-year statistics into stats.json...")
 
     # Class Areas
     class_areas_list = []
@@ -337,7 +336,9 @@ def export_web_data(
             size_str = f"{st_size / 1024:>6.1f} KB"
         print(f"  - {p.name:<32} : {size_str}")
     print("-" * 80)
-    print(f"  Total Web Bundle Size : {total_bytes / (1024*1024):.2f} MB ({len(all_exported_files)} files)")
+    print(
+        f"  Total Web Bundle Size : {total_bytes / (1024*1024):.2f} MB ({len(all_exported_files)} files)"
+    )
     print("=" * 80 + "\n")
 
     return {
@@ -352,8 +353,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Export web application assets, transparent PNG overlays, and JSON datasets."
     )
-    parser.add_argument("--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)")
-    parser.add_argument("--data-dir", type=str, default="data", help="Directory with data rasters and CSVs")
+    parser.add_argument(
+        "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
+    )
+    parser.add_argument(
+        "--data-dir", type=str, default="data", help="Directory with data rasters and CSVs"
+    )
     parser.add_argument("--web-dir", type=str, default="web/data", help="Target web data directory")
     parser.add_argument("--config", type=str, default=None, help="Custom city YAML config path")
 

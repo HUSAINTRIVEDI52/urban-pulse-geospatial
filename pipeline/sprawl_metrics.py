@@ -9,10 +9,11 @@ import argparse
 import sys
 from pathlib import Path
 from typing import Any
-import numpy as np
-import pandas as pd
+
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import numpy as np
+import pandas as pd
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -71,8 +72,6 @@ def plot_sprawl_metrics(
     years = df_metrics["year"].values
     builtup_km2 = df_metrics["builtup_km2"].values
     entropy = df_metrics["shannon_entropy"].values
-    core_share = df_metrics["core_share_0_6km_pct"].values
-    periph_share = df_metrics["periphery_share_gt_12km_pct"].values
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6.5), dpi=dpi)
     fig.patch.set_facecolor("#0f172a")  # Deep slate navy
@@ -106,7 +105,9 @@ def plot_sprawl_metrics(
             fontsize=9.0,
             fontweight="bold",
             color="#f8fafc",
-            bbox=dict(boxstyle="round,pad=0.2", facecolor="#0f172a", edgecolor="#475569", alpha=0.85),
+            bbox=dict(
+                boxstyle="round,pad=0.2", facecolor="#0f172a", edgecolor="#475569", alpha=0.85
+            ),
             zorder=5,
         )
 
@@ -118,14 +119,22 @@ def plot_sprawl_metrics(
         pad=14,
     )
     ax1.set_xlabel("Year", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=8)
-    ax1.set_ylabel("Built-up Land Area (km²)", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=8)
+    ax1.set_ylabel(
+        "Built-up Land Area (km²)", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=8
+    )
     ax1.set_xticks(years)
     ax1.xaxis.set_major_formatter(ticker.FormatStrFormatter("%d"))
     ax1.tick_params(colors="#94a3b8", labelsize=9.5)
     for spine in ax1.spines.values():
         spine.set_edgecolor("#334155")
         spine.set_linewidth(1.2)
-    ax1.legend(loc="upper left", facecolor="#0f172a", edgecolor="#475569", fontsize=9.5, labelcolor="#f8fafc")
+    ax1.legend(
+        loc="upper left",
+        facecolor="#0f172a",
+        edgecolor="#475569",
+        fontsize=9.5,
+        labelcolor="#f8fafc",
+    )
 
     # --- PANEL 2: Normalized Shannon Entropy Trend ---
     ax2.set_facecolor("#1e293b")
@@ -156,7 +165,9 @@ def plot_sprawl_metrics(
             fontsize=9.0,
             fontweight="bold",
             color="#f8fafc",
-            bbox=dict(boxstyle="round,pad=0.2", facecolor="#0f172a", edgecolor="#475569", alpha=0.85),
+            bbox=dict(
+                boxstyle="round,pad=0.2", facecolor="#0f172a", edgecolor="#475569", alpha=0.85
+            ),
             zorder=5,
         )
 
@@ -168,7 +179,9 @@ def plot_sprawl_metrics(
         pad=14,
     )
     ax2.set_xlabel("Year", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=8)
-    ax2.set_ylabel("Shannon Entropy (H_n)", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=8)
+    ax2.set_ylabel(
+        "Shannon Entropy (H_n)", fontsize=11, fontweight="bold", color="#cbd5e1", labelpad=8
+    )
     ax2.set_xticks(years)
     ax2.xaxis.set_major_formatter(ticker.FormatStrFormatter("%d"))
     ax2.set_ylim(0.70, 1.0)
@@ -176,7 +189,13 @@ def plot_sprawl_metrics(
     for spine in ax2.spines.values():
         spine.set_edgecolor("#334155")
         spine.set_linewidth(1.2)
-    ax2.legend(loc="lower right", facecolor="#0f172a", edgecolor="#475569", fontsize=9.5, labelcolor="#f8fafc")
+    ax2.legend(
+        loc="lower right",
+        facecolor="#0f172a",
+        edgecolor="#475569",
+        fontsize=9.5,
+        labelcolor="#f8fafc",
+    )
 
     plt.tight_layout()
     plt.savefig(out_file, bbox_inches="tight", dpi=dpi, facecolor=fig.get_facecolor())
@@ -229,7 +248,7 @@ def run_sprawl_metrics(
 
     for yr in years:
         sub = df_rings[df_rings["year"] == yr].sort_values("ring_start_km").copy()
-        
+
         # Ring-based built-up sum
         ring_builtup_sum = float(sub["builtup_km2"].sum())
         # Use class_areas built-up if present, otherwise ring built-up sum
@@ -249,7 +268,11 @@ def run_sprawl_metrics(
         elif n_years > 0:
             first_sub = df_rings[df_rings["year"] == first_year]
             first_val = float(first_sub["builtup_km2"].sum())
-            cagr_pct = (((builtup_km2 / first_val) ** (1.0 / n_years)) - 1.0) * 100.0 if first_val > 0 else 0.0
+            cagr_pct = (
+                (((builtup_km2 / first_val) ** (1.0 / n_years)) - 1.0) * 100.0
+                if first_val > 0
+                else 0.0
+            )
         else:
             cagr_pct = 0.0
 
@@ -262,7 +285,9 @@ def run_sprawl_metrics(
         periph_builtup = float(sub[sub["ring_start_km"] >= 12.0]["builtup_km2"].sum())
 
         core_share_pct = (core_builtup / ring_builtup_sum * 100.0) if ring_builtup_sum > 0 else 0.0
-        periph_share_pct = (periph_builtup / ring_builtup_sum * 100.0) if ring_builtup_sum > 0 else 0.0
+        periph_share_pct = (
+            (periph_builtup / ring_builtup_sum * 100.0) if ring_builtup_sum > 0 else 0.0
+        )
 
         metrics_records.append(
             {
@@ -328,8 +353,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Compute urban expansion velocity, CAGR, Shannon entropy, and sprawl metrics."
     )
-    parser.add_argument("--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)")
-    parser.add_argument("--data-dir", type=str, default="data", help="Directory for data rasters and CSVs")
+    parser.add_argument(
+        "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
+    )
+    parser.add_argument(
+        "--data-dir", type=str, default="data", help="Directory for data rasters and CSVs"
+    )
 
     args = parser.parse_args()
     run_sprawl_metrics(city=args.city, data_dir=args.data_dir)

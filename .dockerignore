@@ -1,0 +1,36 @@
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.eggs/
+
+# Git
+.git/
+.gitignore
+
+# Data & Cache (Mounted via volume, not baked into images)
+data/
+cache/
+scratch/
+*.tif
+*.tiff
+*.pkl
+*.zip
+*.tar.gz
+*.7z
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

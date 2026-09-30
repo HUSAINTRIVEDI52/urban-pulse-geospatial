@@ -10,18 +10,19 @@ import argparse
 import sys
 from pathlib import Path
 from typing import Any
+
+import geopandas as gpd
+import joblib
 import numpy as np
 import rasterio
-import geopandas as gpd
+import yaml
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score,
-    cohen_kappa_score,
     classification_report,
+    cohen_kappa_score,
     confusion_matrix,
 )
-import joblib
-import yaml
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -42,7 +43,7 @@ FEATURE_NAMES = ["red", "green", "blue", "nir", "swir16", "ndvi", "ndbi", "mndwi
 
 def load_config(config_path: str | Path = "configs/ahmedabad.yaml") -> dict[str, Any]:
     """Loads city YAML configuration."""
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -122,14 +123,18 @@ def classify_raster(
     classified_path = data_path / f"{city_key}_{year}_classified.tif"
 
     if not model_file.exists():
-        raise FileNotFoundError(f"Trained model not found at {model_file.resolve()}. Run train_and_evaluate_classifier first.")
+        raise FileNotFoundError(
+            f"Trained model not found at {model_file.resolve()}. Run train_and_evaluate_classifier first."
+        )
 
     # 1. Feature file paths
     feature_files = [data_path / f"{city_key}_{year}_{feat}.tif" for feat in FEATURE_NAMES]
 
     # If already exists and not force, read and print area summary
     if not force and classified_path.exists():
-        print(f"[+] Classified map already exists at: {classified_path.resolve()}. Skipping inference.")
+        print(
+            f"[+] Classified map already exists at: {classified_path.resolve()}. Skipping inference."
+        )
         with rasterio.open(classified_path) as src:
             classified_arr = src.read(1)
             transform = src.transform
@@ -160,7 +165,9 @@ def classify_raster(
                 "area_km2": area_km2,
                 "percentage": pct,
             }
-            print(f"{cid:<9} | {cname:<15} | {px_count:>14,} | {area_km2:>10.2f} km^2 | {pct:>6.2f}%")
+            print(
+                f"{cid:<9} | {cname:<15} | {px_count:>14,} | {area_km2:>10.2f} km^2 | {pct:>6.2f}%"
+            )
 
         print("-" * 78)
         total_area_km2 = total_valid_px * pixel_area_km2
@@ -186,7 +193,9 @@ def classify_raster(
         raster_transform = ref_src.transform
         raster_shape = ref_src.shape
 
-    print(f"[*] Classifying full raster stack for {city.capitalize()} ({year}) [{raster_shape[0]} x {raster_shape[1]} pixels]...")
+    print(
+        f"[*] Classifying full raster stack for {city.capitalize()} ({year}) [{raster_shape[0]} x {raster_shape[1]} pixels]..."
+    )
     feature_arrays = []
     for fpath in feature_files:
         with rasterio.open(fpath) as src:
@@ -197,7 +206,9 @@ def classify_raster(
     valid_raster_mask_2d = valid_raster_mask_1d.reshape(raster_shape)
 
     print(f"[*] Total Grid Pixels : {len(stack_2d):,}")
-    print(f"[*] Valid AOI Pixels  : {int(np.sum(valid_raster_mask_1d)):,} ({np.sum(valid_raster_mask_1d)/len(stack_2d)*100:.1f}%)")
+    print(
+        f"[*] Valid AOI Pixels  : {int(np.sum(valid_raster_mask_1d)):,} ({np.sum(valid_raster_mask_1d)/len(stack_2d)*100:.1f}%)"
+    )
 
     # Raw Pixel-Level Prediction
     raw_classified_1d = np.zeros(len(stack_2d), dtype=np.uint8)
@@ -354,7 +365,10 @@ def train_and_evaluate_classifier(
     print(report)
 
     print("Confusion Matrix (Rows: Ground Truth, Columns: Predicted):")
-    header_str = f"{'True \\ Pred':<14} | " + " | ".join([f"{PROJECT_CLASS_NAMES[c][:8]:<8}" for c in range(1, 6)])
+    col_header = "True \\ Pred"
+    header_str = f"{col_header:<14} | " + " | ".join(
+        [f"{PROJECT_CLASS_NAMES[c][:8]:<8}" for c in range(1, 6)]
+    )
     print("-" * len(header_str))
     print(header_str)
     print("-" * len(header_str))
@@ -384,13 +398,21 @@ def train_and_evaluate_classifier(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train Random Forest classifier on spectral features.")
-    parser.add_argument("--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)")
+    parser = argparse.ArgumentParser(
+        description="Train Random Forest classifier on spectral features."
+    )
+    parser.add_argument(
+        "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
+    )
     parser.add_argument("--year", type=int, default=2024, help="Analysis year (default: 2024)")
-    parser.add_argument("--trees", type=int, default=200, help="Number of trees in Random Forest (default: 200)")
+    parser.add_argument(
+        "--trees", type=int, default=200, help="Number of trees in Random Forest (default: 200)"
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
     parser.add_argument("--force", action="store_true", help="Force recalculate outputs")
-    parser.add_argument("--data-dir", type=str, default="data", help="Directory with raster and geojson data")
+    parser.add_argument(
+        "--data-dir", type=str, default="data", help="Directory with raster and geojson data"
+    )
 
     args = parser.parse_args()
     train_and_evaluate_classifier(
@@ -401,4 +423,3 @@ if __name__ == "__main__":
         force=args.force,
         data_dir=args.data_dir,
     )
-

@@ -22,7 +22,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from pipeline.build_composite import build_composite, load_city_config
 from pipeline.compute_indices import compute_indices
-from pipeline.train_classifier import classify_raster, PROJECT_CLASS_NAMES
+from pipeline.train_classifier import classify_raster
 
 
 def run_year_pipeline(
@@ -57,7 +57,7 @@ def run_year_pipeline(
     city_name = config.get("city", {}).get("name", city.capitalize())
 
     print("\n" + "=" * 80)
-    print(f" URBANPULSE ANNUAL PROCESSING PIPELINE")
+    print(" URBANPULSE ANNUAL PROCESSING PIPELINE")
     print(f" City: {city_name} | Year: {year} | Target Resolution: {resolution}m")
     print(f" Configuration: configs/{city_key}.yaml | Force: {force}")
     print("=" * 80)
@@ -122,9 +122,13 @@ def run_year_pipeline(
     print("\n" + "=" * 80)
     print(f" PIPELINE EXECUTION SUMMARY: {city_name} ({year})")
     print("=" * 80)
-    print(f"  Step 1: Composite Generation     : {timings['composite']:>8.2f}s (NoData: {nodata_pct:.4f}%)")
+    print(
+        f"  Step 1: Composite Generation     : {timings['composite']:>8.2f}s (NoData: {nodata_pct:.4f}%)"
+    )
     print(f"  Step 2: Indices Computation      : {timings['indices']:>8.2f}s")
-    print(f"  Step 3: Random Forest Inference  : {timings['classification']:>8.2f}s (with 3x3 majority filter)")
+    print(
+        f"  Step 3: Random Forest Inference  : {timings['classification']:>8.2f}s (with 3x3 majority filter)"
+    )
     print("-" * 80)
     print(f"  Total Pipeline Elapsed Time      : {total_elapsed:>8.2f}s")
     print("=" * 80 + "\n")

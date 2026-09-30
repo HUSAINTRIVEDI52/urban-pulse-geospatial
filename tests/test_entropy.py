@@ -6,6 +6,7 @@ and zero-safe exception handling.
 
 import numpy as np
 import pytest
+
 from pipeline.sprawl_metrics import compute_shannon_entropy
 
 

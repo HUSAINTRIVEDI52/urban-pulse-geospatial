@@ -10,12 +10,13 @@ import argparse
 import sys
 from pathlib import Path
 from typing import Any
+
+import geopandas as gpd
 import numpy as np
 import rasterio
-from rasterio.warp import reproject, Resampling
-from shapely.geometry import box
-import geopandas as gpd
 import yaml
+from rasterio.warp import Resampling, reproject
+from shapely.geometry import box
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -49,7 +50,7 @@ PROJECT_CLASS_NAMES = {
 
 def load_config(config_path: str | Path = "configs/ahmedabad.yaml") -> dict[str, Any]:
     """Loads city YAML configuration."""
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -93,7 +94,7 @@ def extract_worldcover_labels(
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     print("=" * 75)
-    print(f"[*] Extracting ESA WorldCover 2021 Training Labels for Ahmedabad")
+    print("[*] Extracting ESA WorldCover 2021 Training Labels for Ahmedabad")
     print(f"    - Target CRS       : {target_crs}")
     print(f"    - Resolution       : {resolution}m")
     print(f"    - Bounding Box     : {bbox}")
@@ -119,7 +120,9 @@ def extract_worldcover_labels(
         dest_shape = (height, width)
         dest_crs = rasterio.crs.CRS.from_string(target_crs)
 
-    print(f"[*] Target Grid Shape: {dest_shape[0]} rows x {dest_shape[1]} cols ({dest_shape[0]*dest_shape[1]:,} pixels)")
+    print(
+        f"[*] Target Grid Shape: {dest_shape[0]} rows x {dest_shape[1]} cols ({dest_shape[0]*dest_shape[1]:,} pixels)"
+    )
 
     # 2. Determine and Fetch WorldCover Tile COGs from AWS Open Data
     tile_ids = get_worldcover_tiles_for_bbox(bbox)
@@ -159,7 +162,9 @@ def extract_worldcover_labels(
         count = int(np.sum(mask))
         if count > 0:
             remapped[mask] = tgt_class
-            print(f"    - Class {src_class:<3} -> Project Class {tgt_class} ({desc:<30}): {count:>10,} pixels")
+            print(
+                f"    - Class {src_class:<3} -> Project Class {tgt_class} ({desc:<30}): {count:>10,} pixels"
+            )
 
     # 4. Save GeoTIFF
     print(f"\n[Step 3/3] Saving training labels GeoTIFF to: {out_path.name}...")
@@ -211,11 +216,22 @@ def extract_worldcover_labels(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract ESA WorldCover training labels at 20m.")
-    parser.add_argument("--config", type=str, default="configs/ahmedabad.yaml", help="Path to config YAML")
-    parser.add_argument("--resolution", type=float, default=20.0, help="Target resolution in meters (default: 20.0)")
-    parser.add_argument("--crs", type=str, default="EPSG:32643", help="Target CRS (default: EPSG:32643)")
+    parser.add_argument(
+        "--config", type=str, default="configs/ahmedabad.yaml", help="Path to config YAML"
+    )
+    parser.add_argument(
+        "--resolution", type=float, default=20.0, help="Target resolution in meters (default: 20.0)"
+    )
+    parser.add_argument(
+        "--crs", type=str, default="EPSG:32643", help="Target CRS (default: EPSG:32643)"
+    )
     parser.add_argument("--ref", type=str, default=None, help="Optional reference raster path")
-    parser.add_argument("--out", type=str, default="data/ahmedabad_worldcover_labels.tif", help="Output labels GeoTIFF")
+    parser.add_argument(
+        "--out",
+        type=str,
+        default="data/ahmedabad_worldcover_labels.tif",
+        help="Output labels GeoTIFF",
+    )
 
     args = parser.parse_args()
     extract_worldcover_labels(

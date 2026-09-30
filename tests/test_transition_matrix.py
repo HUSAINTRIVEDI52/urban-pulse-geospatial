@@ -4,7 +4,7 @@ Tests matrix cell counts against hand-calculated synthetic 4x4 rasters and valid
 """
 
 import numpy as np
-import pytest
+
 from pipeline.change_detection import compute_transition_matrix
 
 

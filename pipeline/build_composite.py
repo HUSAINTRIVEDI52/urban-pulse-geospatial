@@ -9,22 +9,24 @@ import argparse
 import calendar
 from pathlib import Path
 from typing import Any
+
 import numpy as np
-import yaml
-from pystac_client import Client
-import stackstac
-import rioxarray
 import rasterio
+import stackstac
+import yaml
 from dask.diagnostics import ProgressBar
+from pystac_client import Client
 
 
-def load_city_config(city: str = "ahmedabad", config_path: str | Path | None = None) -> dict[str, Any]:
+def load_city_config(
+    city: str = "ahmedabad", config_path: str | Path | None = None
+) -> dict[str, Any]:
     """Loads city YAML configuration."""
     cfg_file = Path(config_path) if config_path else Path(f"configs/{city.lower()}.yaml")
     if not cfg_file.exists():
         raise FileNotFoundError(f"City configuration file not found: {cfg_file.resolve()}")
 
-    with open(cfg_file, "r", encoding="utf-8") as f:
+    with open(cfg_file, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -80,7 +82,9 @@ def build_composite(
 
     # Skip if outputs already exist and force is not set
     if not force and all(p.exists() for p in band_paths.values()):
-        print(f"[+] All composite bands for {city} ({year}) already exist in {data_path.resolve()}. Skipping download.")
+        print(
+            f"[+] All composite bands for {city} ({year}) already exist in {data_path.resolve()}. Skipping download."
+        )
         with rasterio.open(band_paths["red"]) as src:
             red_arr = src.read(1)
             nan_count = int(np.isnan(red_arr).sum() + (red_arr == -9999.0).sum())
@@ -91,13 +95,12 @@ def build_composite(
     config = load_city_config(city=city, config_path=config_path)
     city_name = config.get("city", {}).get("name", city.capitalize())
     bbox = config["spatial"]["bbox"]
-    crs = config["spatial"].get("crs", "EPSG:4326")
     stac_url = config.get("stac", {}).get(
         "earth_search_url", "https://earth-search.aws.element84.com/v1"
     )
-    primary_collection = config.get("stac", {}).get(
-        "collections", {}
-    ).get("sentinel_2", "sentinel-2-c1-l2a")
+    primary_collection = (
+        config.get("stac", {}).get("collections", {}).get("sentinel_2", "sentinel-2-c1-l2a")
+    )
 
     requested_assets = optical_bands + ["scl"]
 
@@ -133,7 +136,9 @@ def build_composite(
         items = list(search.items())
 
     if not items:
-        raise RuntimeError(f"No Sentinel-2 scenes found for {city_name} in {year} with cloud < {max_cloud_cover+15}%.")
+        raise RuntimeError(
+            f"No Sentinel-2 scenes found for {city_name} in {year} with cloud < {max_cloud_cover+15}%."
+        )
 
     # Group scenes by intersecting MGRS tile
     tile_dict: dict[str, list[Any]] = {}
@@ -174,9 +179,7 @@ def build_composite(
     print("\n[Step 3/5] Applying Scene Classification Layer (SCL) cloud & shadow mask...")
     if "scl" in stack.band.values:
         scl = stack.sel(band="scl")
-        is_clear = (
-            (scl != 3) & (scl != 8) & (scl != 9) & (scl != 10) & (scl != 11) & (scl != 0)
-        )
+        is_clear = (scl != 3) & (scl != 8) & (scl != 9) & (scl != 10) & (scl != 11) & (scl != 0)
         optical_stack = stack.sel(band=optical_bands).where(is_clear)
         print("[+] Applied SCL pixel quality mask.")
     else:
@@ -198,9 +201,11 @@ def build_composite(
     nodata_percentage = (nan_pixels / total_grid_pixels) * 100.0
 
     print("\n" + "=" * 78)
-    print(f"[*] Composite Quality & Coverage Check:")
+    print("[*] Composite Quality & Coverage Check:")
     print(f"    - Total AOI Pixels     : {total_grid_pixels:>10,}")
-    print(f"    - Valid Data Pixels    : {total_grid_pixels - nan_pixels:>10,} ({(100 - nodata_percentage):.2f}%)")
+    print(
+        f"    - Valid Data Pixels    : {total_grid_pixels - nan_pixels:>10,} ({(100 - nodata_percentage):.2f}%)"
+    )
     print(f"    - NoData / NaN Pixels  : {nan_pixels:>10,} ({nodata_percentage:.4f}%)")
     if nodata_percentage < 1.0:
         print(f"    - Status               : PASSED (NoData {nodata_percentage:.4f}% < 1.00%)")
@@ -238,12 +243,22 @@ def build_composite(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Build Sentinel-2 composite for UrbanPulse.")
-    parser.add_argument("--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)")
+    parser.add_argument(
+        "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
+    )
     parser.add_argument("--year", type=int, default=2024, help="Target year (default: 2024)")
-    parser.add_argument("--resolution", type=float, default=60.0, help="Resolution in meters (default: 60.0)")
-    parser.add_argument("--max-cloud", type=float, default=10.0, help="Max cloud cover percentage (default: 10.0)")
-    parser.add_argument("--scenes-per-tile", type=int, default=4, help="Scenes per MGRS tile (default: 4)")
-    parser.add_argument("--force", action="store_true", help="Force overwrite existing composite bands")
+    parser.add_argument(
+        "--resolution", type=float, default=60.0, help="Resolution in meters (default: 60.0)"
+    )
+    parser.add_argument(
+        "--max-cloud", type=float, default=10.0, help="Max cloud cover percentage (default: 10.0)"
+    )
+    parser.add_argument(
+        "--scenes-per-tile", type=int, default=4, help="Scenes per MGRS tile (default: 4)"
+    )
+    parser.add_argument(
+        "--force", action="store_true", help="Force overwrite existing composite bands"
+    )
     parser.add_argument("--config", type=str, default=None, help="Path to city config YAML")
     parser.add_argument("--data-dir", type=str, default="data", help="Data directory")
 

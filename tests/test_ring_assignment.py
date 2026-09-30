@@ -4,8 +4,8 @@ Validates radial distance discretization into discrete concentric intervals.
 """
 
 import numpy as np
-import pytest
-from pipeline.ring_analysis import generate_ring_definitions, assign_pixels_to_rings
+
+from pipeline.ring_analysis import assign_pixels_to_rings, generate_ring_definitions
 
 
 def test_generate_ring_definitions():

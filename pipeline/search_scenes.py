@@ -8,9 +8,10 @@ import argparse
 import calendar
 from pathlib import Path
 from typing import Any
+
+import pystac
 import yaml
 from pystac_client import Client
-import pystac
 
 
 def load_config(config_path: str | Path = "configs/ahmedabad.yaml") -> dict[str, Any]:
@@ -19,7 +20,7 @@ def load_config(config_path: str | Path = "configs/ahmedabad.yaml") -> dict[str,
     if not config_file.exists():
         raise FileNotFoundError(f"Configuration file not found: {config_file.resolve()}")
 
-    with open(config_file, "r", encoding="utf-8") as f:
+    with open(config_file, encoding="utf-8") as f:
         config = yaml.safe_load(f)
 
     if "spatial" not in config or "bbox" not in config["spatial"]:
@@ -63,9 +64,7 @@ def search_sentinel_scenes(
     bbox = config["spatial"]["bbox"]
 
     stac_cfg = config.get("stac", {})
-    earth_search_url = stac_cfg.get(
-        "earth_search_url", "https://earth-search.aws.element84.com/v1"
-    )
+    earth_search_url = stac_cfg.get("earth_search_url", "https://earth-search.aws.element84.com/v1")
     collection = stac_cfg.get("collections", {}).get("sentinel_2", "sentinel-2-c1-l2a")
 
     datetime_range = custom_datetime or get_dry_season_datetime(year, config)
@@ -139,12 +138,18 @@ def search_sentinel_scenes(
         selected_items.extend(top_tile_scenes)
 
         for it in top_tile_scenes:
-            dt_str = it.datetime.strftime("%Y-%m-%d %H:%M:%S") if it.datetime else str(it.properties.get("datetime"))
+            dt_str = (
+                it.datetime.strftime("%Y-%m-%d %H:%M:%S")
+                if it.datetime
+                else str(it.properties.get("datetime"))
+            )
             cloud_pct = it.properties.get("eo:cloud_cover", 0.0)
             print(f"{tile_id:<8} | {it.id:<34} | {dt_str:<22} | {cloud_pct:<15.2f}")
 
     print("-" * 85)
-    print(f"Total Selected Scenes: {len(selected_items)} ({scenes_per_tile} per tile across {len(tile_dict)} tiles)\n")
+    print(
+        f"Total Selected Scenes: {len(selected_items)} ({scenes_per_tile} per tile across {len(tile_dict)} tiles)\n"
+    )
 
     return selected_items
 
@@ -152,9 +157,15 @@ def search_sentinel_scenes(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Search Sentinel-2 scenes grouped by MGRS tile.")
     parser.add_argument("--year", type=int, default=2024, help="Analysis year (default: 2024)")
-    parser.add_argument("--config", type=str, default="configs/ahmedabad.yaml", help="Path to config YAML")
-    parser.add_argument("--max-cloud", type=float, default=10.0, help="Max cloud cover percentage (default: 10.0)")
-    parser.add_argument("--scenes-per-tile", type=int, default=4, help="Scenes per tile (default: 4)")
+    parser.add_argument(
+        "--config", type=str, default="configs/ahmedabad.yaml", help="Path to config YAML"
+    )
+    parser.add_argument(
+        "--max-cloud", type=float, default=10.0, help="Max cloud cover percentage (default: 10.0)"
+    )
+    parser.add_argument(
+        "--scenes-per-tile", type=int, default=4, help="Scenes per tile (default: 4)"
+    )
     parser.add_argument("--datetime", type=str, default=None, help="Custom ISO-8601 datetime range")
 
     args = parser.parse_args()
