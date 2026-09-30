@@ -228,6 +228,8 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
     }
 
     .sidebar-content::-webkit-scrollbar {
@@ -856,16 +858,37 @@
       .sheet-handle-bar {
         display: flex;
         width: 100%;
-        padding: 10px 0 4px 0;
+        padding: 12px 0;
         justify-content: center;
-        cursor: pointer;
+        align-items: center;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
       }
 
       .sheet-handle {
-        width: 44px;
-        height: 4px;
-        background: rgba(255, 255, 255, 0.35);
-        border-radius: 4px;
+        width: 40px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.45);
+        border-radius: 5px;
+        position: relative;
+      }
+
+      /* 24px invisible tap and drag area around the handle */
+      .sheet-handle::before {
+        content: '';
+        position: absolute;
+        top: -12px;
+        bottom: -12px;
+        left: -20px;
+        right: -20px;
+      }
+
+      .sidebar-header {
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
       }
 
       .sidebar-close-btn {
@@ -2340,6 +2363,8 @@
 
         function openDashboard() {
           if (!dashboard) return;
+          dashboard.style.transform = '';
+          dashboard.style.transition = '';
           dashboard.classList.add('open');
           document.body.classList.add('sheet-open');
           if (dashToggle) {
@@ -2364,6 +2389,8 @@
           if (!dashboard) return;
           dashboard.classList.remove('open');
           document.body.classList.remove('sheet-open');
+          dashboard.style.transform = '';
+          dashboard.style.transition = '';
           if (dashToggle) {
             dashToggle.setAttribute('aria-expanded', 'false');
             const iconHam = dashToggle.querySelector('.icon-hamburger');
@@ -2395,11 +2422,123 @@
           });
         }
 
-        if (sheetHandleBar) {
-          sheetHandleBar.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeDashboard();
-          });
+        // Pointer Drag & Swipe Down Handling (Mobile Only)
+        const sidebarHeader = document.querySelector('.sidebar-header');
+        const sidebarContent = document.querySelector('.sidebar-content');
+        let isDraggingSheet = false;
+        let startY = 0;
+        let lastY = 0;
+        let lastTimestamp = 0;
+        let currentVelocity = 0; // px/ms
+        let activePointerId = null;
+        let dragTarget = null;
+
+        function onPointerDown(e) {
+          if (window.innerWidth >= 768) return;
+          if (!dashboard || !dashboard.classList.contains('open')) return;
+          // Ignore clicks on close button inside header
+          if (e.target.closest('#close-dashboard-btn, .sidebar-close-btn')) return;
+
+          // If starting from content, only allow drag if content is scrolled to top (scrollTop <= 0)
+          if (e.currentTarget === sidebarContent && sidebarContent.scrollTop > 0) {
+            return;
+          }
+
+          isDraggingSheet = true;
+          activePointerId = e.pointerId;
+          dragTarget = e.currentTarget;
+          startY = e.clientY;
+          lastY = e.clientY;
+          lastTimestamp = performance.now();
+          currentVelocity = 0;
+
+          dashboard.style.transition = 'none';
+
+          try {
+            e.currentTarget.setPointerCapture(e.pointerId);
+          } catch (err) {}
+        }
+
+        function onPointerMove(e) {
+          if (!isDraggingSheet || e.pointerId !== activePointerId) return;
+
+          const dy = e.clientY - startY;
+
+          // If dragging from content area, allow drag down only if dy > 0 and content is at top
+          if (dragTarget === sidebarContent) {
+            if (sidebarContent.scrollTop > 0) {
+              isDraggingSheet = false;
+              dashboard.style.transform = '';
+              return;
+            }
+          }
+
+          const clampedDy = Math.max(0, dy);
+          const now = performance.now();
+          const dt = now - lastTimestamp;
+          if (dt > 10) {
+            currentVelocity = (e.clientY - lastY) / dt;
+            lastY = e.clientY;
+            lastTimestamp = now;
+          }
+
+          dashboard.style.transform = `translateY(${clampedDy}px)`;
+        }
+
+        function onPointerEnd(e) {
+          if (!isDraggingSheet || e.pointerId !== activePointerId) return;
+          isDraggingSheet = false;
+
+          try {
+            if (dragTarget) {
+              dragTarget.releasePointerCapture(e.pointerId);
+            }
+          } catch (err) {}
+
+          activePointerId = null;
+          dragTarget = null;
+
+          const dy = Math.max(0, e.clientY - startY);
+          const sheetHeight = dashboard.offsetHeight || (window.innerHeight * 0.7);
+          const threshold = sheetHeight * 0.25;
+          const isFlick = currentVelocity > 0.5;
+
+          if (dy > threshold || isFlick) {
+            // Animate closed
+            dashboard.style.transition = 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
+            dashboard.style.transform = 'translateY(100%)';
+            setTimeout(() => {
+              closeDashboard();
+              dashboard.style.transform = '';
+              dashboard.style.transition = '';
+            }, 250);
+          } else {
+            // Snap back to open
+            dashboard.style.transition = 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
+            dashboard.style.transform = 'translateY(0)';
+            setTimeout(() => {
+              dashboard.style.transform = '';
+              dashboard.style.transition = '';
+            }, 250);
+          }
+        }
+
+        // Attach pointer listeners to handle bar and header
+        [sheetHandleBar, sidebarHeader].forEach(el => {
+          if (el) {
+            el.addEventListener('pointerdown', onPointerDown);
+            el.addEventListener('pointermove', onPointerMove);
+            el.addEventListener('pointerup', onPointerEnd);
+            el.addEventListener('pointercancel', onPointerEnd);
+          }
+        });
+
+        // Content area: start drag only when scrollTop === 0
+        if (sidebarContent) {
+          sidebarContent.addEventListener('pointerdown', onPointerDown);
+          sidebarContent.addEventListener('pointermove', onPointerMove);
+          sidebarContent.addEventListener('pointerup', onPointerEnd);
+          sidebarContent.addEventListener('pointercancel', onPointerEnd);
         }
 
         // Tapping map area closes dashboard on mobile
