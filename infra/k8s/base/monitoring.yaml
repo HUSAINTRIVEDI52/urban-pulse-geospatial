@@ -1,0 +1,218 @@
+# ==============================================================================
+# UrbanPulse Kubernetes Monitoring Stack
+# Prometheus, Pushgateway, Alert Rules, and Grafana (auto-provisioned dashboard)
+# ==============================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: urbanpulse-prometheus-config
+  namespace: urbanpulse
+  labels:
+    app.kubernetes.io/name: urbanpulse
+    app.kubernetes.io/component: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    rule_files:
+      - /etc/prometheus/alert_rules.yml
+
+    scrape_configs:
+      - job_name: "urbanpulse-api"
+        metrics_path: "/metrics"
+        static_configs:
+          - targets: ["api:8000"]
+
+      - job_name: "urbanpulse-pushgateway"
+        static_configs:
+          - targets: ["pushgateway:9091"]
+        honor_labels: true
+
+  alert_rules.yml: |
+    groups:
+      - name: urbanpulse_alerts
+        rules:
+          - alert: PipelineNotSucceededIn10Days
+            expr: (time() - pipeline_last_run_timestamp_seconds > 864000) or (pipeline_run_status == 0 and (time() - pipeline_last_run_timestamp_seconds > 864000))
+            for: 15m
+            labels:
+              severity: critical
+              service: urbanpulse-pipeline
+            annotations:
+              summary: "UrbanPulse pipeline has not succeeded in 10 days"
+              description: "City {{ $labels.city }} has not recorded a successful pipeline execution in > 10 days."
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: urbanpulse
+  labels:
+    app.kubernetes.io/name: urbanpulse
+    app.kubernetes.io/component: prometheus
+spec:
+  ports:
+    - name: http
+      port: 9090
+      targetPort: 9090
+  selector:
+    app.kubernetes.io/name: urbanpulse
+    app.kubernetes.io/component: prometheus
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: urbanpulse
+  labels:
+    app.kubernetes.io/name: urbanpulse
+    app.kubernetes.io/component: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: urbanpulse
+      app.kubernetes.io/component: prometheus
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: urbanpulse
+        app.kubernetes.io/component: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.51.0
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus"
+          ports:
+            - name: http
+              containerPort: 9090
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+      volumes:
+        - name: config
+          configMap:
+            name: urbanpulse-prometheus-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pushgateway
+  namespace: urbanpulse
+  labels:
+    app.kubernetes.io/name: urbanpulse
+    app.kubernetes.io/component: pushgateway
+spec:
+  ports:
+    - name: http
+      port: 9091
+      targetPort: 9091
+  selector:
+    app.kubernetes.io/name: urbanpulse
+    app.kubernetes.io/component: pushgateway
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pushgateway
+  namespace: urbanpulse
+  labels:
+    app.kubernetes.io/name: urbanpulse
+    app.kubernetes.io/component: pushgateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: urbanpulse
+      app.kubernetes.io/component: pushgateway
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: urbanpulse
+        app.kubernetes.io/component: pushgateway
+    spec:
+      containers:
+        - name: pushgateway
+          image: prom/pushgateway:v1.8.0
+          ports:
+            - name: http
+              containerPort: 9091
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: urbanpulse
+  labels:
+    app.kubernetes.io/name: urbanpulse
+    app.kubernetes.io/component: grafana
+spec:
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+  selector:
+    app.kubernetes.io/name: urbanpulse
+    app.kubernetes.io/component: grafana
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: urbanpulse
+  labels:
+    app.kubernetes.io/name: urbanpulse
+    app.kubernetes.io/component: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: urbanpulse
+      app.kubernetes.io/component: grafana
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: urbanpulse
+        app.kubernetes.io/component: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:10.4.0
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: admin
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: admin
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "true"
+            - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+              value: Viewer
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

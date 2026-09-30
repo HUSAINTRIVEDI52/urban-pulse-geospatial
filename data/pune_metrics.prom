@@ -1,0 +1,15 @@
+# HELP pipeline_run_duration_seconds Duration of the latest satellite analytics pipeline run in seconds
+# TYPE pipeline_run_duration_seconds gauge
+pipeline_run_duration_seconds{city="pune"} 1756.6
+# HELP pipeline_run_status Status of the latest pipeline run (1 = SUCCESS, 0 = FAILED)
+# TYPE pipeline_run_status gauge
+pipeline_run_status{city="pune"} 1.0
+# HELP pipeline_last_run_timestamp_seconds Unix timestamp of the most recent pipeline execution
+# TYPE pipeline_last_run_timestamp_seconds gauge
+pipeline_last_run_timestamp_seconds{city="pune"} 1.7907958197424386e+09
+# HELP pipeline_nodata_percentage Percentage of invalid or missing NoData pixels in satellite composite
+# TYPE pipeline_nodata_percentage gauge
+pipeline_nodata_percentage{city="pune",year="2024"} 0.0
+# HELP pipeline_scenes_used_total Number of Sentinel-2/Landsat scenes used in multi-temporal composite
+# TYPE pipeline_scenes_used_total gauge
+pipeline_scenes_used_total{city="pune",year="2024"} 7.0

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: urbanpulse
+  labels:
+    app.kubernetes.io/name: urbanpulse
+    app.kubernetes.io/part-of: urbanpulse

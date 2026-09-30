@@ -1,0 +1,54 @@
+---
+- name: Set UFW default incoming policy to deny
+  community.general.ufw:
+    direction: incoming
+    default: deny
+
+- name: Set UFW default outgoing policy to allow
+  community.general.ufw:
+    direction: outgoing
+    default: allow
+
+- name: Allow designated TCP ports through UFW firewall
+  community.general.ufw:
+    rule: allow
+    port: "{{ item | string }}"
+    proto: tcp
+  loop: "{{ firewall_allowed_tcp_ports }}"
+
+- name: Allow traffic across CNI network interfaces (flannel / cni0)
+  community.general.ufw:
+    rule: allow
+    interface: "{{ item }}"
+    direction: in
+  loop:
+    - cni0
+    - flannel.1
+  ignore_errors: true
+
+- name: Enable UFW firewall service
+  community.general.ufw:
+    state: enabled
+
+- name: Configure fail2ban jail for SSH brute-force protection
+  ansible.builtin.copy:
+    dest: /etc/fail2ban/jail.local
+    content: |
+      [DEFAULT]
+      bantime = {{ fail2ban_bantime }}
+      findtime = {{ fail2ban_findtime }}
+      maxretry = {{ fail2ban_maxretry }}
+
+      [sshd]
+      enabled = true
+      port = ssh
+      logpath = %(sshd_log)s
+      backend = %(sshd_backend)s
+    mode: "0644"
+  notify: Restart fail2ban
+
+- name: Ensure fail2ban service is enabled and running
+  ansible.builtin.service:
+    name: fail2ban
+    state: started
+    enabled: true

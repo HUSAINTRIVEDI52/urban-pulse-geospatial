@@ -1,0 +1,163 @@
+# ==============================================================================
+# UrbanPulse Continuous Delivery (CD) Workflow
+# Builds, security-scans, and publishes multi-service Docker images to GHCR,
+# updates Kustomize image references, and conditionally deploys to Kubernetes.
+# ==============================================================================
+
+name: UrbanPulse CD
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # 1. Build, Scan with Trivy, & Publish to GHCR
+  # ----------------------------------------------------------------------------
+  build-and-push:
+    name: Build, Scan & Push (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - service: api
+            dockerfile: docker/Dockerfile.api
+            name: urbanpulse-api
+          - service: web
+            dockerfile: docker/Dockerfile.web
+            name: urbanpulse-web
+          - service: pipeline
+            dockerfile: docker/Dockerfile.pipeline
+            name: urbanpulse-pipeline
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Normalize Repository Owner to Lowercase
+        id: repo-owner
+        run: |
+          echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker Metadata (Tags & Labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ steps.repo-owner.outputs.owner }}/${{ matrix.name }}
+          tags: |
+            type=raw,value=${{ github.sha }}
+            type=raw,value=latest
+
+      - name: Build Docker Image Locally
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: false
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.service }}-cd
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}-cd
+
+      - name: Run Trivy Security Vulnerability Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ steps.repo-owner.outputs.owner }}/${{ matrix.name }}:${{ github.sha }}
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL"
+
+      - name: Push Verified Image to GHCR
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.service }}-cd
+
+  # ----------------------------------------------------------------------------
+  # 2. Update Kustomize Manifests & Conditional Kubernetes Deployment
+  # ----------------------------------------------------------------------------
+  deploy:
+    name: Kustomize Update & Cluster Deployment
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Normalize Repository Owner to Lowercase
+        id: repo-owner
+        run: |
+          echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Update Kustomize Overlay Image Tags to Git SHA
+        run: |
+          OWNER="${{ steps.repo-owner.outputs.owner }}"
+          SHA="${{ github.sha }}"
+          cd infra/k8s/overlays/local
+
+          kustomize edit set image urbanpulse-api=${{ env.REGISTRY }}/${OWNER}/urbanpulse-api:${SHA}
+          kustomize edit set image urbanpulse-web=${{ env.REGISTRY }}/${OWNER}/urbanpulse-web:${SHA}
+          kustomize edit set image urbanpulse-pipeline=${{ env.REGISTRY }}/${OWNER}/urbanpulse-pipeline:${SHA}
+
+          echo "=== Rendered Kustomize Manifests for SHA: ${SHA} ==="
+          kustomize build .
+
+      - name: Deploy to Kubernetes Cluster (Conditional)
+        env:
+          KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
+        run: |
+          if [ -n "$KUBECONFIG_DATA" ]; then
+            echo "KUBECONFIG secret detected. Deploying to target cluster..."
+            mkdir -p "$HOME/.kube"
+            
+            # Support both raw YAML and base64-encoded KUBECONFIG strings
+            if echo "$KUBECONFIG_DATA" | base64 -d > "$HOME/.kube/config" 2>/dev/null && [ -s "$HOME/.kube/config" ]; then
+              echo "Decoded base64 KUBECONFIG."
+            else
+              echo "$KUBECONFIG_DATA" > "$HOME/.kube/config"
+              echo "Wrote raw YAML KUBECONFIG."
+            fi
+            
+            chmod 600 "$HOME/.kube/config"
+            kubectl apply -k infra/k8s/overlays/local
+            kubectl rollout status deployment/api -n urbanpulse --timeout=120s
+            kubectl rollout status deployment/web -n urbanpulse --timeout=120s
+            echo "Deployment applied successfully."
+          else
+            echo "No KUBECONFIG secret configured in repository. Skipping remote cluster apply cleanly."
+          fi

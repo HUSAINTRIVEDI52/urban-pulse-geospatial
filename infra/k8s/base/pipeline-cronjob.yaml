@@ -1,0 +1,69 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: urbanpulse-pipeline-weekly
+  namespace: urbanpulse
+  labels:
+    app.kubernetes.io/name: urbanpulse
+    app.kubernetes.io/component: pipeline
+spec:
+  schedule: "0 2 * * 0" # Weekly on Sunday at 02:00 AM UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: urbanpulse
+            app.kubernetes.io/component: pipeline-job
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: pipeline-runner
+              image: urbanpulse-pipeline:latest
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  echo "=== Running UrbanPulse Pipeline for Ahmedabad ==="
+                  python -m pipeline.run_city --city ahmedabad
+                  echo "=== Running UrbanPulse Pipeline for Pune ==="
+                  python -m pipeline.run_city --city pune
+                  echo "=== Pipeline Completed Successfully for All Cities ==="
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: urbanpulse-db-secret
+                      key: DATABASE_URL
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 1Gi
+                limits:
+                  cpu: 2000m
+                  memory: 4Gi
+              volumeMounts:
+                - name: shared-data
+                  mountPath: /app/data
+                  subPath: data
+                - name: shared-data
+                  mountPath: /app/web/data
+                  subPath: web/data
+                - name: city-configs
+                  mountPath: /app/configs
+                  readOnly: true
+          volumes:
+            - name: shared-data
+              persistentVolumeClaim:
+                claimName: urbanpulse-data-pvc
+            - name: city-configs
+              configMap:
+                name: urbanpulse-city-configs

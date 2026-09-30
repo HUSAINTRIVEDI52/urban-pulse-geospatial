@@ -1,0 +1,25 @@
+# ==============================================================================
+# Oracle Cloud Infrastructure (OCI) Credentials & Compartment
+# ==============================================================================
+tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+user_ocid        = "ocid1.user.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+fingerprint      = "xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
+private_key_path = "~/.oci/oci_api_key.pem"
+compartment_ocid = "ocid1.compartment.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+region           = "ap-mumbai-1"
+
+# ==============================================================================
+# Security & Access Control
+# ==============================================================================
+# Restrict admin_cidr to your public IP for secure SSH & K3s API access (e.g. "203.0.113.45/32")
+admin_cidr     = "0.0.0.0/0"
+ssh_public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... user@example.com"
+
+# ==============================================================================
+# Compute Shape Configuration (OCI Always Free Ampere A1 ARM64)
+# ==============================================================================
+instance_shape          = "VM.Standard.A1.Flex"
+instance_ocpus          = 4
+instance_memory_in_gbs  = 24
+boot_volume_size_in_gbs = 100
+instance_display_name   = "urbanpulse-server"

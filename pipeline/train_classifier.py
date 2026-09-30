@@ -7,15 +7,13 @@ masks nodata pixels, and exports classified map and area statistics.
 """
 
 import argparse
-import sys
 from pathlib import Path
+import sys
 from typing import Any
-
 import geopandas as gpd
 import joblib
 import numpy as np
 import rasterio
-import yaml
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score,
@@ -23,6 +21,7 @@ from sklearn.metrics import (
     cohen_kappa_score,
     confusion_matrix,
 )
+import yaml
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -41,9 +40,14 @@ PROJECT_CLASS_NAMES = {
 FEATURE_NAMES = ["red", "green", "blue", "nir", "swir16", "ndvi", "ndbi", "mndwi"]
 
 
-def load_config(config_path: str | Path = "configs/ahmedabad.yaml") -> dict[str, Any]:
+def load_config(
+    city: str = "ahmedabad", config_path: str | Path | None = None
+) -> dict[str, Any]:
     """Loads city YAML configuration."""
-    with open(config_path, encoding="utf-8") as f:
+    cfg_file = Path(config_path) if config_path else Path(f"configs/{city.lower()}.yaml")
+    if not cfg_file.exists():
+        raise FileNotFoundError(f"Configuration file not found: {cfg_file.resolve()}")
+    with open(cfg_file, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -103,181 +107,6 @@ def apply_majority_filter_3x3(arr: np.ndarray, valid_mask: np.ndarray) -> np.nda
     return filtered_map
 
 
-def classify_raster(
-    city: str = "ahmedabad",
-    year: int = 2024,
-    model_path: str | Path = "data/rf_model_2024.pkl",
-    force: bool = False,
-    data_dir: str | Path = "data",
-) -> tuple[Path, dict[str, Any]]:
-    """
-    Classifies the full 8-channel feature stack for a given city and year using a trained
-    Random Forest model, applies a 3x3 majority (mode) filter to reduce noise, masks nodata,
-    exports the classified GeoTIFF, and calculates area statistics.
-
-    Skips classification if the output GeoTIFF already exists unless force=True.
-    """
-    city_key = city.lower()
-    data_path = Path(data_dir)
-    model_file = Path(model_path)
-    classified_path = data_path / f"{city_key}_{year}_classified.tif"
-
-    if not model_file.exists():
-        raise FileNotFoundError(
-            f"Trained model not found at {model_file.resolve()}. Run train_and_evaluate_classifier first."
-        )
-
-    # 1. Feature file paths
-    feature_files = [data_path / f"{city_key}_{year}_{feat}.tif" for feat in FEATURE_NAMES]
-
-    # If already exists and not force, read and print area summary
-    if not force and classified_path.exists():
-        print(
-            f"[+] Classified map already exists at: {classified_path.resolve()}. Skipping inference."
-        )
-        with rasterio.open(classified_path) as src:
-            classified_arr = src.read(1)
-            transform = src.transform
-            pixel_res_x = abs(transform.a)
-            pixel_res_y = abs(transform.e)
-            pixel_area_km2 = (pixel_res_x * pixel_res_y) / 1e6
-
-        valid_classified = classified_arr > 0
-        total_valid_px = int(np.sum(valid_classified))
-
-        print("\n" + "=" * 78)
-        print(f"[*] {city.capitalize()} {year} Land Cover Area Summary (NoData Excluded)")
-        print("=" * 78)
-        print(
-            f"{'Class ID':<9} | {'Class Name':<15} | {'Pixel Count':<14} | {'Area (km^2)':<12} | {'Percentage'}"
-        )
-        print("-" * 78)
-
-        area_summary = {}
-        for cid in range(1, 6):
-            cname = PROJECT_CLASS_NAMES[cid]
-            px_count = int(np.sum(classified_arr == cid))
-            area_km2 = px_count * pixel_area_km2
-            pct = (px_count / total_valid_px * 100.0) if total_valid_px > 0 else 0.0
-            area_summary[cname] = {
-                "class_id": cid,
-                "pixel_count": px_count,
-                "area_km2": area_km2,
-                "percentage": pct,
-            }
-            print(
-                f"{cid:<9} | {cname:<15} | {px_count:>14,} | {area_km2:>10.2f} km^2 | {pct:>6.2f}%"
-            )
-
-        print("-" * 78)
-        total_area_km2 = total_valid_px * pixel_area_km2
-        print(
-            f"{'Total':<9} | {'All Classes':<15} | {total_valid_px:>14,} | {total_area_km2:>10.2f} km^2 | 100.00%"
-        )
-        print("=" * 78 + "\n")
-        return classified_path, area_summary
-
-    # Check for missing feature files
-    missing_features = [f.name for f in feature_files if not f.exists()]
-    if missing_features:
-        raise FileNotFoundError(
-            f"Missing required feature rasters in {data_path}: {missing_features}. "
-            "Please run composite and spectral indices steps first."
-        )
-
-    print(f"\n[*] Loading Random Forest model from {model_file.name}...")
-    rf: RandomForestClassifier = joblib.load(model_file)
-
-    with rasterio.open(feature_files[0]) as ref_src:
-        profile = ref_src.profile.copy()
-        raster_transform = ref_src.transform
-        raster_shape = ref_src.shape
-
-    print(
-        f"[*] Classifying full raster stack for {city.capitalize()} ({year}) [{raster_shape[0]} x {raster_shape[1]} pixels]..."
-    )
-    feature_arrays = []
-    for fpath in feature_files:
-        with rasterio.open(fpath) as src:
-            feature_arrays.append(src.read(1).astype(np.float32))
-
-    stack_2d = np.column_stack([arr.ravel() for arr in feature_arrays])
-    valid_raster_mask_1d = np.all(np.isfinite(stack_2d) & (stack_2d != -9999.0), axis=1)
-    valid_raster_mask_2d = valid_raster_mask_1d.reshape(raster_shape)
-
-    print(f"[*] Total Grid Pixels : {len(stack_2d):,}")
-    print(
-        f"[*] Valid AOI Pixels  : {int(np.sum(valid_raster_mask_1d)):,} ({np.sum(valid_raster_mask_1d)/len(stack_2d)*100:.1f}%)"
-    )
-
-    # Raw Pixel-Level Prediction
-    raw_classified_1d = np.zeros(len(stack_2d), dtype=np.uint8)
-    if np.any(valid_raster_mask_1d):
-        raw_classified_1d[valid_raster_mask_1d] = rf.predict(stack_2d[valid_raster_mask_1d])
-
-    raw_classified_2d = raw_classified_1d.reshape(raster_shape)
-
-    # Apply 3x3 Majority (Mode) Filter
-    print("[*] Applying 3x3 majority (mode) filter to reduce salt-and-pepper noise...")
-    smooth_classified_2d = apply_majority_filter_3x3(raw_classified_2d, valid_raster_mask_2d)
-    print("[+] Applied 3x3 spatial smoothing filter.")
-
-    # Save Classified GeoTIFF
-    print(f"[*] Saving final classified GeoTIFF to: {classified_path.name}...")
-    profile.update(
-        {
-            "driver": "GTiff",
-            "count": 1,
-            "dtype": "uint8",
-            "nodata": 0,
-            "compress": "lzw",
-            "tiled": True,
-        }
-    )
-
-    with rasterio.open(classified_path, "w", **profile) as dst:
-        dst.write(smooth_classified_2d, 1)
-
-    # Area Summary Statistics (Excluding NoData)
-    pixel_res_x = abs(raster_transform.a)
-    pixel_res_y = abs(raster_transform.e)
-    pixel_area_km2 = (pixel_res_x * pixel_res_y) / 1e6
-
-    valid_classified = smooth_classified_2d > 0
-    total_valid_px = int(np.sum(valid_classified))
-
-    print("\n" + "=" * 78)
-    print(f"[*] {city.capitalize()} {year} Final Land Cover Area Summary (NoData Excluded)")
-    print("=" * 78)
-    print(
-        f"{'Class ID':<9} | {'Class Name':<15} | {'Pixel Count':<14} | {'Area (km^2)':<12} | {'Percentage'}"
-    )
-    print("-" * 78)
-
-    area_summary = {}
-    for cid in range(1, 6):
-        cname = PROJECT_CLASS_NAMES[cid]
-        px_count = int(np.sum(smooth_classified_2d == cid))
-        area_km2 = px_count * pixel_area_km2
-        pct = (px_count / total_valid_px * 100.0) if total_valid_px > 0 else 0.0
-        area_summary[cname] = {
-            "class_id": cid,
-            "pixel_count": px_count,
-            "area_km2": area_km2,
-            "percentage": pct,
-        }
-        print(f"{cid:<9} | {cname:<15} | {px_count:>14,} | {area_km2:>10.2f} km^2 | {pct:>6.2f}%")
-
-    print("-" * 78)
-    total_area_km2 = total_valid_px * pixel_area_km2
-    print(
-        f"{'Total':<9} | {'All Classes':<15} | {total_valid_px:>14,} | {total_area_km2:>10.2f} km^2 | 100.00%"
-    )
-    print("=" * 78 + "\n")
-
-    return classified_path, area_summary
-
-
 def train_and_evaluate_classifier(
     city: str = "ahmedabad",
     year: int = 2024,
@@ -285,19 +114,47 @@ def train_and_evaluate_classifier(
     random_state: int = 42,
     force: bool = False,
     data_dir: str | Path = "data",
-    train_geojson: str | Path = "data/train_points.geojson",
-    test_geojson: str | Path = "data/test_points.geojson",
-    output_model_path: str | Path = "data/rf_model_2024.pkl",
+    train_geojson: str | Path | None = None,
+    test_geojson: str | Path | None = None,
+    output_model_path: str | Path | None = None,
 ) -> tuple[RandomForestClassifier, dict[str, Any]]:
     """
     Trains Random Forest on sample points, evaluates on spatial test split,
-    and runs full raster classification.
+    and returns trained model and evaluation report.
     """
     city_key = city.lower()
     data_path = Path(data_dir)
-    train_path = Path(train_geojson)
-    test_path = Path(test_geojson)
-    model_path = Path(output_model_path)
+
+    if train_geojson is None:
+        train_path = data_path / f"{city_key}_train_points.geojson"
+        if not train_path.exists() and (data_path / "train_points.geojson").exists() and city_key == "ahmedabad":
+            train_path = data_path / "train_points.geojson"
+    else:
+        train_path = Path(train_geojson)
+
+    if test_geojson is None:
+        test_path = data_path / f"{city_key}_test_points.geojson"
+        if not test_path.exists() and (data_path / "test_points.geojson").exists() and city_key == "ahmedabad":
+            test_path = data_path / "test_points.geojson"
+    else:
+        test_path = Path(test_geojson)
+
+    if output_model_path is None:
+        model_path = data_path / f"{city_key}_rf_model_{year}.pkl"
+    else:
+        model_path = Path(output_model_path)
+
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Auto-generate sample points if not existing
+    if not train_path.exists() or not test_path.exists():
+        from pipeline.sample_points import sample_training_points
+
+        sample_training_points(
+            city=city_key,
+            output_train_path=train_path,
+            output_test_path=test_path,
+        )
 
     print("=" * 78)
     print(f"[*] UrbanPulse Land Cover Classifier (Training on {city.capitalize()} {year})")
@@ -349,15 +206,20 @@ def train_and_evaluate_classifier(
     # 4. Evaluate Model on Spatial Block Test Set
     print("\n[Step 3/4] Evaluating model performance on independent spatial test blocks...")
     y_pred = rf.predict(X_test)
-
     acc = accuracy_score(y_test, y_pred)
     kappa = cohen_kappa_score(y_test, y_pred)
-    target_names = [PROJECT_CLASS_NAMES[cid] for cid in range(1, 6)]
-    report = classification_report(y_test, y_pred, target_names=target_names, digits=4)
-    cm = confusion_matrix(y_test, y_pred, labels=[1, 2, 3, 4, 5])
+    report = classification_report(
+        y_test,
+        y_pred,
+        labels=list(PROJECT_CLASS_NAMES.keys()),
+        target_names=list(PROJECT_CLASS_NAMES.values()),
+        digits=4,
+        zero_division=0,
+    )
+    cm = confusion_matrix(y_test, y_pred, labels=list(range(1, 6)))
 
     print("\n" + "=" * 78)
-    print("[*] Model Evaluation Metrics (Spatial Block Validation)")
+    print(f"[*] Model Evaluation Metrics for {city.capitalize()} (Spatial Block Validation)")
     print("=" * 78)
     print(f"Overall Accuracy : {acc * 100:.2f}%")
     print(f"Cohen's Kappa    : {kappa:.4f}")
@@ -366,9 +228,7 @@ def train_and_evaluate_classifier(
 
     print("Confusion Matrix (Rows: Ground Truth, Columns: Predicted):")
     col_header = "True \\ Pred"
-    header_str = f"{col_header:<14} | " + " | ".join(
-        [f"{PROJECT_CLASS_NAMES[c][:8]:<8}" for c in range(1, 6)]
-    )
+    header_str = f"{col_header:<14} | " + " | ".join([f"{PROJECT_CLASS_NAMES[c][:8]:<8}" for c in range(1, 6)])
     print("-" * len(header_str))
     print(header_str)
     print("-" * len(header_str))
@@ -377,49 +237,194 @@ def train_and_evaluate_classifier(
         print(f"{PROJECT_CLASS_NAMES[cid]:<14} | {row_vals}")
     print("-" * len(header_str))
 
-    # Feature Importance
-    print("\nFeature Importances:")
-    importances = rf.feature_importances_
-    sorted_idx = np.argsort(importances)[::-1]
-    for rank, idx in enumerate(sorted_idx, 1):
-        print(f"  {rank}. {FEATURE_NAMES[idx]:<8}: {importances[idx]*100:>5.2f}%")
+    metrics_result = {
+        "accuracy": acc,
+        "kappa": kappa,
+        "report": report,
+        "confusion_matrix": cm,
+    }
 
-    # 5. Classify Full Raster
-    print(f"\n[Step 4/4] Executing full raster classification for {city} ({year})...")
-    _, area_summary = classify_raster(
-        city=city,
-        year=year,
-        model_path=model_path,
-        force=force,
-        data_dir=data_dir,
-    )
-
-    return rf, area_summary
+    return rf, metrics_result
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Train Random Forest classifier on spectral features."
+def classify_raster(
+    city: str = "ahmedabad",
+    year: int = 2024,
+    model_path: str | Path | None = None,
+    force: bool = False,
+    data_dir: str | Path = "data",
+) -> tuple[Path, dict[str, Any]]:
+    """
+    Classifies the full 8-channel feature stack for a given city and year using a trained
+    Random Forest model, applies a 3x3 majority filter, masks nodata,
+    exports the classified GeoTIFF, and calculates area statistics.
+    """
+    city_key = city.lower()
+    data_path = Path(data_dir)
+    classified_path = data_path / f"{city_key}_{year}_classified.tif"
+
+    if classified_path.exists() and not force:
+        print(f"[*] Classified raster already exists for {city.capitalize()} {year}: {classified_path.name}")
+        with rasterio.open(classified_path) as src:
+            data = src.read(1)
+            pixel_res_x = abs(src.transform.a)
+            pixel_res_y = abs(src.transform.e)
+            pixel_area_km2 = (pixel_res_x * pixel_res_y) / 1e6
+
+        valid_classified = data > 0
+        total_valid_px = int(np.sum(valid_classified))
+
+        area_summary = {}
+        for cid in range(1, 6):
+            cname = PROJECT_CLASS_NAMES[cid]
+            px_count = int(np.sum(data == cid))
+            area_km2 = px_count * pixel_area_km2
+            pct = (px_count / total_valid_px * 100.0) if total_valid_px > 0 else 0.0
+            area_summary[cname] = {
+                "class_id": cid,
+                "pixel_count": px_count,
+                "area_km2": area_km2,
+                "percentage": pct,
+            }
+        return classified_path, area_summary
+
+    # Locate or Train Model
+    resolved_model_path = None
+    if model_path is not None and Path(model_path).exists():
+        resolved_model_path = Path(model_path)
+    else:
+        candidates = [
+            data_path / f"{city_key}_rf_model_{year}.pkl",
+            data_path / f"{city_key}_rf_model.pkl",
+            data_path / f"{city_key}/rf_model_{year}.pkl",
+            data_path / "rf_model_2024.pkl" if city_key == "ahmedabad" else None,
+        ]
+        for c in candidates:
+            if c is not None and c.exists():
+                resolved_model_path = c
+                break
+
+    if resolved_model_path is None or not resolved_model_path.exists():
+        print(f"[*] No pre-trained model found for {city.capitalize()}. Training fresh city model...")
+        rf, _ = train_and_evaluate_classifier(
+            city=city_key,
+            year=year,
+            data_dir=data_path,
+        )
+    else:
+        print(f"[*] Loading trained Random Forest model: {resolved_model_path.name}...")
+        rf = joblib.load(resolved_model_path)
+
+    # 1. Load 8-channel features
+    feature_files = [data_path / f"{city_key}_{year}_{feat}.tif" for feat in FEATURE_NAMES]
+    for f in feature_files:
+        if not f.exists():
+            raise FileNotFoundError(f"Missing required feature file: {f}")
+
+    print(f"[*] Reading and assembling 8 spectral feature rasters for {city.capitalize()} ({year})...")
+    feature_arrays = []
+    with rasterio.open(feature_files[0]) as ref_src:
+        profile = ref_src.profile.copy()
+        raster_transform = ref_src.transform
+        raster_shape = (ref_src.height, ref_src.width)
+
+    for fpath in feature_files:
+        with rasterio.open(fpath) as src:
+            feature_arrays.append(src.read(1).astype(np.float32))
+
+    stack_2d = np.column_stack([arr.ravel() for arr in feature_arrays])
+    valid_raster_mask_1d = np.all(np.isfinite(stack_2d) & (stack_2d != -9999.0), axis=1)
+    valid_raster_mask_2d = valid_raster_mask_1d.reshape(raster_shape)
+
+    print(f"[*] Total Grid Pixels : {len(stack_2d):,}")
+    print(
+        f"[*] Valid AOI Pixels  : {int(np.sum(valid_raster_mask_1d)):,} ({np.sum(valid_raster_mask_1d)/len(stack_2d)*100:.1f}%)"
     )
-    parser.add_argument(
-        "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
+
+    # Prediction
+    raw_classified_1d = np.zeros(len(stack_2d), dtype=np.uint8)
+    if np.any(valid_raster_mask_1d):
+        raw_classified_1d[valid_raster_mask_1d] = rf.predict(stack_2d[valid_raster_mask_1d])
+
+    raw_classified_2d = raw_classified_1d.reshape(raster_shape)
+
+    # Majority filter
+    print("[*] Applying 3x3 majority (mode) filter to reduce salt-and-pepper noise...")
+    smooth_classified_2d = apply_majority_filter_3x3(raw_classified_2d, valid_raster_mask_2d)
+    print("[+] Applied 3x3 spatial smoothing filter.")
+
+    # Save Classified GeoTIFF
+    profile.update(
+        {
+            "driver": "GTiff",
+            "count": 1,
+            "dtype": "uint8",
+            "nodata": 0,
+            "compress": "lzw",
+            "tiled": True,
+        }
     )
-    parser.add_argument("--year", type=int, default=2024, help="Analysis year (default: 2024)")
-    parser.add_argument(
-        "--trees", type=int, default=200, help="Number of trees in Random Forest (default: 200)"
+
+    with rasterio.open(classified_path, "w", **profile) as dst:
+        dst.write(smooth_classified_2d, 1)
+
+    # Area Summary Statistics
+    pixel_res_x = abs(raster_transform.a)
+    pixel_res_y = abs(raster_transform.e)
+    pixel_area_km2 = (pixel_res_x * pixel_res_y) / 1e6
+
+    valid_classified = smooth_classified_2d > 0
+    total_valid_px = int(np.sum(valid_classified))
+
+    print("\n" + "=" * 78)
+    print(f"[*] {city.capitalize()} {year} Final Land Cover Area Summary (NoData Excluded)")
+    print("=" * 78)
+    print(
+        f"{'Class ID':<9} | {'Class Name':<15} | {'Pixel Count':<14} | {'Area (km^2)':<12} | {'Percentage'}"
     )
-    parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
-    parser.add_argument("--force", action="store_true", help="Force recalculate outputs")
-    parser.add_argument(
-        "--data-dir", type=str, default="data", help="Directory with raster and geojson data"
+    print("-" * 78)
+
+    area_summary = {}
+    for cid in range(1, 6):
+        cname = PROJECT_CLASS_NAMES[cid]
+        px_count = int(np.sum(smooth_classified_2d == cid))
+        area_km2 = px_count * pixel_area_km2
+        pct = (px_count / total_valid_px * 100.0) if total_valid_px > 0 else 0.0
+        area_summary[cname] = {
+            "class_id": cid,
+            "pixel_count": px_count,
+            "area_km2": area_km2,
+            "percentage": pct,
+        }
+        print(f"{cid:<9} | {cname:<15} | {px_count:>14,} | {area_km2:>10.2f} km^2 | {pct:>6.2f}%")
+
+    print("-" * 78)
+    total_area_km2 = total_valid_px * pixel_area_km2
+    print(
+        f"{'Total':<9} | {'All Classes':<15} | {total_valid_px:>14,} | {total_area_km2:>10.2f} km^2 | 100.00%"
     )
+    print("=" * 78 + "\n")
+
+    return classified_path, area_summary
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Train and evaluate city Random Forest model.")
+    parser.add_argument("--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)")
+    parser.add_argument("--year", type=int, default=2024, help="Target year (default: 2024)")
+    parser.add_argument("--n-trees", type=int, default=200, help="Number of trees (default: 200)")
+    parser.add_argument("--model-out", type=str, default=None, help="Output model path")
+    parser.add_argument("--force", action="store_true", help="Force retraining")
 
     args = parser.parse_args()
     train_and_evaluate_classifier(
         city=args.city,
         year=args.year,
-        n_trees=args.trees,
-        random_state=args.seed,
+        n_trees=args.n_trees,
+        output_model_path=args.model_out,
         force=args.force,
-        data_dir=args.data_dir,
     )
+
+
+if __name__ == "__main__":
+    main()

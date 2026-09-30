@@ -1,0 +1,92 @@
+-- ==============================================================================
+-- UrbanPulse PostGIS Schema Definition
+-- Enables PostGIS extension, spatial boundary geometries, time-series tables,
+-- transition matrices, concentric rings, sprawl metrics, and pipeline runs.
+-- ==============================================================================
+
+-- 1. Enable PostGIS Extension
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- 2. Cities & Administrative Metadata
+CREATE TABLE IF NOT EXISTS cities (
+    id VARCHAR(64) PRIMARY KEY,
+    name VARCHAR(128) NOT NULL,
+    state VARCHAR(128),
+    country VARCHAR(128),
+    center_lat DOUBLE PRECISION NOT NULL,
+    center_lon DOUBLE PRECISION NOT NULL,
+    geom geometry(Polygon, 4326),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Spatial index on city AOI bounding box polygon
+CREATE INDEX IF NOT EXISTS idx_cities_geom ON cities USING GIST (geom);
+
+-- 3. Land Use / Land Cover (LULC) Annual Class Statistics
+CREATE TABLE IF NOT EXISTS lulc_stats (
+    city VARCHAR(64) NOT NULL REFERENCES cities(id) ON DELETE CASCADE,
+    year INT NOT NULL,
+    class INT NOT NULL,
+    class_name VARCHAR(64) NOT NULL,
+    area_km2 DOUBLE PRECISION NOT NULL,
+    pct DOUBLE PRECISION NOT NULL,
+    PRIMARY KEY (city, year, class)
+);
+
+CREATE INDEX IF NOT EXISTS idx_lulc_stats_city_year ON lulc_stats(city, year);
+
+-- 4. Land Cover Transitions & Urban Expansion Trajectories
+CREATE TABLE IF NOT EXISTS transitions (
+    city VARCHAR(64) NOT NULL REFERENCES cities(id) ON DELETE CASCADE,
+    start_year INT NOT NULL,
+    end_year INT NOT NULL,
+    from_class INT NOT NULL,
+    to_class INT NOT NULL,
+    area_km2 DOUBLE PRECISION NOT NULL,
+    PRIMARY KEY (city, start_year, end_year, from_class, to_class)
+);
+
+CREATE INDEX IF NOT EXISTS idx_transitions_city_span ON transitions(city, start_year, end_year);
+
+-- 5. Concentric Radial Distance Rings (Urban Gradient Analysis)
+CREATE TABLE IF NOT EXISTS rings (
+    city VARCHAR(64) NOT NULL REFERENCES cities(id) ON DELETE CASCADE,
+    year INT NOT NULL,
+    ring_start_km DOUBLE PRECISION NOT NULL,
+    ring_end_km DOUBLE PRECISION NOT NULL,
+    builtup_km2 DOUBLE PRECISION NOT NULL,
+    valid_km2 DOUBLE PRECISION NOT NULL,
+    builtup_pct DOUBLE PRECISION NOT NULL,
+    PRIMARY KEY (city, year, ring_start_km, ring_end_km)
+);
+
+CREATE INDEX IF NOT EXISTS idx_rings_city_year ON rings(city, year);
+
+-- 6. Urban Sprawl, Shannon Entropy, & Velocity Metrics
+CREATE TABLE IF NOT EXISTS metrics (
+    city VARCHAR(64) NOT NULL REFERENCES cities(id) ON DELETE CASCADE,
+    year INT NOT NULL,
+    builtup_km2 DOUBLE PRECISION NOT NULL,
+    growth_pct DOUBLE PRECISION,
+    cagr_pct DOUBLE PRECISION,
+    entropy DOUBLE PRECISION NOT NULL,
+    core_share_pct DOUBLE PRECISION,
+    periphery_share_pct DOUBLE PRECISION,
+    PRIMARY KEY (city, year)
+);
+
+CREATE INDEX IF NOT EXISTS idx_metrics_city_year ON metrics(city, year);
+
+-- 7. Automated Pipeline Execution Audit Log
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+    id SERIAL PRIMARY KEY,
+    city VARCHAR(64) NOT NULL REFERENCES cities(id) ON DELETE CASCADE,
+    year INT NOT NULL,
+    status VARCHAR(32) NOT NULL, -- 'RUNNING', 'SUCCESS', 'FAILED'
+    started_at TIMESTAMPTZ NOT NULL,
+    finished_at TIMESTAMPTZ,
+    error TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_runs_city ON pipeline_runs(city, year, started_at DESC);

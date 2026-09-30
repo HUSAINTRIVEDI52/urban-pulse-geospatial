@@ -1,0 +1,31 @@
+city:
+  name: Pune
+  state: Maharashtra
+  country: India
+spatial:
+  bbox:
+  - 73.6435
+  - 18.3171
+  - 74.0699
+  - 18.7237
+  crs: EPSG:4326
+  center_lat: 18.5204
+  center_lon: 73.8567
+  buffered_distance_km: 8.0
+  boundary_geojson: configs/pune_boundary.geojson
+  aoi_size_km: 45.0
+temporal:
+  analysis_years:
+    start_year: 2017
+    end_year: 2024
+  dry_season:
+    start_month: 11
+    end_month: 2
+    start_day: 11-01
+    end_day: 02-28
+stac:
+  earth_search_url: https://earth-search.aws.element84.com/v1
+  microsoft_pc_url: https://planetarycomputer.microsoft.com/api/stac/v1
+  collections:
+    sentinel_2: sentinel-2-c1-l2a
+    landsat_c2_l2: landsat-c2-l2

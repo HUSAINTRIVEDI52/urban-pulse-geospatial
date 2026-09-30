@@ -1,0 +1,42 @@
+---
+- name: Ensure remote project directory exists
+  ansible.builtin.file:
+    path: "{{ project_remote_dir }}/infra/k8s"
+    state: directory
+    owner: "{{ deploy_user | default('urbanpulse') }}"
+    group: "{{ deploy_user | default('urbanpulse') }}"
+    mode: "0755"
+
+- name: Copy Kubernetes manifests to remote server
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../k8s/"
+    dest: "{{ project_remote_dir }}/infra/k8s/"
+    owner: "{{ deploy_user | default('urbanpulse') }}"
+    group: "{{ deploy_user | default('urbanpulse') }}"
+    mode: "0644"
+
+- name: Apply Kubernetes Kustomize overlay to k3s cluster
+  ansible.builtin.command:
+    cmd: "kubectl apply -k {{ k8s_overlay_dir }}"
+  environment:
+    KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+  register: kubectl_apply
+  changed_when: "'configured' in kubectl_apply.stdout or 'created' in kubectl_apply.stdout"
+
+- name: Wait for API deployment rollout to complete
+  ansible.builtin.command:
+    cmd: >-
+      kubectl rollout status deployment/api
+      -n urbanpulse --timeout={{ deploy_timeout }}
+  environment:
+    KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+  changed_when: false
+
+- name: Wait for Web deployment rollout to complete
+  ansible.builtin.command:
+    cmd: >-
+      kubectl rollout status deployment/web
+      -n urbanpulse --timeout={{ deploy_timeout }}
+  environment:
+    KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
+  changed_when: false

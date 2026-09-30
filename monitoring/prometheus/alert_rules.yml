@@ -1,0 +1,12 @@
+groups:
+  - name: urbanpulse_alerts
+    rules:
+      - alert: PipelineNotSucceededIn10Days
+        expr: (time() - pipeline_last_run_timestamp_seconds > 864000) or (pipeline_run_status == 0 and (time() - pipeline_last_run_timestamp_seconds > 864000))
+        for: 15m
+        labels:
+          severity: critical
+          service: urbanpulse-pipeline
+        annotations:
+          summary: "UrbanPulse pipeline has not succeeded in 10 days"
+          description: "City {{ $labels.city }} has not recorded a successful pipeline run for more than 10 days (864,000 seconds). Investigate STAC API scene connectivity or job scheduler."

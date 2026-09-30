@@ -1,0 +1,21 @@
+---
+# ==============================================================================
+# UrbanPulse Server Provisioning, Hardening & Deployment Playbook
+# ==============================================================================
+
+- name: Provision and Harden UrbanPulse Server
+  hosts: urbanpulse_servers
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: common
+      tags: [common, hardening]
+    - role: security
+      tags: [security, firewall, fail2ban]
+    - role: docker
+      tags: [docker]
+    - role: k3s
+      tags: [k3s, kubernetes]
+    - role: deploy
+      tags: [deploy, k8s]

@@ -1,0 +1,827 @@
+{
+  "city": "Pune",
+  "years": [
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "class_areas": [
+    {
+      "year": 2018,
+      "built_up_km2": 401.79,
+      "vegetation_km2": 797.76,
+      "water_km2": 26.95,
+      "agriculture_km2": 701.42,
+      "open_land_km2": 129.61,
+      "total_area_km2": 2057.53
+    },
+    {
+      "year": 2019,
+      "built_up_km2": 425.57,
+      "vegetation_km2": 819.77,
+      "water_km2": 23.27,
+      "agriculture_km2": 681.33,
+      "open_land_km2": 107.59,
+      "total_area_km2": 2057.53
+    },
+    {
+      "year": 2020,
+      "built_up_km2": 415.0,
+      "vegetation_km2": 839.52,
+      "water_km2": 26.49,
+      "agriculture_km2": 706.56,
+      "open_land_km2": 69.96,
+      "total_area_km2": 2057.53
+    },
+    {
+      "year": 2021,
+      "built_up_km2": 449.95,
+      "vegetation_km2": 882.03,
+      "water_km2": 23.63,
+      "agriculture_km2": 666.21,
+      "open_land_km2": 35.72,
+      "total_area_km2": 2057.53
+    },
+    {
+      "year": 2022,
+      "built_up_km2": 477.67,
+      "vegetation_km2": 876.37,
+      "water_km2": 25.29,
+      "agriculture_km2": 657.17,
+      "open_land_km2": 21.05,
+      "total_area_km2": 2057.53
+    },
+    {
+      "year": 2023,
+      "built_up_km2": 412.33,
+      "vegetation_km2": 837.67,
+      "water_km2": 25.68,
+      "agriculture_km2": 744.89,
+      "open_land_km2": 36.96,
+      "total_area_km2": 2057.53
+    },
+    {
+      "year": 2024,
+      "built_up_km2": 419.31,
+      "vegetation_km2": 828.85,
+      "water_km2": 25.82,
+      "agriculture_km2": 735.06,
+      "open_land_km2": 48.48,
+      "total_area_km2": 2057.53
+    }
+  ],
+  "metrics": [
+    {
+      "year": 2018,
+      "builtup_km2": 401.79,
+      "annual_growth_pct": 0.0,
+      "cagr_pct": 0.0,
+      "shannon_entropy": 0.9627,
+      "core_builtup_km2": 48.55,
+      "core_share_pct": 13.58,
+      "periphery_builtup_km2": 169.46,
+      "periphery_share_pct": 47.41
+    },
+    {
+      "year": 2019,
+      "builtup_km2": 425.57,
+      "annual_growth_pct": 5.92,
+      "cagr_pct": 5.92,
+      "shannon_entropy": 0.9596,
+      "core_builtup_km2": 53.51,
+      "core_share_pct": 13.69,
+      "periphery_builtup_km2": 181.56,
+      "periphery_share_pct": 46.45
+    },
+    {
+      "year": 2020,
+      "builtup_km2": 415.0,
+      "annual_growth_pct": -2.48,
+      "cagr_pct": 1.63,
+      "shannon_entropy": 0.9623,
+      "core_builtup_km2": 52.27,
+      "core_share_pct": 13.78,
+      "periphery_builtup_km2": 176.97,
+      "periphery_share_pct": 46.67
+    },
+    {
+      "year": 2021,
+      "builtup_km2": 449.95,
+      "annual_growth_pct": 8.42,
+      "cagr_pct": 3.85,
+      "shannon_entropy": 0.9591,
+      "core_builtup_km2": 51.37,
+      "core_share_pct": 12.39,
+      "periphery_builtup_km2": 203.73,
+      "periphery_share_pct": 49.14
+    },
+    {
+      "year": 2022,
+      "builtup_km2": 477.67,
+      "annual_growth_pct": 6.16,
+      "cagr_pct": 4.42,
+      "shannon_entropy": 0.9544,
+      "core_builtup_km2": 51.69,
+      "core_share_pct": 11.61,
+      "periphery_builtup_km2": 223.14,
+      "periphery_share_pct": 50.12
+    },
+    {
+      "year": 2023,
+      "builtup_km2": 412.33,
+      "annual_growth_pct": -13.68,
+      "cagr_pct": 0.52,
+      "shannon_entropy": 0.9567,
+      "core_builtup_km2": 49.08,
+      "core_share_pct": 12.78,
+      "periphery_builtup_km2": 184.32,
+      "periphery_share_pct": 47.99
+    },
+    {
+      "year": 2024,
+      "builtup_km2": 419.31,
+      "annual_growth_pct": 1.69,
+      "cagr_pct": 0.71,
+      "shannon_entropy": 0.961,
+      "core_builtup_km2": 52.93,
+      "core_share_pct": 13.58,
+      "periphery_builtup_km2": 186.6,
+      "periphery_share_pct": 47.87
+    }
+  ],
+  "rings": {
+    "2018": [
+      {
+        "ring_start_km": 0.0,
+        "ring_end_km": 2.0,
+        "ring_label": "0-2 km",
+        "builtup_km2": 7.64,
+        "valid_km2": 12.58,
+        "builtup_pct": 60.73
+      },
+      {
+        "ring_start_km": 2.0,
+        "ring_end_km": 4.0,
+        "ring_label": "2-4 km",
+        "builtup_km2": 14.94,
+        "valid_km2": 37.68,
+        "builtup_pct": 39.64
+      },
+      {
+        "ring_start_km": 4.0,
+        "ring_end_km": 6.0,
+        "ring_label": "4-6 km",
+        "builtup_km2": 25.97,
+        "valid_km2": 62.82,
+        "builtup_pct": 41.34
+      },
+      {
+        "ring_start_km": 6.0,
+        "ring_end_km": 8.0,
+        "ring_label": "6-8 km",
+        "builtup_km2": 45.53,
+        "valid_km2": 88.0,
+        "builtup_pct": 51.74
+      },
+      {
+        "ring_start_km": 8.0,
+        "ring_end_km": 10.0,
+        "ring_label": "8-10 km",
+        "builtup_km2": 48.95,
+        "valid_km2": 113.06,
+        "builtup_pct": 43.3
+      },
+      {
+        "ring_start_km": 10.0,
+        "ring_end_km": 12.0,
+        "ring_label": "10-12 km",
+        "builtup_km2": 44.91,
+        "valid_km2": 138.21,
+        "builtup_pct": 32.5
+      },
+      {
+        "ring_start_km": 12.0,
+        "ring_end_km": 14.0,
+        "ring_label": "12-14 km",
+        "builtup_km2": 37.12,
+        "valid_km2": 163.45,
+        "builtup_pct": 22.71
+      },
+      {
+        "ring_start_km": 14.0,
+        "ring_end_km": 16.0,
+        "ring_label": "14-16 km",
+        "builtup_km2": 34.46,
+        "valid_km2": 188.4,
+        "builtup_pct": 18.29
+      },
+      {
+        "ring_start_km": 16.0,
+        "ring_end_km": 18.0,
+        "ring_label": "16-18 km",
+        "builtup_km2": 40.37,
+        "valid_km2": 213.61,
+        "builtup_pct": 18.9
+      },
+      {
+        "ring_start_km": 18.0,
+        "ring_end_km": 20.0,
+        "ring_label": "18-20 km",
+        "builtup_km2": 35.82,
+        "valid_km2": 238.86,
+        "builtup_pct": 15.0
+      },
+      {
+        "ring_start_km": 20.0,
+        "ring_end_km": 22.0,
+        "ring_label": "20-22 km",
+        "builtup_km2": 21.69,
+        "valid_km2": 263.86,
+        "builtup_pct": 8.22
+      }
+    ],
+    "2019": [
+      {
+        "ring_start_km": 0.0,
+        "ring_end_km": 2.0,
+        "ring_label": "0-2 km",
+        "builtup_km2": 9.11,
+        "valid_km2": 12.58,
+        "builtup_pct": 72.44
+      },
+      {
+        "ring_start_km": 2.0,
+        "ring_end_km": 4.0,
+        "ring_label": "2-4 km",
+        "builtup_km2": 16.54,
+        "valid_km2": 37.68,
+        "builtup_pct": 43.9
+      },
+      {
+        "ring_start_km": 4.0,
+        "ring_end_km": 6.0,
+        "ring_label": "4-6 km",
+        "builtup_km2": 27.86,
+        "valid_km2": 62.82,
+        "builtup_pct": 44.36
+      },
+      {
+        "ring_start_km": 6.0,
+        "ring_end_km": 8.0,
+        "ring_label": "6-8 km",
+        "builtup_km2": 47.4,
+        "valid_km2": 88.0,
+        "builtup_pct": 53.86
+      },
+      {
+        "ring_start_km": 8.0,
+        "ring_end_km": 10.0,
+        "ring_label": "8-10 km",
+        "builtup_km2": 55.58,
+        "valid_km2": 113.06,
+        "builtup_pct": 49.16
+      },
+      {
+        "ring_start_km": 10.0,
+        "ring_end_km": 12.0,
+        "ring_label": "10-12 km",
+        "builtup_km2": 52.82,
+        "valid_km2": 138.21,
+        "builtup_pct": 38.22
+      },
+      {
+        "ring_start_km": 12.0,
+        "ring_end_km": 14.0,
+        "ring_label": "12-14 km",
+        "builtup_km2": 43.81,
+        "valid_km2": 163.45,
+        "builtup_pct": 26.8
+      },
+      {
+        "ring_start_km": 14.0,
+        "ring_end_km": 16.0,
+        "ring_label": "14-16 km",
+        "builtup_km2": 39.51,
+        "valid_km2": 188.4,
+        "builtup_pct": 20.97
+      },
+      {
+        "ring_start_km": 16.0,
+        "ring_end_km": 18.0,
+        "ring_label": "16-18 km",
+        "builtup_km2": 43.29,
+        "valid_km2": 213.61,
+        "builtup_pct": 20.26
+      },
+      {
+        "ring_start_km": 18.0,
+        "ring_end_km": 20.0,
+        "ring_label": "18-20 km",
+        "builtup_km2": 35.69,
+        "valid_km2": 238.86,
+        "builtup_pct": 14.94
+      },
+      {
+        "ring_start_km": 20.0,
+        "ring_end_km": 22.0,
+        "ring_label": "20-22 km",
+        "builtup_km2": 19.26,
+        "valid_km2": 263.86,
+        "builtup_pct": 7.3
+      }
+    ],
+    "2020": [
+      {
+        "ring_start_km": 0.0,
+        "ring_end_km": 2.0,
+        "ring_label": "0-2 km",
+        "builtup_km2": 8.59,
+        "valid_km2": 12.58,
+        "builtup_pct": 68.32
+      },
+      {
+        "ring_start_km": 2.0,
+        "ring_end_km": 4.0,
+        "ring_label": "2-4 km",
+        "builtup_km2": 16.21,
+        "valid_km2": 37.68,
+        "builtup_pct": 43.02
+      },
+      {
+        "ring_start_km": 4.0,
+        "ring_end_km": 6.0,
+        "ring_label": "4-6 km",
+        "builtup_km2": 27.47,
+        "valid_km2": 62.82,
+        "builtup_pct": 43.73
+      },
+      {
+        "ring_start_km": 6.0,
+        "ring_end_km": 8.0,
+        "ring_label": "6-8 km",
+        "builtup_km2": 46.25,
+        "valid_km2": 88.0,
+        "builtup_pct": 52.55
+      },
+      {
+        "ring_start_km": 8.0,
+        "ring_end_km": 10.0,
+        "ring_label": "8-10 km",
+        "builtup_km2": 54.71,
+        "valid_km2": 113.06,
+        "builtup_pct": 48.39
+      },
+      {
+        "ring_start_km": 10.0,
+        "ring_end_km": 12.0,
+        "ring_label": "10-12 km",
+        "builtup_km2": 49.02,
+        "valid_km2": 138.21,
+        "builtup_pct": 35.47
+      },
+      {
+        "ring_start_km": 12.0,
+        "ring_end_km": 14.0,
+        "ring_label": "12-14 km",
+        "builtup_km2": 38.84,
+        "valid_km2": 163.45,
+        "builtup_pct": 23.76
+      },
+      {
+        "ring_start_km": 14.0,
+        "ring_end_km": 16.0,
+        "ring_label": "14-16 km",
+        "builtup_km2": 36.66,
+        "valid_km2": 188.4,
+        "builtup_pct": 19.46
+      },
+      {
+        "ring_start_km": 16.0,
+        "ring_end_km": 18.0,
+        "ring_label": "16-18 km",
+        "builtup_km2": 43.29,
+        "valid_km2": 213.61,
+        "builtup_pct": 20.27
+      },
+      {
+        "ring_start_km": 18.0,
+        "ring_end_km": 20.0,
+        "ring_label": "18-20 km",
+        "builtup_km2": 36.05,
+        "valid_km2": 238.86,
+        "builtup_pct": 15.09
+      },
+      {
+        "ring_start_km": 20.0,
+        "ring_end_km": 22.0,
+        "ring_label": "20-22 km",
+        "builtup_km2": 22.13,
+        "valid_km2": 263.86,
+        "builtup_pct": 8.39
+      }
+    ],
+    "2021": [
+      {
+        "ring_start_km": 0.0,
+        "ring_end_km": 2.0,
+        "ring_label": "0-2 km",
+        "builtup_km2": 8.5,
+        "valid_km2": 12.58,
+        "builtup_pct": 67.57
+      },
+      {
+        "ring_start_km": 2.0,
+        "ring_end_km": 4.0,
+        "ring_label": "2-4 km",
+        "builtup_km2": 16.03,
+        "valid_km2": 37.68,
+        "builtup_pct": 42.53
+      },
+      {
+        "ring_start_km": 4.0,
+        "ring_end_km": 6.0,
+        "ring_label": "4-6 km",
+        "builtup_km2": 26.84,
+        "valid_km2": 62.82,
+        "builtup_pct": 42.73
+      },
+      {
+        "ring_start_km": 6.0,
+        "ring_end_km": 8.0,
+        "ring_label": "6-8 km",
+        "builtup_km2": 46.65,
+        "valid_km2": 88.0,
+        "builtup_pct": 53.01
+      },
+      {
+        "ring_start_km": 8.0,
+        "ring_end_km": 10.0,
+        "ring_label": "8-10 km",
+        "builtup_km2": 57.76,
+        "valid_km2": 113.06,
+        "builtup_pct": 51.09
+      },
+      {
+        "ring_start_km": 10.0,
+        "ring_end_km": 12.0,
+        "ring_label": "10-12 km",
+        "builtup_km2": 55.04,
+        "valid_km2": 138.21,
+        "builtup_pct": 39.82
+      },
+      {
+        "ring_start_km": 12.0,
+        "ring_end_km": 14.0,
+        "ring_label": "12-14 km",
+        "builtup_km2": 44.5,
+        "valid_km2": 163.45,
+        "builtup_pct": 27.23
+      },
+      {
+        "ring_start_km": 14.0,
+        "ring_end_km": 16.0,
+        "ring_label": "14-16 km",
+        "builtup_km2": 42.77,
+        "valid_km2": 188.4,
+        "builtup_pct": 22.7
+      },
+      {
+        "ring_start_km": 16.0,
+        "ring_end_km": 18.0,
+        "ring_label": "16-18 km",
+        "builtup_km2": 48.47,
+        "valid_km2": 213.61,
+        "builtup_pct": 22.69
+      },
+      {
+        "ring_start_km": 18.0,
+        "ring_end_km": 20.0,
+        "ring_label": "18-20 km",
+        "builtup_km2": 43.43,
+        "valid_km2": 238.86,
+        "builtup_pct": 18.18
+      },
+      {
+        "ring_start_km": 20.0,
+        "ring_end_km": 22.0,
+        "ring_label": "20-22 km",
+        "builtup_km2": 24.56,
+        "valid_km2": 263.86,
+        "builtup_pct": 9.31
+      }
+    ],
+    "2022": [
+      {
+        "ring_start_km": 0.0,
+        "ring_end_km": 2.0,
+        "ring_label": "0-2 km",
+        "builtup_km2": 8.55,
+        "valid_km2": 12.58,
+        "builtup_pct": 68.0
+      },
+      {
+        "ring_start_km": 2.0,
+        "ring_end_km": 4.0,
+        "ring_label": "2-4 km",
+        "builtup_km2": 15.52,
+        "valid_km2": 37.68,
+        "builtup_pct": 41.19
+      },
+      {
+        "ring_start_km": 4.0,
+        "ring_end_km": 6.0,
+        "ring_label": "4-6 km",
+        "builtup_km2": 27.62,
+        "valid_km2": 62.82,
+        "builtup_pct": 43.97
+      },
+      {
+        "ring_start_km": 6.0,
+        "ring_end_km": 8.0,
+        "ring_label": "6-8 km",
+        "builtup_km2": 49.0,
+        "valid_km2": 88.0,
+        "builtup_pct": 55.68
+      },
+      {
+        "ring_start_km": 8.0,
+        "ring_end_km": 10.0,
+        "ring_label": "8-10 km",
+        "builtup_km2": 61.39,
+        "valid_km2": 113.06,
+        "builtup_pct": 54.3
+      },
+      {
+        "ring_start_km": 10.0,
+        "ring_end_km": 12.0,
+        "ring_label": "10-12 km",
+        "builtup_km2": 59.95,
+        "valid_km2": 138.21,
+        "builtup_pct": 43.37
+      },
+      {
+        "ring_start_km": 12.0,
+        "ring_end_km": 14.0,
+        "ring_label": "12-14 km",
+        "builtup_km2": 49.25,
+        "valid_km2": 163.45,
+        "builtup_pct": 30.13
+      },
+      {
+        "ring_start_km": 14.0,
+        "ring_end_km": 16.0,
+        "ring_label": "14-16 km",
+        "builtup_km2": 49.15,
+        "valid_km2": 188.4,
+        "builtup_pct": 26.09
+      },
+      {
+        "ring_start_km": 16.0,
+        "ring_end_km": 18.0,
+        "ring_label": "16-18 km",
+        "builtup_km2": 54.08,
+        "valid_km2": 213.61,
+        "builtup_pct": 25.32
+      },
+      {
+        "ring_start_km": 18.0,
+        "ring_end_km": 20.0,
+        "ring_label": "18-20 km",
+        "builtup_km2": 46.54,
+        "valid_km2": 238.86,
+        "builtup_pct": 19.48
+      },
+      {
+        "ring_start_km": 20.0,
+        "ring_end_km": 22.0,
+        "ring_label": "20-22 km",
+        "builtup_km2": 24.12,
+        "valid_km2": 263.86,
+        "builtup_pct": 9.14
+      }
+    ],
+    "2023": [
+      {
+        "ring_start_km": 0.0,
+        "ring_end_km": 2.0,
+        "ring_label": "0-2 km",
+        "builtup_km2": 8.0,
+        "valid_km2": 12.58,
+        "builtup_pct": 63.62
+      },
+      {
+        "ring_start_km": 2.0,
+        "ring_end_km": 4.0,
+        "ring_label": "2-4 km",
+        "builtup_km2": 15.61,
+        "valid_km2": 37.68,
+        "builtup_pct": 41.41
+      },
+      {
+        "ring_start_km": 4.0,
+        "ring_end_km": 6.0,
+        "ring_label": "4-6 km",
+        "builtup_km2": 25.47,
+        "valid_km2": 62.82,
+        "builtup_pct": 40.55
+      },
+      {
+        "ring_start_km": 6.0,
+        "ring_end_km": 8.0,
+        "ring_label": "6-8 km",
+        "builtup_km2": 45.86,
+        "valid_km2": 88.0,
+        "builtup_pct": 52.11
+      },
+      {
+        "ring_start_km": 8.0,
+        "ring_end_km": 10.0,
+        "ring_label": "8-10 km",
+        "builtup_km2": 54.8,
+        "valid_km2": 113.06,
+        "builtup_pct": 48.47
+      },
+      {
+        "ring_start_km": 10.0,
+        "ring_end_km": 12.0,
+        "ring_label": "10-12 km",
+        "builtup_km2": 49.99,
+        "valid_km2": 138.21,
+        "builtup_pct": 36.17
+      },
+      {
+        "ring_start_km": 12.0,
+        "ring_end_km": 14.0,
+        "ring_label": "12-14 km",
+        "builtup_km2": 41.51,
+        "valid_km2": 163.45,
+        "builtup_pct": 25.4
+      },
+      {
+        "ring_start_km": 14.0,
+        "ring_end_km": 16.0,
+        "ring_label": "14-16 km",
+        "builtup_km2": 40.05,
+        "valid_km2": 188.4,
+        "builtup_pct": 21.26
+      },
+      {
+        "ring_start_km": 16.0,
+        "ring_end_km": 18.0,
+        "ring_label": "16-18 km",
+        "builtup_km2": 46.07,
+        "valid_km2": 213.61,
+        "builtup_pct": 21.57
+      },
+      {
+        "ring_start_km": 18.0,
+        "ring_end_km": 20.0,
+        "ring_label": "18-20 km",
+        "builtup_km2": 38.1,
+        "valid_km2": 238.86,
+        "builtup_pct": 15.95
+      },
+      {
+        "ring_start_km": 20.0,
+        "ring_end_km": 22.0,
+        "ring_label": "20-22 km",
+        "builtup_km2": 18.59,
+        "valid_km2": 263.86,
+        "builtup_pct": 7.05
+      }
+    ],
+    "2024": [
+      {
+        "ring_start_km": 0.0,
+        "ring_end_km": 2.0,
+        "ring_label": "0-2 km",
+        "builtup_km2": 8.83,
+        "valid_km2": 12.58,
+        "builtup_pct": 70.18
+      },
+      {
+        "ring_start_km": 2.0,
+        "ring_end_km": 4.0,
+        "ring_label": "2-4 km",
+        "builtup_km2": 16.82,
+        "valid_km2": 37.68,
+        "builtup_pct": 44.63
+      },
+      {
+        "ring_start_km": 4.0,
+        "ring_end_km": 6.0,
+        "ring_label": "4-6 km",
+        "builtup_km2": 27.28,
+        "valid_km2": 62.82,
+        "builtup_pct": 43.43
+      },
+      {
+        "ring_start_km": 6.0,
+        "ring_end_km": 8.0,
+        "ring_label": "6-8 km",
+        "builtup_km2": 46.4,
+        "valid_km2": 88.0,
+        "builtup_pct": 52.72
+      },
+      {
+        "ring_start_km": 8.0,
+        "ring_end_km": 10.0,
+        "ring_label": "8-10 km",
+        "builtup_km2": 53.28,
+        "valid_km2": 113.06,
+        "builtup_pct": 47.12
+      },
+      {
+        "ring_start_km": 10.0,
+        "ring_end_km": 12.0,
+        "ring_label": "10-12 km",
+        "builtup_km2": 50.57,
+        "valid_km2": 138.21,
+        "builtup_pct": 36.59
+      },
+      {
+        "ring_start_km": 12.0,
+        "ring_end_km": 14.0,
+        "ring_label": "12-14 km",
+        "builtup_km2": 42.78,
+        "valid_km2": 163.45,
+        "builtup_pct": 26.17
+      },
+      {
+        "ring_start_km": 14.0,
+        "ring_end_km": 16.0,
+        "ring_label": "14-16 km",
+        "builtup_km2": 41.21,
+        "valid_km2": 188.4,
+        "builtup_pct": 21.87
+      },
+      {
+        "ring_start_km": 16.0,
+        "ring_end_km": 18.0,
+        "ring_label": "16-18 km",
+        "builtup_km2": 46.08,
+        "valid_km2": 213.61,
+        "builtup_pct": 21.57
+      },
+      {
+        "ring_start_km": 18.0,
+        "ring_end_km": 20.0,
+        "ring_label": "18-20 km",
+        "builtup_km2": 36.73,
+        "valid_km2": 238.86,
+        "builtup_pct": 15.38
+      },
+      {
+        "ring_start_km": 20.0,
+        "ring_end_km": 22.0,
+        "ring_label": "20-22 km",
+        "builtup_km2": 19.8,
+        "valid_km2": 263.86,
+        "builtup_pct": 7.51
+      }
+    ]
+  },
+  "transitions": {
+    "2018_2024": {
+      "Built-up (2024)": {
+        "Built-up (2018)": 290.5344,
+        "Vegetation (2018)": 23.2704,
+        "Water (2018)": 1.0368,
+        "Agriculture (2018)": 73.53359999999999,
+        "Open land (2018)": 31.338
+      },
+      "Vegetation (2024)": {
+        "Built-up (2018)": 22.2372,
+        "Vegetation (2018)": 676.2492,
+        "Water (2018)": 0.7847999999999999,
+        "Agriculture (2018)": 66.8952,
+        "Open land (2018)": 61.974
+      },
+      "Water (2024)": {
+        "Built-up (2018)": 0.7847999999999999,
+        "Vegetation (2018)": 0.9396,
+        "Water (2018)": 22.1616,
+        "Agriculture (2018)": 1.9656,
+        "Open land (2018)": 0.1188
+      },
+      "Agriculture (2024)": {
+        "Built-up (2018)": 74.21039999999999,
+        "Vegetation (2018)": 89.04599999999999,
+        "Water (2018)": 2.7936,
+        "Agriculture (2018)": 554.9688,
+        "Open land (2018)": 13.4892
+      },
+      "Open land (2024)": {
+        "Built-up (2018)": 14.0256,
+        "Vegetation (2018)": 8.251199999999999,
+        "Water (2018)": 0.1728,
+        "Agriculture (2018)": 4.0608,
+        "Open land (2018)": 22.6872
+      }
+    }
+  }
+}

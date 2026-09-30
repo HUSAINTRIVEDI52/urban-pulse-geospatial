@@ -12,3 +12,7 @@ pandas
 matplotlib
 pyyaml
 pytest
+psycopg2-binary>=2.9.9
+sqlalchemy>=2.0.0
+prometheus-client>=0.20.0
+

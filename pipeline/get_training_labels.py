@@ -1,22 +1,20 @@
 """
-UrbanPulse - Training Labels Extraction Module
-Downloads and reprojects ESA WorldCover 2021 land cover raster for the Ahmedabad AOI,
-resamples it to 20m in EPSG:32643 (UTM Zone 43N), remaps raw classes into 5 standardized
-project categories (Built-up, Vegetation, Water, Agriculture, Open land), and exports
-data/ahmedabad_worldcover_labels.tif.
+UrbanPulse - ESA WorldCover Training Label Generator
+Downloads and reprojects ESA WorldCover 2021 land cover raster for any configured city AOI,
+remapping standard WorldCover classes into the 5-class project schema.
 """
 
 import argparse
+import io
 import sys
 from pathlib import Path
 from typing import Any
-
-import geopandas as gpd
 import numpy as np
 import rasterio
+from rasterio.enums import Resampling
+from rasterio.warp import calculate_default_transform, reproject
+import requests
 import yaml
-from rasterio.warp import Resampling, reproject
-from shapely.geometry import box
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -24,40 +22,40 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 
-# ESA WorldCover 2021 -> UrbanPulse 5-Class Legend Mapping
-# 1: Built-up, 2: Vegetation, 3: Water, 4: Agriculture, 5: Open land
-CLASS_MAPPING = {
-    50: (1, "Built-up"),
-    10: (2, "Vegetation (Tree cover)"),
-    20: (2, "Vegetation (Shrubland)"),
-    30: (2, "Vegetation (Grassland)"),
-    95: (2, "Vegetation (Mangroves)"),
-    80: (3, "Water (Permanent water)"),
-    90: (3, "Water (Herbaceous wetland)"),
-    40: (4, "Agriculture (Cropland)"),
-    60: (5, "Open land (Bare / sparse vegetation)"),
-    100: (5, "Open land (Moss and lichen)"),
-}
+WORLDCOVER_V200_S3_BASE = (
+    "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map"
+)
 
-PROJECT_CLASS_NAMES = {
-    1: "Built-up",
-    2: "Vegetation",
-    3: "Water",
-    4: "Agriculture",
-    5: "Open land",
+# WorldCover -> Project Schema
+# 1: Built-up (50), 2: Vegetation (10, 20, 30, 90, 95), 3: Water (80), 4: Agriculture (40), 5: Open land (60, 70)
+WORLDCOVER_REMAP = {
+    50: 1,  # Built-up
+    10: 2,  # Tree cover
+    20: 2,  # Shrubland
+    30: 2,  # Grassland
+    90: 2,  # Herbaceous wetland
+    95: 2,  # Mangroves
+    80: 3,  # Permanent water bodies
+    40: 4,  # Cropland
+    60: 5,  # Bare / sparse vegetation
+    70: 5,  # Snow and ice
 }
 
 
-def load_config(config_path: str | Path = "configs/ahmedabad.yaml") -> dict[str, Any]:
+def load_config(
+    city: str = "ahmedabad", config_path: str | Path | None = None
+) -> dict[str, Any]:
     """Loads city YAML configuration."""
-    with open(config_path, encoding="utf-8") as f:
+    cfg_file = Path(config_path) if config_path else Path(f"configs/{city.lower()}.yaml")
+    if not cfg_file.exists():
+        raise FileNotFoundError(f"Configuration file not found: {cfg_file.resolve()}")
+    with open(cfg_file, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
 def get_worldcover_tiles_for_bbox(bbox: list[float]) -> list[str]:
     """
     Determines required 3x3 degree ESA WorldCover tile identifiers for a given bbox [minx, miny, maxx, maxy].
-    WorldCover tiles are named by bottom-left coordinate in multiples of 3 degrees (e.g. N21E069).
     """
     min_lon, min_lat, max_lon, max_lat = bbox
 
@@ -79,165 +77,129 @@ def get_worldcover_tiles_for_bbox(bbox: list[float]) -> list[str]:
 
 
 def extract_worldcover_labels(
-    config_path: str | Path = "configs/ahmedabad.yaml",
+    city: str = "ahmedabad",
+    config_path: str | Path | None = None,
     target_crs: str = "EPSG:32643",
     resolution: float = 20.0,
     reference_raster_path: str | Path | None = None,
-    output_labels_path: str | Path = "data/ahmedabad_worldcover_labels.tif",
+    output_labels_path: str | Path | None = None,
 ) -> Path:
     """
-    Fetches, warps, and remaps ESA WorldCover 2021 into 20m project training labels.
+    Fetches, warps, and remaps ESA WorldCover 2021 into project training labels for a city.
     """
-    config = load_config(config_path)
+    city_key = city.lower()
+    config = load_config(city=city_key, config_path=config_path)
+    city_name = config.get("city", {}).get("name", city.capitalize())
     bbox = config["spatial"]["bbox"]
-    out_path = Path(output_labels_path)
+
+    if output_labels_path is None:
+        out_path = Path(f"data/{city_key}_worldcover_labels.tif")
+    else:
+        out_path = Path(output_labels_path)
+
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
+    if out_path.exists():
+        print(f"[*] Found existing training labels for {city_name}: {out_path}")
+        return out_path
+
     print("=" * 75)
-    print("[*] Extracting ESA WorldCover 2021 Training Labels for Ahmedabad")
+    print(f"[*] Extracting ESA WorldCover 2021 Training Labels for {city_name}")
     print(f"    - Target CRS       : {target_crs}")
     print(f"    - Resolution       : {resolution}m")
     print(f"    - Bounding Box     : {bbox}")
-    print(f"    - Output File      : {out_path.resolve()}")
     print("=" * 75)
 
-    # 1. Determine Target Raster Grid (20m, EPSG:32643)
+    tiles = get_worldcover_tiles_for_bbox(bbox)
+    print(f"[+] Identified {len(tiles)} required WorldCover tile(s): {tiles}")
+
+    tile_datasets = []
+    for tile_id in tiles:
+        tile_url = f"{WORLDCOVER_V200_S3_BASE}/ESA_WorldCover_10m_2021_v200_{tile_id}_Map.tif"
+        print(f"[+] Downloading tile {tile_id} from ESA AWS S3...")
+        try:
+            resp = requests.get(tile_url, timeout=60)
+            resp.raise_for_status()
+            mem_file = io.BytesIO(resp.content)
+            src = rasterio.open(mem_file)
+            tile_datasets.append(src)
+        except Exception as e:
+            print(f"[!] Warning: Failed to download tile {tile_id} ({e}). Trying GDAL vsicurl...")
+            src = rasterio.open(f"/vsicurl/{tile_url}")
+            tile_datasets.append(src)
+
+    if not tile_datasets:
+        raise RuntimeError("No WorldCover tiles could be loaded.")
+
     if reference_raster_path and Path(reference_raster_path).exists():
-        ref_path = Path(reference_raster_path)
-        print(f"[*] Matching grid from reference raster: {ref_path.name}")
-        with rasterio.open(ref_path) as ref_src:
-            dest_crs = ref_src.crs
-            dest_transform = ref_src.transform
-            dest_shape = ref_src.shape
+        with rasterio.open(reference_raster_path) as ref:
+            dst_crs = ref.crs
+            dst_transform = ref.transform
+            dst_width = ref.width
+            dst_height = ref.height
     else:
-        print(f"[*] Calculating {resolution}m target grid in {target_crs} from AOI bounding box...")
-        gdf_bbox = gpd.GeoDataFrame(geometry=[box(*bbox)], crs="EPSG:4326").to_crs(target_crs)
-        minx, miny, maxx, maxy = gdf_bbox.total_bounds
+        min_lon, min_lat, max_lon, max_lat = bbox
+        dst_crs = target_crs
+        dst_transform, dst_width, dst_height = calculate_default_transform(
+            "EPSG:4326", dst_crs, 1000, 1000, left=min_lon, bottom=min_lat, right=max_lon, top=max_lat
+        )
 
-        width = int(np.ceil((maxx - minx) / resolution))
-        height = int(np.ceil((maxy - miny) / resolution))
-        dest_transform = rasterio.transform.from_origin(minx, maxy, resolution, resolution)
-        dest_shape = (height, width)
-        dest_crs = rasterio.crs.CRS.from_string(target_crs)
+    destination_arr = np.zeros((dst_height, dst_width), dtype=np.uint8)
 
-    print(
-        f"[*] Target Grid Shape: {dest_shape[0]} rows x {dest_shape[1]} cols ({dest_shape[0]*dest_shape[1]:,} pixels)"
-    )
+    for src in tile_datasets:
+        temp_arr = np.zeros((dst_height, dst_width), dtype=np.uint8)
+        reproject(
+            source=rasterio.band(src, 1),
+            destination=temp_arr,
+            src_transform=src.transform,
+            src_crs=src.crs,
+            dst_transform=dst_transform,
+            dst_crs=dst_crs,
+            resampling=Resampling.nearest,
+        )
+        mask = (temp_arr > 0) & (destination_arr == 0)
+        destination_arr[mask] = temp_arr[mask]
 
-    # 2. Determine and Fetch WorldCover Tile COGs from AWS Open Data
-    tile_ids = get_worldcover_tiles_for_bbox(bbox)
-    print(f"\n[Step 1/3] Identified required ESA WorldCover 3x3 deg tiles: {tile_ids}")
+    # Remap into 5 project classes
+    remapped_arr = np.zeros_like(destination_arr, dtype=np.uint8)
+    for raw_val, proj_val in WORLDCOVER_REMAP.items():
+        remapped_arr[destination_arr == raw_val] = proj_val
 
-    warped_raw = np.zeros(dest_shape, dtype=np.uint8)
-
-    with rasterio.Env(AWS_NO_SIGN_REQUEST="YES", GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR"):
-        for tile in tile_ids:
-            tile_url = f"https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_{tile}_Map.tif"
-            print(f"    - Streaming & warping tile {tile} at {resolution}m...", end="", flush=True)
-
-            try:
-                with rasterio.open(tile_url) as tile_src:
-                    temp_dest = np.zeros(dest_shape, dtype=np.uint8)
-                    reproject(
-                        source=rasterio.band(tile_src, 1),
-                        destination=temp_dest,
-                        src_transform=tile_src.transform,
-                        src_crs=tile_src.crs,
-                        dst_transform=dest_transform,
-                        dst_crs=dest_crs,
-                        resampling=Resampling.nearest,
-                    )
-                    # Merge tiles into warped raster
-                    warped_raw = np.where(temp_dest > 0, temp_dest, warped_raw)
-                    print(" [Done]")
-            except Exception as e:
-                print(f" [Error loading {tile}: {e}]")
-
-    # 3. Remap into 5 Project Classes
-    print("\n[Step 2/3] Remapping ESA WorldCover classes into 5 target project classes...")
-    remapped = np.zeros(dest_shape, dtype=np.uint8)
-
-    for src_class, (tgt_class, desc) in CLASS_MAPPING.items():
-        mask = warped_raw == src_class
-        count = int(np.sum(mask))
-        if count > 0:
-            remapped[mask] = tgt_class
-            print(
-                f"    - Class {src_class:<3} -> Project Class {tgt_class} ({desc:<30}): {count:>10,} pixels"
-            )
-
-    # 4. Save GeoTIFF
-    print(f"\n[Step 3/3] Saving training labels GeoTIFF to: {out_path.name}...")
-    profile = {
+    # Write output
+    meta = {
         "driver": "GTiff",
-        "height": dest_shape[0],
-        "width": dest_shape[1],
-        "count": 1,
         "dtype": "uint8",
-        "crs": dest_crs,
-        "transform": dest_transform,
         "nodata": 0,
+        "width": dst_width,
+        "height": dst_height,
+        "count": 1,
+        "crs": dst_crs,
+        "transform": dst_transform,
         "compress": "lzw",
-        "tiled": True,
     }
 
-    with rasterio.open(out_path, "w", **profile) as dst:
-        dst.write(remapped, 1)
+    with rasterio.open(out_path, "w", **meta) as dst:
+        dst.write(remapped_arr, 1)
 
-    # 5. Compute Class Distribution Statistics
-    pixel_area_km2 = (resolution * resolution) / 1e6
-    valid_mask = remapped > 0
-    total_valid_pixels = int(np.sum(valid_mask))
-
-    print("\n" + "=" * 75)
-    print("[*] Training Labels Class Distribution Summary (20m, EPSG:32643)")
-    print("=" * 75)
-    print(
-        f"{'Class ID':<9} | {'Class Name':<15} | {'Pixel Count':<14} | {'Area (km^2)':<12} | {'Percentage'}"
-    )
-    print("-" * 75)
-
-    for cid in range(1, 6):
-        cname = PROJECT_CLASS_NAMES[cid]
-        p_count = int(np.sum(remapped == cid))
-        p_area = p_count * pixel_area_km2
-        p_pct = (p_count / total_valid_pixels * 100.0) if total_valid_pixels > 0 else 0.0
-        print(f"{cid:<9} | {cname:<15} | {p_count:>14,} | {p_area:>10.2f} km^2 | {p_pct:>6.2f}%")
-
-    print("-" * 75)
-    total_area = total_valid_pixels * pixel_area_km2
-    print(
-        f"{'Total':<9} | {'All Classes':<15} | {total_valid_pixels:>14,} | {total_area:>10.2f} km^2 | 100.00%"
-    )
-    print("=" * 75 + "\n")
-
+    print(f"[+] Successfully saved {city_name} training labels: {out_path.resolve()}")
     return out_path
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Extract ESA WorldCover training labels at 20m.")
-    parser.add_argument(
-        "--config", type=str, default="configs/ahmedabad.yaml", help="Path to config YAML"
-    )
-    parser.add_argument(
-        "--resolution", type=float, default=20.0, help="Target resolution in meters (default: 20.0)"
-    )
-    parser.add_argument(
-        "--crs", type=str, default="EPSG:32643", help="Target CRS (default: EPSG:32643)"
-    )
-    parser.add_argument("--ref", type=str, default=None, help="Optional reference raster path")
-    parser.add_argument(
-        "--out",
-        type=str,
-        default="data/ahmedabad_worldcover_labels.tif",
-        help="Output labels GeoTIFF",
-    )
+def main():
+    parser = argparse.ArgumentParser(description="Extract WorldCover training labels.")
+    parser.add_argument("--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)")
+    parser.add_argument("--config", type=str, default=None, help="Path to config YAML")
+    parser.add_argument("--crs", type=str, default="EPSG:32643", help="Target CRS (default: EPSG:32643)")
+    parser.add_argument("--out", type=str, default=None, help="Output GeoTIFF path")
 
     args = parser.parse_args()
     extract_worldcover_labels(
+        city=args.city,
         config_path=args.config,
         target_crs=args.crs,
-        resolution=args.resolution,
-        reference_raster_path=args.ref,
         output_labels_path=args.out,
     )
+
+
+if __name__ == "__main__":
+    main()

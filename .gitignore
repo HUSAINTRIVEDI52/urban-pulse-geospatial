@@ -13,6 +13,22 @@ __pycache__/
 # Environment variables & secrets
 .env
 .env.*
+*.secret.yaml
+infra/k8s/**/secret.yaml
+!infra/k8s/**/secret.example.yaml
+
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+
+# Models & archives
+*.pkl
+*.zip
+*.tar.gz
 
 # Data folder & large geospatial raster/vector outputs
 data/*.tif
@@ -25,6 +41,10 @@ data/raw/
 data/processed/
 data/outputs/
 
-# OS specific
+# OS & testing
 .DS_Store
 Thumbs.db
+.pytest_cache/
+.coverage
+htmlcov/
+

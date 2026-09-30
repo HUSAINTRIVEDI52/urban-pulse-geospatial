@@ -148,26 +148,26 @@ def run_all_years(
     start_year: int = 2017,
     end_year: int = 2024,
     resolution: float = 60.0,
-    model_path: str | Path = "data/rf_model_2024.pkl",
+    model_path: str | Path | None = None,
     force: bool = False,
     config_path: str | Path | None = None,
     data_dir: str | Path = "data",
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, list[int]]:
     """
     Executes annual pipeline for each year in [start_year, end_year], captures results,
     saves summary CSV, and creates a trend visualization.
     """
+    city_key = city.lower()
     data_path = Path(data_dir)
     data_path.mkdir(parents=True, exist_ok=True)
-    csv_file = data_path / f"{city.lower()}_class_areas.csv"
-    plot_file = data_path / "builtup_trend.png"
+    csv_file = data_path / f"{city_key}_class_areas.csv"
+    plot_file = data_path / f"{city_key}_builtup_trend.png"
 
     all_years = list(range(start_year, end_year + 1))
     print("\n" + "=" * 80)
     print(f" URBANPULSE MULTI-YEAR PROCESSING BATCH: {city.upper()} ({start_year} - {end_year})")
     print(f" Target Years       : {all_years}")
     print(f" Spatial Resolution : {resolution}m")
-    print(f" Classifier Model   : {Path(model_path).name}")
     print(f" Output CSV         : {csv_file.resolve()}")
     print("=" * 80 + "\n")
 
@@ -272,7 +272,8 @@ def run_all_years(
         print(" All years processed with 100% success!")
     print("=" * 80 + "\n")
 
-    return df
+    successful_years = [int(r["Year"]) for r in results_records]
+    return df, successful_years
 
 
 if __name__ == "__main__":

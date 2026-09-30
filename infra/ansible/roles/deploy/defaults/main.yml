@@ -1,0 +1,4 @@
+---
+project_remote_dir: "/opt/urbanpulse"
+k8s_overlay_dir: "{{ project_remote_dir }}/infra/k8s/overlays/local"
+deploy_timeout: 120s

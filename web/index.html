@@ -10,12 +10,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   
-  <!-- MapLibre GL JS & Compare Plugin -->
-  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
-  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-  
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Local Vendor Styles & Scripts (Offline, Docker, GitHub Pages) -->
+  <link rel="stylesheet" href="vendor/maplibre-gl.css">
+  <script src="vendor/maplibre-gl.js"></script>
+  <script src="vendor/chart.umd.js"></script>
 
   <style>
     :root {
@@ -569,20 +567,37 @@
       cursor: pointer;
     }
 
-    /* Compare Mode Swipe Curtain */
-    #compare-curtain-container {
+    /* Compare Mode Dual Map Container */
+    #compare-container {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      pointer-events: none;
-      z-index: 15;
       display: none;
+      z-index: 10;
     }
 
-    #compare-curtain-container.active {
+    #compare-container.active {
       display: block;
+    }
+
+    #map-before, #map-after {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #map-before {
+      z-index: 1;
+    }
+
+    #map-after {
+      z-index: 2;
+      clip-path: inset(0 0 0 50%);
+      -webkit-clip-path: inset(0 0 0 50%);
     }
 
     .swipe-divider {
@@ -594,9 +609,10 @@
       box-shadow: 0 0 15px var(--accent-cyan);
       cursor: ew-resize;
       pointer-events: auto;
-      z-index: 25;
+      z-index: 35;
       left: 50%;
       transform: translateX(-50%);
+      user-select: none;
     }
 
     .swipe-handle {
@@ -613,21 +629,23 @@
       display: grid;
       place-items: center;
       color: #fff;
+      cursor: ew-resize;
+      user-select: none;
     }
 
     .compare-tag {
       position: absolute;
-      top: 76px;
+      top: 80px;
       padding: 6px 14px;
       border-radius: 20px;
       font-family: var(--font-mono);
       font-size: 13px;
       font-weight: 700;
-      z-index: 22;
+      z-index: 28;
       pointer-events: none;
     }
-    .compare-tag-left { left: 24px; background: rgba(59, 130, 246, 0.85); border: 1px solid #60a5fa; }
-    .compare-tag-right { right: 24px; background: rgba(239, 68, 68, 0.85); border: 1px solid #f87171; }
+    .compare-tag-left { left: 24px; background: rgba(59, 130, 246, 0.9); border: 1px solid #60a5fa; color: #fff; }
+    .compare-tag-right { right: 24px; background: rgba(239, 68, 68, 0.9); border: 1px solid #f87171; color: #fff; }
 
     /* Compare Mode Selection Bar */
     .compare-modal {
@@ -709,9 +727,70 @@
         display: none;
       }
     }
+
+    /* Visible Error Banner */
+    #error-banner {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      width: calc(100% - 32px);
+      max-width: 650px;
+      background: rgba(220, 38, 38, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #ffffff;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    #error-banner.visible {
+      display: flex;
+    }
+
+    .error-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 700;
+    }
+
+    .error-close-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 4px;
+    }
+
+    .error-content {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
+      opacity: 0.95;
+    }
   </style>
 </head>
 <body>
+
+  <!-- Visible Error Banner -->
+  <div id="error-banner">
+    <div class="error-header">
+      <span id="error-title">⚠️ Application Notice</span>
+      <button id="error-close-btn" class="error-close-btn" title="Dismiss">&times;</button>
+    </div>
+    <div id="error-content" class="error-content"></div>
+  </div>
 
   <!-- Map Viewport -->
   <div id="map-wrapper">
@@ -729,6 +808,7 @@
       </div>
       <select id="city-select" class="city-select">
         <option value="ahmedabad">Ahmedabad, India</option>
+        <option value="pune">Pune, India</option>
       </select>
       <div class="badge-live">Satellite Analytics</div>
     </div>
@@ -759,15 +839,17 @@
       <button id="close-compare-btn" class="tool-btn" style="padding: 4px 10px; font-size: 11px;">Exit</button>
     </div>
 
-    <!-- Compare Mode Swipe Divider -->
-    <div id="compare-curtain-container">
-      <div id="compare-tag-left" class="compare-tag compare-tag-left">2018 (Left)</div>
-      <div id="compare-tag-right" class="compare-tag compare-tag-right">2024 (Right)</div>
+    <!-- Dual Map Compare Container -->
+    <div id="compare-container">
+      <div id="map-before"></div>
+      <div id="map-after"></div>
       <div id="swipe-divider" class="swipe-divider">
         <div class="swipe-handle">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
         </div>
       </div>
+      <div id="compare-tag-left" class="compare-tag compare-tag-left">2018</div>
+      <div id="compare-tag-right" class="compare-tag compare-tag-right">2024</div>
     </div>
 
     <!-- Floating Legend Card -->
@@ -902,14 +984,15 @@
 
   <!-- Application Logic -->
   <script>
-    // Configurable endpoint: Default to static relative data folder, can be set to "http://127.0.0.1:8000"
+    // Base data path (relative for offline, GitHub Pages, and Docker support)
     const DATA_BASE = "./data";
 
+    // Application State
     let currentCity = "ahmedabad";
     let metaData = null;
     let statsData = null;
-    let availableYears = [];
-    let selectedYearIndex = 0;
+    let availableYears = [2018, 2019, 2020, 2021, 2022, 2023, 2024];
+    let selectedYearIndex = 6;
     let isPlaying = false;
     let playInterval = null;
     let isChangeLayerActive = false;
@@ -918,13 +1001,54 @@
     let splitPercent = 50.0;
     let isDraggingDivider = false;
 
+    // Map instances
+    let map = null;
+    let mapLoaded = false;
+    let mapBefore = null;
+    let mapAfter = null;
+    let mapBeforeLoaded = false;
+    let mapAfterLoaded = false;
+    let syncingMaps = false;
+
+    // Charts
     let timeSeriesChart = null;
     let ringDensityChart = null;
 
-    // Initialize MapLibre GL Map with Free CartoDB / OSM Raster Basemap (No API Keys)
-    const map = new maplibreGl.Map({
-      container: 'map',
-      style: {
+    // Visible UI Error Banner Helper
+    function showError(section, message) {
+      console.error(`[UrbanPulse Error] [${section}]:`, message);
+      const banner = document.getElementById('error-banner');
+      const content = document.getElementById('error-content');
+      const title = document.getElementById('error-title');
+      if (banner && content) {
+        title.textContent = `⚠️ Error in ${section}`;
+        content.textContent = typeof message === 'object' ? (message.stack || message.message || JSON.stringify(message)) : String(message);
+        banner.classList.add('visible');
+      }
+    }
+
+    function clearError() {
+      const banner = document.getElementById('error-banner');
+      if (banner) banner.classList.remove('visible');
+    }
+
+    // Helper to verify fetch responses
+    async function fetchJsonVerified(url, desc) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status} (${res.statusText}) when fetching ${desc} from ${url}`);
+        }
+        return await res.json();
+      } catch (err) {
+        showError(`Fetch ${desc}`, err);
+        throw err;
+      }
+    }
+
+    // Basemap configuration generator
+    function getBasemapStyle() {
+      return {
         version: 8,
         sources: {
           'osm-basemap': {
@@ -947,570 +1071,947 @@
             maxzoom: 20
           }
         ]
-      },
-      center: [72.5714, 23.0225],
-      zoom: 10.5,
-      pitch: 0,
-      attributionControl: true
-    });
+      };
+    }
 
-    map.addControl(new maplibreGl.NavigationControl({ showCompass: false }), 'bottom-right');
+    // Two-way synchronization between before & after maps
+    function syncMaps(source, target) {
+      if (syncingMaps || !source || !target) return;
+      try {
+        syncingMaps = true;
+        target.jumpTo({
+          center: source.getCenter(),
+          zoom: source.getZoom(),
+          bearing: source.getBearing(),
+          pitch: source.getPitch()
+        });
+      } catch (err) {
+        console.warn("[UrbanPulse Map Sync Warning]:", err);
+      } finally {
+        syncingMaps = false;
+      }
+    }
 
-    // Fetch City Data
+    // 1. Initialize Single MapLibre GL Map
+    function initMap() {
+      try {
+        const MapLibreClass = window.maplibregl || window.maplibreGl || (typeof maplibregl !== 'undefined' ? maplibregl : null);
+        if (!MapLibreClass) {
+          throw new Error("MapLibre GL library not loaded. Check vendor/maplibre-gl.js.");
+        }
+
+        map = new MapLibreClass.Map({
+          container: 'map',
+          style: getBasemapStyle(),
+          center: [72.5714, 23.0225],
+          zoom: 10.5,
+          pitch: 0,
+          attributionControl: true
+        });
+
+        map.addControl(new MapLibreClass.NavigationControl({ showCompass: false }), 'bottom-right');
+
+        map.on('error', (e) => {
+          console.warn("[MapLibre Warning]:", e);
+        });
+
+        map.on('load', async () => {
+          mapLoaded = true;
+          try {
+            await loadCityData(currentCity);
+          } catch (err) {
+            showError("Map Load Data", err);
+          }
+        });
+
+      } catch (err) {
+        showError("Map Initialization", err);
+      }
+    }
+
+    // 2. Fetch and Load City Data
     async function loadCityData(city) {
       try {
-        const metaRes = await fetch(`${DATA_BASE}/${city}/meta.json`);
-        metaData = await metaRes.json();
-
-        const statsRes = await fetch(`${DATA_BASE}/${city}/stats.json`);
-        statsData = await statsRes.json();
+        currentCity = city;
+        metaData = await fetchJsonVerified(`${DATA_BASE}/${city}/meta.json`, `${city} metadata`);
+        statsData = await fetchJsonVerified(`${DATA_BASE}/${city}/stats.json`, `${city} statistics`);
 
         availableYears = metaData.years || [2018, 2019, 2020, 2021, 2022, 2023, 2024];
         selectedYearIndex = availableYears.length - 1;
 
         setupUI();
-        initMapLayers();
+        if (mapLoaded && map) {
+          initMapLayers();
+        }
+        if (isCompareModeActive) {
+          updateCompareMapLayers();
+        }
         initCharts();
         updateDisplay();
       } catch (err) {
-        console.error("Error loading web data:", err);
+        showError("City Data Loader", err);
       }
     }
 
-    // Set Up UI Controls
+    // 3. UI Controls Setup (Ticks, Dropdowns, Legend)
     function setupUI() {
-      // Timeline slider
-      const slider = document.getElementById('year-slider');
-      slider.max = availableYears.length - 1;
-      slider.value = selectedYearIndex;
+      try {
+        const slider = document.getElementById('year-slider');
+        if (slider) {
+          slider.max = availableYears.length - 1;
+          slider.value = selectedYearIndex;
+        }
 
-      // Render ticks
-      const ticksContainer = document.getElementById('timeline-ticks');
-      ticksContainer.innerHTML = availableYears
-        .map((yr, idx) => `<span id="tick-${idx}" class="${idx === selectedYearIndex ? 'tick-active' : ''}">${yr}</span>`)
-        .join('');
+        const ticksContainer = document.getElementById('timeline-ticks');
+        if (ticksContainer) {
+          ticksContainer.innerHTML = availableYears
+            .map((yr, idx) => `<span id="tick-${idx}" class="${idx === selectedYearIndex ? 'tick-active' : ''}">${yr}</span>`)
+            .join('');
+        }
 
-      // Setup Compare selects
-      const compA = document.getElementById('compare-year-a');
-      const compB = document.getElementById('compare-year-b');
-      compA.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === 0 ? 'selected' : ''}>${y}</option>`).join('');
-      compB.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === availableYears.length - 1 ? 'selected' : ''}>${y}</option>`).join('');
+        const compA = document.getElementById('compare-year-a');
+        const compB = document.getElementById('compare-year-b');
+        if (compA && compB) {
+          compA.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === 0 ? 'selected' : ''}>${y}</option>`).join('');
+          compB.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === availableYears.length - 1 ? 'selected' : ''}>${y}</option>`).join('');
+        }
 
-      // Render Legend
-      renderLegend();
+        renderLegend();
+      } catch (err) {
+        showError("Setup UI", err);
+      }
     }
 
     function renderLegend() {
-      const container = document.getElementById('legend-items-container');
-      const headerText = document.getElementById('legend-header-text');
+      try {
+        const container = document.getElementById('legend-items-container');
+        const headerText = document.getElementById('legend-header-text');
+        if (!container || !headerText) return;
 
-      if (isChangeLayerActive) {
-        headerText.textContent = "Urban Change (2018–2024)";
-        const changeLegend = metaData.change_legend || {
-          "veg_to_built": { "label": "Vegetation -> Built-up", "color": "#2e7d32" },
-          "agri_to_built": { "label": "Agriculture -> Built-up", "color": "#ea580c" },
-          "open_to_built": { "label": "Open land -> Built-up", "color": "#8b5cf6" },
-          "built_loss": { "label": "Built-up Loss -> Other", "color": "#0f172a" }
-        };
+        if (isChangeLayerActive) {
+          headerText.textContent = "Urban Change (2018–2024)";
+          const changeLegend = (metaData && metaData.change_legend) || {
+            "veg_to_built": { "label": "Vegetation -> Built-up", "color": "#2e7d32" },
+            "agri_to_built": { "label": "Agriculture -> Built-up", "color": "#ea580c" },
+            "open_to_built": { "label": "Open land -> Built-up", "color": "#8b5cf6" },
+            "built_loss": { "label": "Built-up Loss -> Other", "color": "#0f172a" }
+          };
 
-        container.innerHTML = Object.values(changeLegend).map(item => `
-          <div class="legend-item">
-            <div class="legend-swatch" style="background: ${item.color};"></div>
-            <span>${item.label}</span>
-          </div>
-        `).join('');
-      } else {
-        headerText.textContent = "Land Cover Classes";
-        container.innerHTML = Object.entries(metaData.classes).map(([cid, cls]) => `
-          <div class="legend-item">
-            <div class="legend-swatch" style="background: ${cls.color}; box-shadow: 0 0 6px ${cls.color}55;"></div>
-            <span>${cls.name}</span>
-          </div>
-        `).join('');
+          container.innerHTML = Object.values(changeLegend).map(item => `
+            <div class="legend-item">
+              <div class="legend-swatch" style="background: ${item.color};"></div>
+              <span>${item.label}</span>
+            </div>
+          `).join('');
+        } else {
+          headerText.textContent = "Land Cover Classes";
+          const classes = (metaData && metaData.classes) || {
+            "1": { name: "Built-up", color: "#e41a1c" },
+            "2": { name: "Vegetation", color: "#238b45" },
+            "3": { name: "Water", color: "#1f78b4" },
+            "4": { name: "Agriculture", color: "#ffd92f" },
+            "5": { name: "Open land", color: "#d2b48c" }
+          };
+          container.innerHTML = Object.entries(classes).map(([cid, cls]) => `
+            <div class="legend-item">
+              <div class="legend-swatch" style="background: ${cls.color}; box-shadow: 0 0 6px ${cls.color}55;"></div>
+              <span>${cls.name}</span>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        showError("Legend Render", err);
       }
     }
 
-    // Initialize Map Raster Layers
+    // 4. Map Layers Initialization with Ordered Bounds Quad
     function initMapLayers() {
-      const bounds = metaData.bounds; // [west, south, east, north]
-      const coordinates = [
-        [bounds[0], bounds[3]], // Top-Left (NW)
-        [bounds[2], bounds[3]], // Top-Right (NE)
-        [bounds[2], bounds[1]], // Bottom-Right (SE)
-        [bounds[0], bounds[1]]  // Bottom-Left (SW)
-      ];
+      try {
+        if (!map || !mapLoaded || !metaData || !metaData.bounds) return;
 
-      // Remove existing sources/layers if any
-      ['annual-overlay-layer', 'change-overlay-layer', 'compare-layer-a', 'compare-layer-b'].forEach(layerId => {
-        if (map.getLayer(layerId)) map.removeLayer(layerId);
-      });
-      ['annual-overlay-source', 'change-overlay-source', 'compare-source-a', 'compare-source-b'].forEach(sourceId => {
-        if (map.getSource(sourceId)) map.removeSource(sourceId);
-      });
-
-      const initialYear = availableYears[selectedYearIndex];
-
-      // 1. Annual Overlay Source & Layer
-      map.addSource('annual-overlay-source', {
-        type: 'image',
-        url: `${DATA_BASE}/${currentCity}/${initialYear}.png`,
-        coordinates: coordinates
-      });
-
-      map.addLayer({
-        id: 'annual-overlay-layer',
-        type: 'raster',
-        source: 'annual-overlay-source',
-        paint: {
-          'raster-opacity': currentOpacity,
-          'raster-resampling': 'nearest'
-        }
-      });
-
-      // 2. Change Detection Overlay Source & Layer (initially hidden)
-      map.addSource('change-overlay-source', {
-        type: 'image',
-        url: `${DATA_BASE}/${currentCity}/change_2018_2024.png`,
-        coordinates: coordinates
-      });
-
-      map.addLayer({
-        id: 'change-overlay-layer',
-        type: 'raster',
-        source: 'change-overlay-source',
-        layout: {
-          visibility: 'none'
-        },
-        paint: {
-          'raster-opacity': currentOpacity,
-          'raster-resampling': 'nearest'
-        }
-      });
-
-      // Fit map to AOI bounds
-      map.fitBounds([
-        [bounds[0], bounds[1]],
-        [bounds[2], bounds[3]]
-      ], { padding: 40 });
-    }
-
-    // Update Display on Year / State Change
-    function updateDisplay() {
-      const currentYear = availableYears[selectedYearIndex];
-      document.getElementById('year-display').textContent = currentYear;
-      document.getElementById('table-year-lbl').textContent = currentYear;
-
-      // Update slider ticks
-      document.querySelectorAll('#timeline-ticks span').forEach((el, idx) => {
-        el.className = idx === selectedYearIndex ? 'tick-active' : '';
-      });
-
-      // Update Map Overlay
-      if (!isChangeLayerActive && !isCompareModeActive && map.getSource('annual-overlay-source')) {
-        const bounds = metaData.bounds;
+        // Bounds: [min_lon, min_lat, max_lon, max_lat] -> [west, south, east, north]
+        const [west, south, east, north] = metaData.bounds;
+        
+        // Exact MapLibre image coordinate format: [[west, north], [east, north], [east, south], [west, south]]
         const coordinates = [
-          [bounds[0], bounds[3]],
-          [bounds[2], bounds[3]],
-          [bounds[2], bounds[1]],
-          [bounds[0], bounds[1]]
+          [west, north], // Top-Left (NW)
+          [east, north], // Top-Right (NE)
+          [east, south], // Bottom-Right (SE)
+          [west, south]  // Bottom-Left (SW)
         ];
-        map.getSource('annual-overlay-source').updateImage({
-          url: `${DATA_BASE}/${currentCity}/${currentYear}.png`,
+
+        // Clean up any existing raster layers & sources
+        ['annual-overlay-layer', 'change-overlay-layer'].forEach(layerId => {
+          if (map.getLayer(layerId)) map.removeLayer(layerId);
+        });
+        ['annual-overlay-source', 'change-overlay-source'].forEach(sourceId => {
+          if (map.getSource(sourceId)) map.removeSource(sourceId);
+        });
+
+        const initialYear = availableYears[selectedYearIndex];
+        const annualPngUrl = `${DATA_BASE}/${currentCity}/${initialYear}.png`;
+        const changePngUrl = `${DATA_BASE}/${currentCity}/change_2018_2024.png`;
+
+        // 1. Annual Land Cover Overlay
+        map.addSource('annual-overlay-source', {
+          type: 'image',
+          url: annualPngUrl,
           coordinates: coordinates
         });
-      }
 
-      // Update Metrics Cards
-      const metricsArr = statsData.metrics || [];
-      const curMetrics = metricsArr.find(m => m.year === currentYear) || {};
-      if (curMetrics.builtup_km2) {
-        document.getElementById('metric-builtup-val').textContent = `${curMetrics.builtup_km2.toFixed(1)} km²`;
-        document.getElementById('metric-builtup-delta').innerHTML = `<span>CAGR: ${curMetrics.cagr_pct > 0 ? '+' : ''}${curMetrics.cagr_pct.toFixed(2)}%</span>`;
-        document.getElementById('metric-entropy-val').textContent = curMetrics.shannon_entropy.toFixed(4);
-        document.getElementById('metric-core-val').textContent = `${curMetrics.core_share_pct.toFixed(1)}%`;
-        document.getElementById('metric-periph-val').textContent = `${curMetrics.periphery_share_pct.toFixed(1)}%`;
-      }
-
-      // Update Class Breakdown Table
-      const classAreasArr = statsData.class_areas || [];
-      const curAreas = classAreasArr.find(a => a.year === currentYear) || {};
-      const tbody = document.getElementById('class-table-body');
-      tbody.innerHTML = '';
-
-      if (curAreas.total_area_km2) {
-        const classMapping = [
-          { name: "Built-up", key: "built_up_km2", color: "#e41a1c" },
-          { name: "Vegetation", key: "vegetation_km2", color: "#238b45" },
-          { name: "Water", key: "water_km2", color: "#1f78b4" },
-          { name: "Agriculture", key: "agriculture_km2", color: "#ffd92f" },
-          { name: "Open land", key: "open_land_km2", color: "#d2b48c" }
-        ];
-
-        classMapping.forEach(c => {
-          const km2 = curAreas[c.key] || 0;
-          const pct = (km2 / curAreas.total_area_km2) * 100.0;
-          tbody.innerHTML += `
-            <tr>
-              <td>
-                <div class="class-pill">
-                  <span class="class-color-dot" style="background: ${c.color}; color: ${c.color};"></span>
-                  <span>${c.name}</span>
-                </div>
-              </td>
-              <td>${km2.toFixed(1)}</td>
-              <td>${pct.toFixed(1)}%</td>
-            </tr>
-          `;
+        map.addLayer({
+          id: 'annual-overlay-layer',
+          type: 'raster',
+          source: 'annual-overlay-source',
+          paint: {
+            'raster-opacity': currentOpacity,
+            'raster-resampling': 'nearest'
+          }
         });
-      }
 
-      // Update Charts
-      updateCharts(currentYear);
+        // 2. Change Detection Overlay (initially hidden)
+        map.addSource('change-overlay-source', {
+          type: 'image',
+          url: changePngUrl,
+          coordinates: coordinates
+        });
+
+        map.addLayer({
+          id: 'change-overlay-layer',
+          type: 'raster',
+          source: 'change-overlay-source',
+          layout: {
+            visibility: 'none'
+          },
+          paint: {
+            'raster-opacity': currentOpacity,
+            'raster-resampling': 'nearest'
+          }
+        });
+
+        // Center map to AOI bounds
+        map.fitBounds([
+          [west, south],
+          [east, north]
+        ], { padding: 40, duration: 800 });
+
+      } catch (err) {
+        showError("Map Layers Setup", err);
+      }
     }
 
-    // Initialize Chart.js Instances
+    // 5. Update UI and Layer Display on Year Change
+    function updateDisplay() {
+      try {
+        const currentYear = availableYears[selectedYearIndex];
+        const yearDisplay = document.getElementById('year-display');
+        const tableYearLbl = document.getElementById('table-year-lbl');
+        if (yearDisplay) yearDisplay.textContent = currentYear;
+        if (tableYearLbl) tableYearLbl.textContent = currentYear;
+
+        // Update timeline tick styling
+        document.querySelectorAll('#timeline-ticks span').forEach((el, idx) => {
+          el.className = idx === selectedYearIndex ? 'tick-active' : '';
+        });
+
+        // Update Map Image Source
+        if (map && mapLoaded && !isChangeLayerActive && !isCompareModeActive && map.getSource('annual-overlay-source')) {
+          const [west, south, east, north] = metaData.bounds;
+          const coordinates = [
+            [west, north],
+            [east, north],
+            [east, south],
+            [west, south]
+          ];
+          const annualUrl = `${DATA_BASE}/${currentCity}/${currentYear}.png`;
+          map.getSource('annual-overlay-source').updateImage({
+            url: annualUrl,
+            coordinates: coordinates
+          });
+        }
+
+        // Update Metrics Cards
+        updateMetricCards(currentYear);
+
+        // Update Class Table
+        updateClassTable(currentYear);
+
+        // Update Charts
+        updateCharts(currentYear);
+
+      } catch (err) {
+        showError("Display Update", err);
+      }
+    }
+
+    function updateMetricCards(currentYear) {
+      try {
+        if (!statsData) return;
+        const metricsArr = statsData.metrics || [];
+        const curMetrics = metricsArr.find(m => m.year === currentYear) || metricsArr[metricsArr.length - 1] || {};
+        
+        const builtupEl = document.getElementById('metric-builtup-val');
+        const deltaEl = document.getElementById('metric-builtup-delta');
+        const entropyEl = document.getElementById('metric-entropy-val');
+        const coreEl = document.getElementById('metric-core-val');
+        const periphEl = document.getElementById('metric-periph-val');
+
+        if (builtupEl && curMetrics.builtup_km2 != null) builtupEl.textContent = `${curMetrics.builtup_km2.toFixed(1)} km²`;
+        if (deltaEl && curMetrics.growth_pct != null) {
+          const growth = curMetrics.growth_pct;
+          deltaEl.innerHTML = `<span class="${growth >= 0 ? 'delta-up' : 'delta-down'}">${growth >= 0 ? '+' : ''}${growth.toFixed(1)}% YoY</span>`;
+        }
+        if (entropyEl && curMetrics.entropy != null) entropyEl.textContent = curMetrics.entropy.toFixed(4);
+        if (coreEl && curMetrics.core_share_pct != null) coreEl.textContent = `${curMetrics.core_share_pct.toFixed(1)}%`;
+        if (periphEl && curMetrics.periphery_share_pct != null) periphEl.textContent = `${curMetrics.periphery_share_pct.toFixed(1)}%`;
+      } catch (err) {
+        showError("Metrics Cards", err);
+      }
+    }
+
+    function updateClassTable(currentYear) {
+      try {
+        if (!statsData) return;
+        const classAreasArr = statsData.class_areas || [];
+        const curAreas = classAreasArr.find(a => a.year === currentYear) || classAreasArr[classAreasArr.length - 1] || {};
+        const tbody = document.getElementById('class-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        if (curAreas.total_area_km2) {
+          const classMapping = [
+            { name: "Built-up", key: "built_up_km2", color: "#e41a1c" },
+            { name: "Vegetation", key: "vegetation_km2", color: "#238b45" },
+            { name: "Water", key: "water_km2", color: "#1f78b4" },
+            { name: "Agriculture", key: "agriculture_km2", color: "#ffd92f" },
+            { name: "Open land", key: "open_land_km2", color: "#d2b48c" }
+          ];
+
+          classMapping.forEach(c => {
+            const km2 = curAreas[c.key] || 0;
+            const pct = (km2 / curAreas.total_area_km2) * 100.0;
+            tbody.innerHTML += `
+              <tr>
+                <td>
+                  <div class="class-pill">
+                    <span class="class-color-dot" style="background: ${c.color}; color: ${c.color};"></span>
+                    <span>${c.name}</span>
+                  </div>
+                </td>
+                <td>${km2.toFixed(1)}</td>
+                <td>${pct.toFixed(1)}%</td>
+              </tr>
+            `;
+          });
+        }
+      } catch (err) {
+        showError("Class Table", err);
+      }
+    }
+
+    // 6. Chart.js Setup & Updates
     function initCharts() {
-      // 1. Time Series Chart
-      const tsCtx = document.getElementById('timeSeriesChart').getContext('2d');
-      const years = (statsData.metrics || []).map(m => m.year);
-      const builtupVals = (statsData.metrics || []).map(m => m.builtup_km2);
-
-      timeSeriesChart = new Chart(tsCtx, {
-        type: 'line',
-        data: {
-          labels: years,
-          datasets: [{
-            label: 'Built-up Area (km²)',
-            data: builtupVals,
-            borderColor: '#ef4444',
-            backgroundColor: 'rgba(239, 68, 68, 0.15)',
-            borderWidth: 2.5,
-            fill: true,
-            tension: 0.35,
-            pointBackgroundColor: years.map((y, i) => i === selectedYearIndex ? '#ffffff' : '#ef4444'),
-            pointBorderColor: '#ef4444',
-            pointRadius: years.map((y, i) => i === selectedYearIndex ? 6 : 3.5),
-            pointHoverRadius: 7
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: '#0f172a',
-              titleColor: '#f8fafc',
-              bodyColor: '#cbd5e1',
-              borderColor: '#334155',
-              borderWidth: 1,
-              padding: 10
-            }
-          },
-          scales: {
-            x: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 10 } }
-            },
-            y: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 10 } }
-            }
-          }
+      try {
+        if (typeof Chart === 'undefined') {
+          console.warn("Chart.js not loaded. Skipping chart initialization.");
+          return;
         }
-      });
 
-      // 2. Ring Density Profile Chart
-      const rdCtx = document.getElementById('ringDensityChart').getContext('2d');
-      ringDensityChart = new Chart(rdCtx, {
-        type: 'bar',
-        data: {
-          labels: [],
-          datasets: [{
-            label: '% Built-up',
-            data: [],
-            backgroundColor: '#38bdf8',
-            borderRadius: 5,
-            borderSkipped: false
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: '#0f172a',
-              titleColor: '#f8fafc',
-              bodyColor: '#cbd5e1',
-              borderColor: '#334155',
-              borderWidth: 1,
-              padding: 10,
-              callbacks: {
-                label: (ctx) => `${ctx.parsed.y.toFixed(1)}% Built-up density`
+        if (timeSeriesChart) {
+          timeSeriesChart.destroy();
+          timeSeriesChart = null;
+        }
+        if (ringDensityChart) {
+          ringDensityChart.destroy();
+          ringDensityChart = null;
+        }
+
+        if (!statsData) return;
+
+        // 1. Time Series Chart
+        const tsCanvas = document.getElementById('timeSeriesChart');
+        if (tsCanvas) {
+          const tsCtx = tsCanvas.getContext('2d');
+          const years = (statsData.metrics || []).map(m => m.year);
+          const builtupVals = (statsData.metrics || []).map(m => m.builtup_km2);
+
+          timeSeriesChart = new Chart(tsCtx, {
+            type: 'line',
+            data: {
+              labels: years,
+              datasets: [{
+                label: 'Built-up Area (km²)',
+                data: builtupVals,
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.35,
+                pointBackgroundColor: years.map((y, i) => i === selectedYearIndex ? '#ffffff' : '#ef4444'),
+                pointBorderColor: '#ef4444',
+                pointRadius: years.map((y, i) => i === selectedYearIndex ? 6 : 3.5),
+                pointHoverRadius: 7
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: '#0f172a',
+                  titleColor: '#f8fafc',
+                  bodyColor: '#cbd5e1',
+                  borderColor: '#334155',
+                  borderWidth: 1,
+                  padding: 10
+                }
+              },
+              scales: {
+                x: {
+                  grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                  ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 10 } }
+                },
+                y: {
+                  grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                  ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 10 } }
+                }
               }
             }
-          },
-          scales: {
-            x: {
-              grid: { display: false },
-              ticks: { color: '#94a3b8', font: { size: 9.5 } }
+          });
+        }
+
+        // 2. Ring Density Profile Chart
+        const rdCanvas = document.getElementById('ringDensityChart');
+        if (rdCanvas) {
+          const rdCtx = rdCanvas.getContext('2d');
+          ringDensityChart = new Chart(rdCtx, {
+            type: 'bar',
+            data: {
+              labels: [],
+              datasets: [{
+                label: '% Built-up',
+                data: [],
+                backgroundColor: '#38bdf8',
+                borderRadius: 5,
+                borderSkipped: false
+              }]
             },
-            y: {
-              max: 100,
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: {
-                color: '#94a3b8',
-                font: { family: "'JetBrains Mono', monospace", size: 10 },
-                callback: (val) => `${val}%`
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: '#0f172a',
+                  titleColor: '#f8fafc',
+                  bodyColor: '#cbd5e1',
+                  borderColor: '#334155',
+                  borderWidth: 1,
+                  padding: 10,
+                  callbacks: {
+                    label: (ctx) => `${ctx.parsed.y.toFixed(1)}% Built-up density`
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  grid: { display: false },
+                  ticks: { color: '#94a3b8', font: { size: 9.5 } }
+                },
+                y: {
+                  max: 100,
+                  grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                  ticks: {
+                    color: '#94a3b8',
+                    font: { family: "'JetBrains Mono', monospace", size: 10 },
+                    callback: (val) => `${val}%`
+                  }
+                }
               }
             }
-          }
+          });
         }
-      });
+      } catch (err) {
+        showError("Charts Initialization", err);
+      }
     }
 
     function updateCharts(currentYear) {
-      if (!timeSeriesChart || !ringDensityChart) return;
+      try {
+        if (!statsData) return;
 
-      // Update active point styling on time-series chart
-      const years = (statsData.metrics || []).map(m => m.year);
-      timeSeriesChart.data.datasets[0].pointBackgroundColor = years.map((y, i) => i === selectedYearIndex ? '#ffffff' : '#ef4444');
-      timeSeriesChart.data.datasets[0].pointRadius = years.map((y, i) => i === selectedYearIndex ? 6.5 : 3.5);
-      timeSeriesChart.update();
+        if (timeSeriesChart) {
+          const years = (statsData.metrics || []).map(m => m.year);
+          timeSeriesChart.data.datasets[0].pointBackgroundColor = years.map((y, i) => i === selectedYearIndex ? '#ffffff' : '#ef4444');
+          timeSeriesChart.data.datasets[0].pointRadius = years.map((y, i) => i === selectedYearIndex ? 6.5 : 3.5);
+          timeSeriesChart.update();
+        }
 
-      // Update ring density chart
-      const ringsForYear = (statsData.rings && statsData.rings[String(currentYear)]) || [];
-      ringDensityChart.data.labels = ringsForYear.map(r => r.ring_label);
-      ringDensityChart.data.datasets[0].data = ringsForYear.map(r => r.builtup_pct);
-      ringDensityChart.update();
+        if (ringDensityChart) {
+          const ringsForYear = (statsData.rings && statsData.rings[String(currentYear)]) || [];
+          ringDensityChart.data.labels = ringsForYear.map(r => r.ring_label);
+          ringDensityChart.data.datasets[0].data = ringsForYear.map(r => r.builtup_pct);
+          ringDensityChart.update();
+        }
+      } catch (err) {
+        showError("Charts Update", err);
+      }
     }
 
-    // Timeline Slider Input Event
-    document.getElementById('year-slider').addEventListener('input', (e) => {
-      selectedYearIndex = parseInt(e.target.value, 10);
-      updateDisplay();
-    });
+    // 7. Change Layer Toggle
+    function toggleChangeLayer() {
+      try {
+        const changeBtn = document.getElementById('toggle-change-btn');
+        if (isCompareModeActive) exitCompareMode();
 
-    // Play / Pause Animation
-    const playBtn = document.getElementById('play-pause-btn');
-    const playIcon = document.getElementById('play-icon');
-    const pauseIcon = document.getElementById('pause-icon');
+        isChangeLayerActive = !isChangeLayerActive;
+        if (changeBtn) changeBtn.classList.toggle('active', isChangeLayerActive);
 
-    playBtn.addEventListener('click', () => {
-      isPlaying = !isPlaying;
-      if (isPlaying) {
-        playIcon.style.display = 'none';
-        pauseIcon.style.display = 'block';
-        playInterval = setInterval(() => {
-          selectedYearIndex = (selectedYearIndex + 1) % availableYears.length;
-          document.getElementById('year-slider').value = selectedYearIndex;
-          updateDisplay();
-        }, 1400);
-      } else {
-        playIcon.style.display = 'block';
-        pauseIcon.style.display = 'none';
-        clearInterval(playInterval);
-      }
-    });
-
-    // Opacity Slider
-    document.getElementById('opacity-slider').addEventListener('input', (e) => {
-      currentOpacity = parseFloat(e.target.value) / 100.0;
-      document.getElementById('opacity-val').textContent = `${e.target.value}%`;
-      ['annual-overlay-layer', 'change-overlay-layer', 'compare-layer-a', 'compare-layer-b'].forEach(layerId => {
-        if (map.getLayer(layerId)) {
-          map.setPaintProperty(layerId, 'raster-opacity', currentOpacity);
+        if (map && mapLoaded && map.getLayer('change-overlay-layer') && map.getLayer('annual-overlay-layer')) {
+          if (isChangeLayerActive) {
+            map.setLayoutProperty('change-overlay-layer', 'visibility', 'visible');
+            map.setLayoutProperty('annual-overlay-layer', 'visibility', 'none');
+          } else {
+            map.setLayoutProperty('change-overlay-layer', 'visibility', 'none');
+            map.setLayoutProperty('annual-overlay-layer', 'visibility', 'visible');
+          }
         }
-      });
-    });
+        renderLegend();
+      } catch (err) {
+        showError("Change Layer Toggle", err);
+      }
+    }
 
-    // Toggle Change Layer
-    const changeBtn = document.getElementById('toggle-change-btn');
-    changeBtn.addEventListener('click', () => {
-      if (isCompareModeActive) exitCompareMode();
+    // 8. Dual Map Compare Mode Implementation
+    function initCompareMaps() {
+      try {
+        const MapLibreClass = window.maplibregl || window.maplibreGl || (typeof maplibregl !== 'undefined' ? maplibregl : null);
+        if (!MapLibreClass) throw new Error("MapLibre GL library not available for compare maps");
 
-      isChangeLayerActive = !isChangeLayerActive;
-      changeBtn.classList.toggle('active', isChangeLayerActive);
+        const curCenter = map ? map.getCenter() : [72.5714, 23.0225];
+        const curZoom = map ? map.getZoom() : 10.5;
+        const curBearing = map ? map.getBearing() : 0;
+        const curPitch = map ? map.getPitch() : 0;
 
-      if (map.getLayer('change-overlay-layer') && map.getLayer('annual-overlay-layer')) {
-        if (isChangeLayerActive) {
-          map.setLayoutProperty('change-overlay-layer', 'visibility', 'visible');
-          map.setLayoutProperty('annual-overlay-layer', 'visibility', 'none');
-        } else {
-          map.setLayoutProperty('change-overlay-layer', 'visibility', 'none');
-          map.setLayoutProperty('annual-overlay-layer', 'visibility', 'visible');
+        // Map Before (Left - Bottom Container)
+        if (!mapBefore) {
+          mapBefore = new MapLibreClass.Map({
+            container: 'map-before',
+            style: getBasemapStyle(),
+            center: curCenter,
+            zoom: curZoom,
+            bearing: curBearing,
+            pitch: curPitch,
+            attributionControl: false
+          });
+
+          mapBefore.on('load', () => {
+            mapBeforeLoaded = true;
+            updateCompareMapLayers();
+          });
+
+          mapBefore.on('move', () => {
+            syncMaps(mapBefore, mapAfter);
+          });
         }
+
+        // Map After (Right - Top Clipped Container)
+        if (!mapAfter) {
+          mapAfter = new MapLibreClass.Map({
+            container: 'map-after',
+            style: getBasemapStyle(),
+            center: curCenter,
+            zoom: curZoom,
+            bearing: curBearing,
+            pitch: curPitch,
+            attributionControl: false
+          });
+
+          mapAfter.on('load', () => {
+            mapAfterLoaded = true;
+            updateCompareMapLayers();
+          });
+
+          mapAfter.on('move', () => {
+            syncMaps(mapAfter, mapBefore);
+          });
+        }
+
+      } catch (err) {
+        showError("Init Compare Maps", err);
       }
-      renderLegend();
-    });
+    }
 
-    // Compare Mode (Swipe Slider) Implementation
-    const compareBtn = document.getElementById('toggle-compare-btn');
-    const compareBar = document.getElementById('compare-bar');
-    const compareCurtain = document.getElementById('compare-curtain-container');
-    const timelineContainer = document.getElementById('timeline-container');
-    const swipeDivider = document.getElementById('swipe-divider');
+    function updateCompareMapLayers() {
+      try {
+        if (!metaData || !metaData.bounds) return;
 
-    compareBtn.addEventListener('click', () => {
-      if (!isCompareModeActive) {
-        enterCompareMode();
-      } else {
-        exitCompareMode();
+        const compA = document.getElementById('compare-year-a');
+        const compB = document.getElementById('compare-year-b');
+        const yearA = compA ? compA.value : (availableYears[0] || 2018);
+        const yearB = compB ? compB.value : (availableYears[availableYears.length - 1] || 2024);
+
+        const tagLeft = document.getElementById('compare-tag-left');
+        const tagRight = document.getElementById('compare-tag-right');
+        if (tagLeft) tagLeft.textContent = `${yearA}`;
+        if (tagRight) tagRight.textContent = `${yearB}`;
+
+        // Bounds: [west, south, east, north]
+        const [west, south, east, north] = metaData.bounds;
+        const coordinates = [
+          [west, north], // NW
+          [east, north], // NE
+          [east, south], // SE
+          [west, south]  // SW
+        ];
+
+        // 1. Update mapBefore (Left Year A)
+        if (mapBefore && mapBeforeLoaded) {
+          const urlA = `${DATA_BASE}/${currentCity}/${yearA}.png`;
+          if (mapBefore.getSource('compare-overlay-source-before')) {
+            mapBefore.getSource('compare-overlay-source-before').updateImage({
+              url: urlA,
+              coordinates: coordinates
+            });
+          } else {
+            mapBefore.addSource('compare-overlay-source-before', {
+              type: 'image',
+              url: urlA,
+              coordinates: coordinates
+            });
+            mapBefore.addLayer({
+              id: 'compare-overlay-layer-before',
+              type: 'raster',
+              source: 'compare-overlay-source-before',
+              paint: { 'raster-opacity': currentOpacity, 'raster-resampling': 'nearest' }
+            });
+          }
+        }
+
+        // 2. Update mapAfter (Right Year B)
+        if (mapAfter && mapAfterLoaded) {
+          const urlB = `${DATA_BASE}/${currentCity}/${yearB}.png`;
+          if (mapAfter.getSource('compare-overlay-source-after')) {
+            mapAfter.getSource('compare-overlay-source-after').updateImage({
+              url: urlB,
+              coordinates: coordinates
+            });
+          } else {
+            mapAfter.addSource('compare-overlay-source-after', {
+              type: 'image',
+              url: urlB,
+              coordinates: coordinates
+            });
+            mapAfter.addLayer({
+              id: 'compare-overlay-layer-after',
+              type: 'raster',
+              source: 'compare-overlay-source-after',
+              paint: { 'raster-opacity': currentOpacity, 'raster-resampling': 'nearest' }
+            });
+          }
+        }
+
+      } catch (err) {
+        showError("Update Compare Layers", err);
       }
-    });
+    }
 
-    document.getElementById('close-compare-btn').addEventListener('click', exitCompareMode);
+    function updateSwipeDivider(percent) {
+      try {
+        splitPercent = Math.max(0, Math.min(100, percent));
+        const divider = document.getElementById('swipe-divider');
+        const mapAfterEl = document.getElementById('map-after');
+        const tagLeft = document.getElementById('compare-tag-left');
+        const tagRight = document.getElementById('compare-tag-right');
+
+        if (divider) divider.style.left = `${splitPercent}%`;
+        if (mapAfterEl) {
+          mapAfterEl.style.clipPath = `inset(0 0 0 ${splitPercent}%)`;
+          mapAfterEl.style.webkitClipPath = `inset(0 0 0 ${splitPercent}%)`;
+        }
+        if (tagLeft) tagLeft.style.display = splitPercent > 12 ? 'block' : 'none';
+        if (tagRight) tagRight.style.display = splitPercent < 88 ? 'block' : 'none';
+      } catch (err) {
+        showError("Swipe Divider Update", err);
+      }
+    }
 
     function enterCompareMode() {
-      isCompareModeActive = true;
-      if (isChangeLayerActive) {
-        isChangeLayerActive = false;
-        changeBtn.classList.remove('active');
-        renderLegend();
+      try {
+        isCompareModeActive = true;
+
+        // 1. Turn off change layer if active
+        if (isChangeLayerActive) {
+          isChangeLayerActive = false;
+          const changeBtn = document.getElementById('toggle-change-btn');
+          if (changeBtn) changeBtn.classList.remove('active');
+          if (map && mapLoaded && map.getLayer('change-overlay-layer') && map.getLayer('annual-overlay-layer')) {
+            map.setLayoutProperty('change-overlay-layer', 'visibility', 'none');
+            map.setLayoutProperty('annual-overlay-layer', 'visibility', 'visible');
+          }
+          renderLegend();
+        }
+
+        // 2. Hide single-year slider and single map
+        const timelineContainer = document.getElementById('timeline-container');
+        if (timelineContainer) timelineContainer.style.display = 'none';
+
+        const singleMapEl = document.getElementById('map');
+        if (singleMapEl) singleMapEl.style.display = 'none';
+
+        // 3. Show Compare controls & dual map container
+        const compareBtn = document.getElementById('toggle-compare-btn');
+        const compareBar = document.getElementById('compare-bar');
+        const compareContainer = document.getElementById('compare-container');
+
+        if (compareBtn) compareBtn.classList.add('active');
+        if (compareBar) compareBar.classList.add('active');
+        if (compareContainer) compareContainer.classList.add('active');
+
+        // 4. Initialize dual maps
+        initCompareMaps();
+        updateSwipeDivider(splitPercent);
+
+        // 5. Trigger resize and sync position after becoming visible
+        requestAnimationFrame(() => {
+          if (mapBefore) {
+            mapBefore.resize();
+            if (map) {
+              mapBefore.jumpTo({
+                center: map.getCenter(),
+                zoom: map.getZoom(),
+                bearing: map.getBearing(),
+                pitch: map.getPitch()
+              });
+            }
+          }
+          if (mapAfter) {
+            mapAfter.resize();
+            if (map) {
+              mapAfter.jumpTo({
+                center: map.getCenter(),
+                zoom: map.getZoom(),
+                bearing: map.getBearing(),
+                pitch: map.getPitch()
+              });
+            }
+          }
+          updateCompareMapLayers();
+        });
+
+      } catch (err) {
+        showError("Enter Compare Mode", err);
       }
-
-      compareBtn.classList.add('active');
-      compareBar.classList.add('active');
-      compareCurtain.classList.add('active');
-      timelineContainer.style.opacity = '0.3';
-      timelineContainer.style.pointerEvents = 'none';
-
-      setupCompareLayers();
     }
 
     function exitCompareMode() {
-      isCompareModeActive = false;
-      compareBtn.classList.remove('active');
-      compareBar.classList.remove('active');
-      compareCurtain.classList.remove('active');
-      timelineContainer.style.opacity = '1';
-      timelineContainer.style.pointerEvents = 'auto';
+      try {
+        isCompareModeActive = false;
 
-      // Restore single map layer
-      if (map.getLayer('annual-overlay-layer')) {
-        map.setLayoutProperty('annual-overlay-layer', 'visibility', 'visible');
-      }
-      ['compare-layer-a', 'compare-layer-b'].forEach(l => {
-        if (map.getLayer(l)) map.removeLayer(l);
-      });
-      ['compare-source-a', 'compare-source-b'].forEach(s => {
-        if (map.getSource(s)) map.removeSource(s);
-      });
-      updateDisplay();
-    }
+        const compareBtn = document.getElementById('toggle-compare-btn');
+        const compareBar = document.getElementById('compare-bar');
+        const compareContainer = document.getElementById('compare-container');
+        const timelineContainer = document.getElementById('timeline-container');
+        const singleMapEl = document.getElementById('map');
 
-    function setupCompareLayers() {
-      const yearA = document.getElementById('compare-year-a').value;
-      const yearB = document.getElementById('compare-year-b').value;
+        if (compareBtn) compareBtn.classList.remove('active');
+        if (compareBar) compareBar.classList.remove('active');
+        if (compareContainer) compareContainer.classList.remove('active');
+        if (timelineContainer) timelineContainer.style.display = 'flex';
+        if (singleMapEl) singleMapEl.style.display = 'block';
 
-      document.getElementById('compare-tag-left').textContent = `${yearA} (Left)`;
-      document.getElementById('compare-tag-right').textContent = `${yearB} (Right)`;
+        // Sync view back to main single map and resize
+        if (map && mapBefore) {
+          map.resize();
+          map.jumpTo({
+            center: mapBefore.getCenter(),
+            zoom: mapBefore.getZoom(),
+            bearing: mapBefore.getBearing(),
+            pitch: mapBefore.getPitch()
+          });
+        }
 
-      if (map.getLayer('annual-overlay-layer')) {
-        map.setLayoutProperty('annual-overlay-layer', 'visibility', 'none');
-      }
-
-      const bounds = metaData.bounds;
-      const coordinates = [
-        [bounds[0], bounds[3]],
-        [bounds[2], bounds[3]],
-        [bounds[2], bounds[1]],
-        [bounds[0], bounds[1]]
-      ];
-
-      // Remove existing compare layers
-      ['compare-layer-a', 'compare-layer-b'].forEach(l => {
-        if (map.getLayer(l)) map.removeLayer(l);
-      });
-      ['compare-source-a', 'compare-source-b'].forEach(s => {
-        if (map.getSource(s)) map.removeSource(s);
-      });
-
-      // Layer B (Right - Base)
-      map.addSource('compare-source-b', {
-        type: 'image',
-        url: `${DATA_BASE}/${currentCity}/${yearB}.png`,
-        coordinates: coordinates
-      });
-      map.addLayer({
-        id: 'compare-layer-b',
-        type: 'raster',
-        source: 'compare-source-b',
-        paint: { 'raster-opacity': currentOpacity, 'raster-resampling': 'nearest' }
-      });
-
-      // Layer A (Left - Clipped)
-      map.addSource('compare-source-a', {
-        type: 'image',
-        url: `${DATA_BASE}/${currentCity}/${yearA}.png`,
-        coordinates: coordinates
-      });
-      map.addLayer({
-        id: 'compare-layer-a',
-        type: 'raster',
-        source: 'compare-source-a',
-        paint: { 'raster-opacity': currentOpacity, 'raster-resampling': 'nearest' }
-      });
-
-      updateSwipeClip();
-    }
-
-    function updateSwipeClip() {
-      swipeDivider.style.left = `${splitPercent}%`;
-      // Clip Year A layer to left side of split using CSS clip on container canvas or layer fade
-      const mapCanvas = map.getCanvas();
-      if (isCompareModeActive) {
-        // Update tags
-        document.getElementById('compare-tag-left').style.display = splitPercent > 15 ? 'block' : 'none';
-        document.getElementById('compare-tag-right').style.display = splitPercent < 85 ? 'block' : 'none';
+        updateDisplay();
+      } catch (err) {
+        showError("Exit Compare Mode", err);
       }
     }
 
-    // Draggable Swipe Divider
-    swipeDivider.addEventListener('mousedown', () => { isDraggingDivider = true; });
-    window.addEventListener('mouseup', () => { isDraggingDivider = false; });
-    window.addEventListener('mousemove', (e) => {
-      if (!isDraggingDivider) return;
-      const wrapperRect = document.getElementById('map-wrapper').getBoundingClientRect();
-      const x = e.clientX - wrapperRect.left;
-      splitPercent = Math.max(5, Math.min(95, (x / wrapperRect.width) * 100));
-      updateSwipeClip();
-    });
+    function recenterAOI() {
+      try {
+        if (!metaData || !metaData.bounds) return;
+        const [west, south, east, north] = metaData.bounds;
+        const boundsQuad = [[west, south], [east, north]];
 
-    // Touch support for swipe divider
-    swipeDivider.addEventListener('touchstart', () => { isDraggingDivider = true; });
-    window.addEventListener('touchend', () => { isDraggingDivider = false; });
-    window.addEventListener('touchmove', (e) => {
-      if (!isDraggingDivider || !e.touches[0]) return;
-      const wrapperRect = document.getElementById('map-wrapper').getBoundingClientRect();
-      const x = e.touches[0].clientX - wrapperRect.left;
-      splitPercent = Math.max(5, Math.min(95, (x / wrapperRect.width) * 100));
-      updateSwipeClip();
-    });
-
-    document.getElementById('compare-year-a').addEventListener('change', setupCompareLayers);
-    document.getElementById('compare-year-b').addEventListener('change', setupCompareLayers);
-
-    // Recenter AOI Button
-    document.getElementById('recenter-btn').addEventListener('click', () => {
-      if (metaData && metaData.bounds) {
-        map.fitBounds([
-          [metaData.bounds[0], metaData.bounds[1]],
-          [metaData.bounds[2], metaData.bounds[3]]
-        ], { padding: 40, duration: 1000 });
+        if (isCompareModeActive) {
+          if (mapBefore) mapBefore.fitBounds(boundsQuad, { padding: 40, duration: 1000 });
+          if (mapAfter) mapAfter.fitBounds(boundsQuad, { padding: 40, duration: 1000 });
+        } else if (map) {
+          map.fitBounds(boundsQuad, { padding: 40, duration: 1000 });
+        }
+      } catch (err) {
+        showError("Recenter AOI", err);
       }
-    });
+    }
 
-    // Mobile Drawer Toggle
-    document.getElementById('drawer-toggle').addEventListener('click', () => {
-      document.getElementById('sidebar').classList.toggle('open');
-    });
+    // 9. Attach UI Controls Event Listeners (Independent initialization)
+    function initControls() {
+      try {
+        // Error banner close button
+        const errorCloseBtn = document.getElementById('error-close-btn');
+        if (errorCloseBtn) {
+          errorCloseBtn.addEventListener('click', clearError);
+        }
 
-    // Map Load Trigger
-    map.on('load', () => {
-      loadCityData(currentCity);
-    });
+        // Timeline Slider
+        const slider = document.getElementById('year-slider');
+        if (slider) {
+          slider.addEventListener('input', (e) => {
+            selectedYearIndex = parseInt(e.target.value, 10);
+            updateDisplay();
+          });
+        }
+
+        // Play / Pause Animation Button
+        const playBtn = document.getElementById('play-pause-btn');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+
+        if (playBtn) {
+          playBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+              if (playIcon) playIcon.style.display = 'none';
+              if (pauseIcon) pauseIcon.style.display = 'block';
+              playInterval = setInterval(() => {
+                selectedYearIndex = (selectedYearIndex + 1) % availableYears.length;
+                if (slider) slider.value = selectedYearIndex;
+                updateDisplay();
+              }, 1400);
+            } else {
+              if (playIcon) playIcon.style.display = 'block';
+              if (pauseIcon) pauseIcon.style.display = 'none';
+              if (playInterval) clearInterval(playInterval);
+            }
+          });
+        }
+
+        // Opacity Slider
+        const opacitySlider = document.getElementById('opacity-slider');
+        const opacityVal = document.getElementById('opacity-val');
+        if (opacitySlider) {
+          opacitySlider.addEventListener('input', (e) => {
+            currentOpacity = parseFloat(e.target.value) / 100.0;
+            if (opacityVal) opacityVal.textContent = `${e.target.value}%`;
+            
+            // Update single map layers
+            if (map && mapLoaded) {
+              ['annual-overlay-layer', 'change-overlay-layer'].forEach(layerId => {
+                if (map.getLayer(layerId)) {
+                  map.setPaintProperty(layerId, 'raster-opacity', currentOpacity);
+                }
+              });
+            }
+            // Update compare maps layers
+            if (mapBefore && mapBeforeLoaded && mapBefore.getLayer('compare-overlay-layer-before')) {
+              mapBefore.setPaintProperty('compare-overlay-layer-before', 'raster-opacity', currentOpacity);
+            }
+            if (mapAfter && mapAfterLoaded && mapAfter.getLayer('compare-overlay-layer-after')) {
+              mapAfter.setPaintProperty('compare-overlay-layer-after', 'raster-opacity', currentOpacity);
+            }
+          });
+        }
+
+        // Change Layer Toggle Button
+        const changeBtn = document.getElementById('toggle-change-btn');
+        if (changeBtn) {
+          changeBtn.addEventListener('click', toggleChangeLayer);
+        }
+
+        // Compare Mode Toggle Button & Close
+        const compareBtn = document.getElementById('toggle-compare-btn');
+        if (compareBtn) {
+          compareBtn.addEventListener('click', () => {
+            if (!isCompareModeActive) enterCompareMode();
+            else exitCompareMode();
+          });
+        }
+
+        const closeCompBtn = document.getElementById('close-compare-btn');
+        if (closeCompBtn) {
+          closeCompBtn.addEventListener('click', exitCompareMode);
+        }
+
+        // Compare Year Selectors
+        const compA = document.getElementById('compare-year-a');
+        const compB = document.getElementById('compare-year-b');
+        if (compA) compA.addEventListener('change', updateCompareMapLayers);
+        if (compB) compB.addEventListener('change', updateCompareMapLayers);
+
+        // Swipe Divider Draggable Handling (Mouse, Touch, and Pointer)
+        const swipeDivider = document.getElementById('swipe-divider');
+        if (swipeDivider) {
+          function handleDrag(clientX) {
+            const wrapper = document.getElementById('map-wrapper');
+            if (!wrapper) return;
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const x = clientX - wrapperRect.left;
+            const pct = (x / wrapperRect.width) * 100;
+            updateSwipeDivider(pct);
+          }
+
+          swipeDivider.addEventListener('mousedown', (e) => {
+            isDraggingDivider = true;
+            e.preventDefault();
+          });
+          window.addEventListener('mouseup', () => { isDraggingDivider = false; });
+          window.addEventListener('mousemove', (e) => {
+            if (isDraggingDivider) handleDrag(e.clientX);
+          });
+
+          swipeDivider.addEventListener('touchstart', () => {
+            isDraggingDivider = true;
+          }, { passive: true });
+          window.addEventListener('touchend', () => { isDraggingDivider = false; });
+          window.addEventListener('touchmove', (e) => {
+            if (isDraggingDivider && e.touches && e.touches[0]) {
+              handleDrag(e.touches[0].clientX);
+            }
+          }, { passive: true });
+        }
+
+        // Recenter AOI Button
+        const recenterBtn = document.getElementById('recenter-btn');
+        if (recenterBtn) {
+          recenterBtn.addEventListener('click', recenterAOI);
+        }
+
+        // City Selector Dropdown
+        const citySelect = document.getElementById('city-select');
+        if (citySelect) {
+          citySelect.addEventListener('change', (e) => {
+            loadCityData(e.target.value);
+          });
+        }
+
+        // Mobile Drawer Toggle
+        const drawerToggle = document.getElementById('drawer-toggle');
+        const sidebar = document.getElementById('sidebar');
+        if (drawerToggle && sidebar) {
+          drawerToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+          });
+        }
+
+      } catch (err) {
+        showError("Init Controls", err);
+      }
+    }
+
+    // Initialize application immediately
+    initControls();
+    initMap();
   </script>
 </body>
 </html>

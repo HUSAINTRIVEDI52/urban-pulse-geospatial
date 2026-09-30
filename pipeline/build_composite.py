@@ -12,6 +12,7 @@ from typing import Any
 
 import numpy as np
 import rasterio
+import rioxarray  # noqa: F401 - registers .rio accessor on xarray DataArray
 import stackstac
 import yaml
 from dask.diagnostics import ProgressBar
@@ -136,8 +137,32 @@ def build_composite(
         items = list(search.items())
 
     if not items:
+        # Fallback to broader seasonal window (Jan to May)
+        alt_range = f"{year:04d}-01-01/{year:04d}-05-31"
+        print(f"[*] Trying broader seasonal date range ({alt_range}) with cloud < 30%...")
+        search = client.search(
+            collections=[primary_collection],
+            bbox=bbox,
+            datetime=alt_range,
+            query={"eo:cloud_cover": {"lt": 30.0}},
+        )
+        items = list(search.items())
+
+    if not items:
+        # Fallback to entire year
+        full_year_range = f"{year:04d}-01-01/{year:04d}-12-31"
+        print(f"[*] Searching full year ({full_year_range}) with cloud < 35%...")
+        search = client.search(
+            collections=[primary_collection],
+            bbox=bbox,
+            datetime=full_year_range,
+            query={"eo:cloud_cover": {"lt": 35.0}},
+        )
+        items = list(search.items())
+
+    if not items:
         raise RuntimeError(
-            f"No Sentinel-2 scenes found for {city_name} in {year} with cloud < {max_cloud_cover+15}%."
+            f"No Sentinel-2 scenes found for {city_name} in {year} across all seasonal windows."
         )
 
     # Group scenes by intersecting MGRS tile

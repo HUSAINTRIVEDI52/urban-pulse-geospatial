@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: urbanpulse-data-pvc
+  namespace: urbanpulse
+  labels:
+    app.kubernetes.io/name: urbanpulse
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi

@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+secretGenerator:
+  - name: urbanpulse-db-secret
+    behavior: create
+    literals:
+      - POSTGRES_DB=urbanpulse
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/urbanpulse
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+images:
+  - name: urbanpulse-api
+    newName: urbanpulse-api
+    newTag: latest
+  - name: urbanpulse-web
+    newName: urbanpulse-web
+    newTag: latest
+  - name: urbanpulse-pipeline
+    newName: urbanpulse-pipeline
+    newTag: latest

@@ -1,0 +1,6 @@
+---
+k3s_version: ""  # Empty string defaults to latest stable
+k3s_install_args: >-
+  --write-kubeconfig-mode 644
+  --tls-san {{ ansible_host | default('127.0.0.1') }}
+k3s_user: "{{ deploy_user | default('urbanpulse') }}"
