@@ -461,6 +461,7 @@
       border-radius: 12px;
       background: var(--bg-surface);
       backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
       border: 1px solid var(--border-subtle);
       color: var(--text-primary);
       font-family: var(--font-main);
@@ -497,6 +498,7 @@
       flex-direction: column;
       gap: 10px;
       min-width: 200px;
+      transition: all 0.25s ease;
     }
 
     .legend-title {
@@ -508,6 +510,20 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .legend-toggle-icon {
+      transition: transform 0.2s ease;
+    }
+
+    .legend-card.collapsed .legend-body {
+      display: none;
+    }
+
+    .legend-card.collapsed .legend-toggle-icon {
+      transform: rotate(-90deg);
     }
 
     .legend-items {
@@ -693,38 +709,182 @@
       cursor: pointer;
     }
 
-    /* Responsive Mobile Layout */
-    @media (max-width: 900px) {
+    .sheet-handle-bar {
+      display: none;
+      width: 100%;
+      padding: 8px 0 2px 0;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .sheet-handle {
+      width: 42px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+    }
+
+    .sidebar-close-btn {
+      display: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 16px;
+      width: 28px;
+      height: 28px;
+      line-height: 1;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Responsive Mobile Layout for Screens Under 768px */
+    @media (max-width: 768px) {
       body {
         flex-direction: column;
       }
 
+      /* Stack header: logo and city dropdown on one row, badge hidden */
+      .top-nav {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        width: calc(100% - 20px);
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        box-sizing: border-box;
+      }
+
+      .badge-live {
+        display: none !important;
+      }
+
+      .brand-title {
+        font-size: 14px;
+      }
+
+      .city-select {
+        font-size: 12px;
+        padding: 5px 8px;
+      }
+
+      /* Collapse Change Layer, Compare Mode, Recenter AOI into icon-only column top-right below header */
+      .map-tools {
+        top: 68px;
+        right: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 25;
+      }
+
+      .tool-btn {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+      }
+
+      .tool-btn .btn-text {
+        display: none !important;
+      }
+
+      /* Year slider labels: show only the first, last and every second year */
+      .timeline-ticks span {
+        display: none;
+      }
+      .timeline-ticks span:first-child,
+      .timeline-ticks span:last-child,
+      .timeline-ticks span:nth-child(odd) {
+        display: inline-block;
+      }
+
+      .timeline-bar {
+        width: calc(100% - 20px);
+        bottom: 76px;
+        left: 50%;
+        padding: 10px 14px;
+      }
+
+      .year-display {
+        font-size: 20px;
+        min-width: 55px;
+      }
+
+      /* Bottom sheet dashboard */
       #sidebar {
         position: fixed;
         bottom: 0;
         left: 0;
+        right: 0;
         width: 100%;
-        height: 65vh;
+        max-height: 70vh;
+        height: 70vh;
         transform: translateY(100%);
-        border-radius: 24px 24px 0 0;
+        border-radius: 20px 20px 0 0;
+        border-left: none;
+        border-top: 1px solid var(--border-subtle);
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7);
+        z-index: 60;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
       }
 
       #sidebar.open {
         transform: translateY(0);
       }
 
+      .sheet-handle-bar {
+        display: flex;
+      }
+
+      .sidebar-close-btn {
+        display: flex;
+      }
+
       .drawer-toggle-btn {
         display: grid;
         place-items: center;
+        bottom: 18px;
+        right: 18px;
+        z-index: 45;
       }
 
-      .timeline-bar {
-        width: calc(100% - 32px);
-        bottom: 80px;
-      }
-
+      /* Legend collapsed by default on mobile */
       .legend-card {
-        display: none;
+        bottom: 76px;
+        left: 10px;
+        padding: 8px 12px;
+        min-width: auto;
+        cursor: pointer;
+      }
+
+      /* Compare Mode on Mobile */
+      .compare-modal {
+        top: 68px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 6px 10px;
+        gap: 6px;
+        font-size: 11px;
+        max-width: calc(100% - 70px);
+      }
+
+      .compare-select {
+        padding: 4px 6px;
+        font-size: 11px;
+      }
+
+      .compare-tag {
+        top: 115px;
+        padding: 4px 8px;
+        font-size: 11px;
       }
     }
 
@@ -739,6 +899,7 @@
       max-width: 650px;
       background: rgba(220, 38, 38, 0.95);
       backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.25);
       border-radius: 12px;
       padding: 12px 16px;
@@ -815,17 +976,17 @@
 
     <!-- Map Tools Toolbar -->
     <div class="map-tools">
-      <button id="toggle-change-btn" class="tool-btn">
+      <button id="toggle-change-btn" class="tool-btn" title="Change Layer (2018–2024)">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        Change Layer (2018–2024)
+        <span class="btn-text">Change Layer (2018–2024)</span>
       </button>
-      <button id="toggle-compare-btn" class="tool-btn">
+      <button id="toggle-compare-btn" class="tool-btn" title="Compare Mode">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        Compare Mode
+        <span class="btn-text">Compare Mode</span>
       </button>
-      <button id="recenter-btn" class="tool-btn">
+      <button id="recenter-btn" class="tool-btn" title="Recenter AOI">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
-        Recenter AOI
+        <span class="btn-text">Recenter AOI</span>
       </button>
     </div>
 
@@ -854,14 +1015,17 @@
 
     <!-- Floating Legend Card -->
     <div id="legend-card" class="legend-card glass-panel">
-      <div class="legend-title">
+      <div id="legend-header" class="legend-title" title="Toggle Legend">
         <span id="legend-header-text">Land Cover Classes</span>
+        <svg id="legend-toggle-icon" class="legend-toggle-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
       </div>
-      <div id="legend-items-container" class="legend-items"></div>
-      <div class="opacity-control">
-        <span class="opacity-label">Opacity</span>
-        <input type="range" id="opacity-slider" class="opacity-slider" min="0" max="100" value="90">
-        <span id="opacity-val" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary);">90%</span>
+      <div id="legend-body" class="legend-body">
+        <div id="legend-items-container" class="legend-items"></div>
+        <div class="opacity-control">
+          <span class="opacity-label">Opacity</span>
+          <input type="range" id="opacity-slider" class="opacity-slider" min="0" max="100" value="90">
+          <span id="opacity-val" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary);">90%</span>
+        </div>
       </div>
     </div>
 
@@ -881,19 +1045,25 @@
     </div>
 
     <!-- Mobile Drawer Toggle Button -->
-    <button id="drawer-toggle" class="drawer-toggle-btn">
+    <button id="drawer-toggle" class="drawer-toggle-btn" title="Toggle Analytics Dashboard">
       <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
   </div>
 
-  <!-- Analytics & Sprawl Sidebar -->
+  <!-- Analytics & Sprawl Sidebar (Bottom sheet on mobile) -->
   <aside id="sidebar">
+    <div id="sheet-handle-bar" class="sheet-handle-bar" title="Swipe or click to close">
+      <div class="sheet-handle"></div>
+    </div>
     <div class="sidebar-header">
       <div class="sidebar-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
         Urban Analytics Dashboard
       </div>
-      <span id="aoi-meta-badge" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">45x45 km</span>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span id="aoi-meta-badge" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">45x45 km</span>
+        <button id="close-sidebar-btn" class="sidebar-close-btn" title="Close Dashboard">&times;</button>
+      </div>
     </div>
 
     <div class="sidebar-content">
@@ -1046,7 +1216,7 @@
       }
     }
 
-    // Basemap configuration generator
+    // Basemap configuration generator (OpenStreetMap Raster Source)
     function getBasemapStyle() {
       return {
         version: 8,
@@ -1054,12 +1224,11 @@
           'osm-basemap': {
             type: 'raster',
             tiles: [
-              'https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png',
-              'https://b.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png',
-              'https://c.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png'
+              'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
             ],
             tileSize: 256,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            attribution: '© OpenStreetMap contributors',
+            maxzoom: 19
           }
         },
         layers: [
@@ -1068,7 +1237,7 @@
             type: 'raster',
             source: 'osm-basemap',
             minzoom: 0,
-            maxzoom: 20
+            maxzoom: 19
           }
         ]
       };
@@ -1356,14 +1525,25 @@
         const coreEl = document.getElementById('metric-core-val');
         const periphEl = document.getElementById('metric-periph-val');
 
-        if (builtupEl && curMetrics.builtup_km2 != null) builtupEl.textContent = `${curMetrics.builtup_km2.toFixed(1)} km²`;
-        if (deltaEl && curMetrics.growth_pct != null) {
-          const growth = curMetrics.growth_pct;
-          deltaEl.innerHTML = `<span class="${growth >= 0 ? 'delta-up' : 'delta-down'}">${growth >= 0 ? '+' : ''}${growth.toFixed(1)}% YoY</span>`;
+        if (builtupEl && curMetrics.builtup_km2 != null) {
+          builtupEl.textContent = `${curMetrics.builtup_km2.toFixed(1)} km²`;
         }
-        if (entropyEl && curMetrics.entropy != null) entropyEl.textContent = curMetrics.entropy.toFixed(4);
-        if (coreEl && curMetrics.core_share_pct != null) coreEl.textContent = `${curMetrics.core_share_pct.toFixed(1)}%`;
-        if (periphEl && curMetrics.periphery_share_pct != null) periphEl.textContent = `${curMetrics.periphery_share_pct.toFixed(1)}%`;
+        
+        const growthVal = curMetrics.annual_growth_pct ?? curMetrics.growth_pct;
+        if (deltaEl && growthVal != null) {
+          deltaEl.innerHTML = `<span class="${growthVal >= 0 ? 'delta-up' : 'delta-down'}">${growthVal >= 0 ? '+' : ''}${growthVal.toFixed(1)}% YoY</span>`;
+        }
+        
+        const entropyVal = curMetrics.shannon_entropy ?? curMetrics.entropy;
+        if (entropyEl && entropyVal != null) {
+          entropyEl.textContent = Number(entropyVal).toFixed(4);
+        }
+        if (coreEl && curMetrics.core_share_pct != null) {
+          coreEl.textContent = `${curMetrics.core_share_pct.toFixed(1)}%`;
+        }
+        if (periphEl && curMetrics.periphery_share_pct != null) {
+          periphEl.textContent = `${curMetrics.periphery_share_pct.toFixed(1)}%`;
+        }
       } catch (err) {
         showError("Metrics Cards", err);
       }
@@ -1995,12 +2175,31 @@
           });
         }
 
-        // Mobile Drawer Toggle
-        const drawerToggle = document.getElementById('drawer-toggle');
-        const sidebar = document.getElementById('sidebar');
-        if (drawerToggle && sidebar) {
-          drawerToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
+        // Legend Card Toggle Header
+        const legendCard = document.getElementById('legend-card');
+        const legendHeader = document.getElementById('legend-header');
+        if (legendCard) {
+          if (window.innerWidth <= 768) {
+            legendCard.classList.add('collapsed');
+          }
+          if (legendHeader) {
+            legendHeader.addEventListener('click', () => {
+              legendCard.classList.toggle('collapsed');
+            });
+          }
+        }
+
+        // Close Mobile Sidebar Button & Sheet Handle
+        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+        const sheetHandleBar = document.getElementById('sheet-handle-bar');
+        if (closeSidebarBtn && sidebar) {
+          closeSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+          });
+        }
+        if (sheetHandleBar && sidebar) {
+          sheetHandleBar.addEventListener('click', () => {
+            sidebar.classList.remove('open');
           });
         }
 
