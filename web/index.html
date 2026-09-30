@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>UrbanPulse - Satellite Urban Sprawl & Land Cover Analytics</title>
   
   <!-- Modern Typography -->
@@ -45,13 +45,15 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    body {
+    html, body {
       font-family: var(--font-main);
       background-color: var(--bg-base);
       color: var(--text-primary);
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       overflow: hidden;
+      overscroll-behavior: none;
       display: flex;
     }
 
@@ -59,14 +61,16 @@
     #map-wrapper {
       position: relative;
       flex: 1;
-      height: 100%;
+      height: 100vh;
+      height: 100dvh;
       background: #0b1120;
       overflow: hidden;
     }
 
     #map {
       width: 100%;
-      height: 100%;
+      height: 100vh;
+      height: 100dvh;
     }
 
     /* Glass Effect Utilities */
@@ -82,7 +86,7 @@
     /* Top App Navigation Bar */
     .top-nav {
       position: absolute;
-      top: 16px;
+      top: calc(16px + env(safe-area-inset-top, 0px));
       left: 16px;
       z-index: 20;
       padding: 10px 18px;
@@ -175,8 +179,10 @@
     #sidebar {
       width: 440px;
       height: 100vh;
+      height: 100dvh;
       background: var(--bg-surface);
       backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
       border-left: 1px solid var(--border-subtle);
       display: flex;
       flex-direction: column;
@@ -349,7 +355,7 @@
     /* Floating Bottom Timeline Bar */
     .timeline-bar {
       position: absolute;
-      bottom: 24px;
+      bottom: calc(24px + env(safe-area-inset-bottom, 0px));
       left: 50%;
       transform: translateX(-50%);
       z-index: 20;
@@ -448,7 +454,7 @@
     /* Floating Map Toolbar Controls */
     .map-tools {
       position: absolute;
-      top: 16px;
+      top: calc(16px + env(safe-area-inset-top, 0px));
       right: 16px;
       z-index: 20;
       display: flex;
@@ -490,7 +496,7 @@
     /* Floating Legend */
     .legend-card {
       position: absolute;
-      bottom: 24px;
+      bottom: calc(24px + env(safe-area-inset-bottom, 0px));
       left: 24px;
       z-index: 20;
       padding: 14px 18px;
@@ -589,7 +595,8 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 100%;
+      height: 100vh;
+      height: 100dvh;
       display: none;
       z-index: 10;
     }
@@ -603,7 +610,8 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 100%;
+      height: 100vh;
+      height: 100dvh;
     }
 
     #map-before {
@@ -651,7 +659,7 @@
 
     .compare-tag {
       position: absolute;
-      top: 80px;
+      top: calc(80px + env(safe-area-inset-top, 0px));
       padding: 6px 14px;
       border-radius: 20px;
       font-family: var(--font-mono);
@@ -666,7 +674,7 @@
     /* Compare Mode Selection Bar */
     .compare-modal {
       position: absolute;
-      top: 80px;
+      top: calc(80px + env(safe-area-inset-top, 0px));
       left: 50%;
       transform: translateX(-50%);
       z-index: 25;
@@ -696,7 +704,7 @@
     .drawer-toggle-btn {
       display: none;
       position: absolute;
-      bottom: 24px;
+      bottom: calc(24px + env(safe-area-inset-bottom, 0px));
       right: 24px;
       z-index: 40;
       width: 48px;
@@ -747,7 +755,7 @@
 
       /* Stack header: logo and city dropdown on one row, badge hidden */
       .top-nav {
-        top: 10px;
+        top: calc(10px + env(safe-area-inset-top, 0px));
         left: 10px;
         right: 10px;
         width: calc(100% - 20px);
@@ -774,7 +782,7 @@
 
       /* Collapse Change Layer, Compare Mode, Recenter AOI into icon-only column top-right below header */
       .map-tools {
-        top: 68px;
+        top: calc(68px + env(safe-area-inset-top, 0px));
         right: 10px;
         display: flex;
         flex-direction: column;
@@ -806,9 +814,10 @@
         display: inline-block;
       }
 
+      /* Extra 12px bottom clearance so slider panel clears Safari bottom toolbar */
       .timeline-bar {
         width: calc(100% - 20px);
-        bottom: 76px;
+        bottom: calc(88px + env(safe-area-inset-bottom, 0px));
         left: 50%;
         padding: 10px 14px;
       }
@@ -826,7 +835,9 @@
         right: 0;
         width: 100%;
         max-height: 70vh;
+        max-height: 70dvh;
         height: 70vh;
+        height: 70dvh;
         transform: translateY(100%);
         border-radius: 20px 20px 0 0;
         border-left: none;
@@ -851,14 +862,14 @@
       .drawer-toggle-btn {
         display: grid;
         place-items: center;
-        bottom: 18px;
+        bottom: calc(30px + env(safe-area-inset-bottom, 0px));
         right: 18px;
         z-index: 45;
       }
 
-      /* Legend collapsed by default on mobile */
+      /* Legend collapsed by default on mobile with extra bottom toolbar margin */
       .legend-card {
-        bottom: 76px;
+        bottom: calc(88px + env(safe-area-inset-bottom, 0px));
         left: 10px;
         padding: 8px 12px;
         min-width: auto;
@@ -867,7 +878,7 @@
 
       /* Compare Mode on Mobile */
       .compare-modal {
-        top: 68px;
+        top: calc(68px + env(safe-area-inset-top, 0px));
         left: 50%;
         transform: translateX(-50%);
         padding: 6px 10px;
@@ -882,7 +893,7 @@
       }
 
       .compare-tag {
-        top: 115px;
+        top: calc(115px + env(safe-area-inset-top, 0px));
         padding: 4px 8px;
         font-size: 11px;
       }
@@ -1308,6 +1319,11 @@
         availableYears = metaData.years || [2018, 2019, 2020, 2021, 2022, 2023, 2024];
         selectedYearIndex = availableYears.length - 1;
 
+        const aoiBadge = document.getElementById('aoi-meta-badge');
+        if (aoiBadge && metaData.city) {
+          aoiBadge.textContent = `${metaData.city} (45x45 km)`;
+        }
+
         setupUI();
         if (mapLoaded && map) {
           initMapLayers();
@@ -1317,6 +1333,9 @@
         }
         initCharts();
         updateDisplay();
+
+        // Automatically recenter map viewport to new city's AOI bounds
+        recenterAOI();
       } catch (err) {
         showError("City Data Loader", err);
       }
@@ -2201,6 +2220,25 @@
           sheetHandleBar.addEventListener('click', () => {
             sidebar.classList.remove('open');
           });
+        }
+
+        // Responsive map viewport adaptation for mobile toolbars
+        function handleViewportResize() {
+          if (map) {
+            try { map.resize(); } catch (e) {}
+          }
+          if (isCompareModeActive) {
+            if (mapBefore) { try { mapBefore.resize(); } catch (e) {} }
+            if (mapAfter) { try { mapAfter.resize(); } catch (e) {} }
+          }
+        }
+
+        window.addEventListener('resize', handleViewportResize);
+        window.addEventListener('orientationchange', () => {
+          setTimeout(handleViewportResize, 200);
+        });
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', handleViewportResize);
         }
 
       } catch (err) {
