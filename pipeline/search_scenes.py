@@ -1,7 +1,7 @@
 """
 UrbanPulse - Sentinel-2 Scene Search Module
-Queries Earth Search STAC API for Sentinel-2 L2A scenes over the city AOI
-filtered by dry-season temporal window and cloud cover constraints.
+Queries Earth Search STAC API for Sentinel-2 L2A scenes over the city AOI,
+groups them by intersecting MGRS tiles, and selects the lowest-cloud dry season scenes.
 """
 
 import argparse
@@ -39,11 +39,9 @@ def get_dry_season_datetime(year: int, config: dict[str, Any]) -> str:
     start_month = dry_season_cfg.get("start_month", 11)
     end_month = dry_season_cfg.get("end_month", 2)
 
-    # Determine start date: Nov 1 of (year - 1)
     start_year = year - 1 if start_month > end_month else year
     start_date = f"{start_year:04d}-{start_month:02d}-01"
 
-    # Determine end date: last day of end_month in `year` (handles leap years)
     _, last_day = calendar.monthrange(year, end_month)
     end_date = f"{year:04d}-{end_month:02d}-{last_day:02d}"
 
@@ -53,43 +51,35 @@ def get_dry_season_datetime(year: int, config: dict[str, Any]) -> str:
 def search_sentinel_scenes(
     year: int = 2024,
     config_path: str | Path = "configs/ahmedabad.yaml",
-    max_cloud_cover: float = 30.0,
+    max_cloud_cover: float = 10.0,
+    scenes_per_tile: int = 4,
     custom_datetime: str | None = None,
 ) -> list[pystac.Item]:
     """
-    Searches Earth Search STAC API for Sentinel-2 L2A scenes matching criteria.
-
-    Args:
-        year: Target analysis year (default 2024).
-        config_path: Path to city config YAML.
-        max_cloud_cover: Maximum allowable cloud cover percentage (default 30.0%).
-        custom_datetime: Optional explicit STAC datetime string (e.g. '2024-01-01/2024-02-29').
-
-    Returns:
-        List of matching PySTAC Items.
+    Searches Earth Search STAC API for Sentinel-2 L2A scenes grouped by MGRS tile.
     """
     config = load_config(config_path)
-    city_name = config.get("city", {}).get("name", "Target City")
+    city_name = config.get("city", {}).get("name", "Ahmedabad")
     bbox = config["spatial"]["bbox"]
 
     stac_cfg = config.get("stac", {})
     earth_search_url = stac_cfg.get(
         "earth_search_url", "https://earth-search.aws.element84.com/v1"
     )
-    collection = stac_cfg.get("collections", {}).get("sentinel_2", "sentinel-2-l2a")
+    collection = stac_cfg.get("collections", {}).get("sentinel_2", "sentinel-2-c1-l2a")
 
     datetime_range = custom_datetime or get_dry_season_datetime(year, config)
 
-    print("=" * 70)
+    print("=" * 78)
     print(f"[*] Searching STAC Catalog for {city_name} (Year: {year})")
-    print(f"    - Endpoint       : {earth_search_url}")
-    print(f"    - Collection     : {collection}")
-    print(f"    - Bounding Box   : {bbox}")
-    print(f"    - Datetime Range : {datetime_range}")
-    print(f"    - Max Cloud Cover: < {max_cloud_cover}%")
-    print("=" * 70)
+    print(f"    - Endpoint          : {earth_search_url}")
+    print(f"    - Collection        : {collection}")
+    print(f"    - Bounding Box      : {bbox}")
+    print(f"    - Datetime Window   : {datetime_range}")
+    print(f"    - Max Cloud Cover   : < {max_cloud_cover}%")
+    print(f"    - Top Scenes / Tile : {scenes_per_tile}")
+    print("=" * 78)
 
-    # Open STAC Client
     client = Client.open(earth_search_url)
 
     search = client.search(
@@ -102,6 +92,16 @@ def search_sentinel_scenes(
     items = list(search.items())
 
     if not items:
+        # Fallback to broader collection or cloud threshold if needed
+        search = client.search(
+            collections=[collection],
+            bbox=bbox,
+            datetime=datetime_range,
+            query={"eo:cloud_cover": {"lt": max_cloud_cover + 15}},
+        )
+        items = list(search.items())
+
+    if not items:
         error_msg = (
             f"\n[ERROR] Zero Sentinel-2 scenes found for {city_name}!\n"
             f"Criteria used:\n"
@@ -110,43 +110,58 @@ def search_sentinel_scenes(
             f"  - Bounding Box    : {bbox}\n\n"
             f"[SUGGESTION] To find available scenes, please consider:\n"
             f"  1. Widening the date range (e.g. adding adjacent months/weeks with --datetime).\n"
-            f"  2. Increasing the cloud cover tolerance (e.g. --max-cloud 50).\n"
+            f"  2. Increasing the cloud cover tolerance (e.g. --max-cloud 30).\n"
             f"  3. Checking if data is available for the requested year in STAC collection '{collection}'."
         )
         raise RuntimeError(error_msg)
 
-    # Sort items chronologically
-    items.sort(key=lambda item: item.datetime or item.properties.get("datetime", ""))
+    # Group items by MGRS tile
+    tile_dict: dict[str, list[pystac.Item]] = {}
+    for item in items:
+        z = str(item.properties.get("mgrs:utm_zone", ""))
+        b = str(item.properties.get("mgrs:latitude_band", ""))
+        g = str(item.properties.get("mgrs:grid_square", ""))
+        tile_id = f"{z}{b}{g}" if (z and b and g) else item.id.split("_")[1].replace("T", "")
+        tile_dict.setdefault(tile_id, []).append(item)
 
-    print(f"\n[+] Found {len(items)} Sentinel-2 scenes matching criteria:\n")
+    print(f"\n[+] Identified {len(tile_dict)} intersecting MGRS tiles for AOI:\n")
+
+    selected_items: list[pystac.Item] = []
     print(
-        f"{'#':<3} | {'Scene ID':<30} | {'Acquisition Date (UTC)':<22} | {'Cloud Cover (%)':<15}"
+        f"{'Tile':<8} | {'Scene ID':<34} | {'Acquisition Date (UTC)':<22} | {'Cloud Cover (%)':<15}"
     )
-    print("-" * 78)
+    print("-" * 85)
 
-    for idx, item in enumerate(items, 1):
-        dt_str = item.datetime.strftime("%Y-%m-%d %H:%M:%S") if item.datetime else str(item.properties.get("datetime"))
-        cloud_pct = item.properties.get("eo:cloud_cover", 0.0)
-        print(f"{idx:<3} | {item.id:<30} | {dt_str:<22} | {cloud_pct:<15.2f}")
+    for tile_id, t_items in tile_dict.items():
+        # Sort by cloud cover ascending
+        t_items.sort(key=lambda it: it.properties.get("eo:cloud_cover", 100))
+        top_tile_scenes = t_items[:scenes_per_tile]
+        selected_items.extend(top_tile_scenes)
 
-    print("-" * 78)
-    print(f"Total Scenes: {len(items)}\n")
+        for it in top_tile_scenes:
+            dt_str = it.datetime.strftime("%Y-%m-%d %H:%M:%S") if it.datetime else str(it.properties.get("datetime"))
+            cloud_pct = it.properties.get("eo:cloud_cover", 0.0)
+            print(f"{tile_id:<8} | {it.id:<34} | {dt_str:<22} | {cloud_pct:<15.2f}")
 
-    return items
+    print("-" * 85)
+    print(f"Total Selected Scenes: {len(selected_items)} ({scenes_per_tile} per tile across {len(tile_dict)} tiles)\n")
+
+    return selected_items
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Search Sentinel-2 scenes via STAC API.")
+    parser = argparse.ArgumentParser(description="Search Sentinel-2 scenes grouped by MGRS tile.")
     parser.add_argument("--year", type=int, default=2024, help="Analysis year (default: 2024)")
     parser.add_argument("--config", type=str, default="configs/ahmedabad.yaml", help="Path to config YAML")
-    parser.add_argument("--max-cloud", type=float, default=30.0, help="Max cloud cover percentage (default: 30.0)")
-    parser.add_argument("--datetime", type=str, default=None, help="Custom ISO-8601 datetime range (e.g. 2024-01-01/2024-02-29)")
+    parser.add_argument("--max-cloud", type=float, default=10.0, help="Max cloud cover percentage (default: 10.0)")
+    parser.add_argument("--scenes-per-tile", type=int, default=4, help="Scenes per tile (default: 4)")
+    parser.add_argument("--datetime", type=str, default=None, help="Custom ISO-8601 datetime range")
 
     args = parser.parse_args()
-
     search_sentinel_scenes(
         year=args.year,
         config_path=args.config,
         max_cloud_cover=args.max_cloud,
+        scenes_per_tile=args.scenes_per_tile,
         custom_datetime=args.datetime,
     )

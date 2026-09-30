@@ -76,8 +76,16 @@ def plot_classified_map(
 
     im = ax.imshow(data, cmap=cmap, norm=norm, interpolation="nearest")
 
+    # Extract year/city from filename if possible
+    stem = raster_path.stem
+    parts = stem.split("_")
+    city_str = parts[0].capitalize() if len(parts) > 0 else "Ahmedabad"
+    year_str = parts[1] if len(parts) > 1 and parts[1].isdigit() else ""
+
+    title_text = f"{city_str} Metropolitan Area - {year_str} Land Cover Classification\n(Random Forest 200 Trees, 3x3 Majority Filter, Sentinel-2 Composite)"
+
     ax.set_title(
-        "Ahmedabad Metropolitan Area - 2024 Land Cover Classification\n(Random Forest 200 Trees, Sentinel-2 Composite)",
+        title_text,
         fontsize=14,
         fontweight="bold",
         pad=14,

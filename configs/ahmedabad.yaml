@@ -4,13 +4,16 @@ city:
   country: India
 spatial:
   bbox:
-  - 71.762428
-  - 21.910413
-  - 72.920548
-  - 23.580932
+  - 72.356712
+  - 22.814991
+  - 72.802746
+  - 23.22784
   crs: EPSG:4326
+  center_lat: 23.0225
+  center_lon: 72.5714
   buffered_distance_km: 8.0
   boundary_geojson: configs/ahmedabad_boundary.geojson
+  aoi_size_km: 45.0
 temporal:
   analysis_years:
     start_year: 2000

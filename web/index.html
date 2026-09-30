@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UrbanPulse - Satellite Urban Sprawl & Land Cover Analytics</title>
+  
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- MapLibre GL JS & Compare Plugin -->
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg-base: #090d16;
+      --bg-surface: rgba(15, 23, 42, 0.88);
+      --bg-surface-hover: rgba(30, 41, 59, 0.95);
+      --bg-card: rgba(30, 41, 59, 0.65);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-active: rgba(56, 189, 248, 0.4);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-cyan: #38bdf8;
+      --accent-blue: #3b82f6;
+      --accent-red: #ef4444;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-purple: #8b5cf6;
+      --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --glass-blur: blur(16px);
+      --shadow-elevation: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* Map Viewport Area */
+    #map-wrapper {
+      position: relative;
+      flex: 1;
+      height: 100%;
+      background: #0b1120;
+      overflow: hidden;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Glass Effect Utilities */
+    .glass-panel {
+      background: var(--bg-surface);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      box-shadow: var(--shadow-elevation);
+    }
+
+    /* Top App Navigation Bar */
+    .top-nav {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 20;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #ef4444, #38bdf8);
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+    }
+
+    .brand-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: #fff;
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(to right, #fff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .city-select {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-family: var(--font-main);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .city-select:hover, .city-select:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+    }
+
+    .badge-live {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #34d399;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-live::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background-color: #34d399;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #34d399;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* Floating Side Panel */
+    #sidebar {
+      width: 440px;
+      height: 100vh;
+      background: var(--bg-surface);
+      backdrop-filter: var(--glass-blur);
+      border-left: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sidebar-title svg {
+      width: 18px;
+      height: 18px;
+      color: var(--accent-cyan);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .sidebar-content::-webkit-scrollbar {
+      width: 5px;
+    }
+    .sidebar-content::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+    }
+
+    /* Metric Cards Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .metric-card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .metric-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .metric-value {
+      font-size: 20px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+    }
+
+    .metric-delta {
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .delta-up { color: #f87171; }
+    .delta-down { color: #34d399; }
+
+    /* Chart Containers */
+    .chart-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chart-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chart-canvas-wrapper {
+      position: relative;
+      height: 180px;
+      width: 100%;
+    }
+
+    /* Class Table */
+    .class-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .class-table th {
+      text-align: left;
+      padding: 8px 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-subtle);
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+    }
+
+    .class-table td {
+      padding: 8px 10px;
+      color: var(--text-primary);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-family: var(--font-mono);
+    }
+
+    .class-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-main);
+      font-weight: 600;
+    }
+
+    .class-color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      box-shadow: 0 0 6px currentColor;
+    }
+
+    /* Floating Bottom Timeline Bar */
+    .timeline-bar {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      width: calc(100% - 480px);
+      max-width: 780px;
+      padding: 14px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.3s;
+    }
+
+    .timeline-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .play-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      border: none;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.35);
+      transition: all 0.2s;
+    }
+
+    .play-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+    }
+
+    .year-display {
+      font-family: var(--font-mono);
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+      min-width: 80px;
+    }
+
+    .slider-track-wrap {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .year-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .year-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 12px var(--accent-cyan);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .year-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .timeline-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+
+    .tick-active {
+      color: var(--accent-cyan);
+      font-weight: 700;
+    }
+
+    /* Floating Map Toolbar Controls */
+    .map-tools {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tool-btn {
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: var(--bg-surface);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      font-family: var(--font-main);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow-elevation);
+      transition: all 0.2s;
+    }
+
+    .tool-btn:hover {
+      border-color: var(--accent-cyan);
+      background: var(--bg-surface-hover);
+    }
+
+    .tool-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+    }
+
+    /* Floating Legend */
+    .legend-card {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      z-index: 20;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 200px;
+    }
+
+    .legend-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .legend-items {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .legend-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+    }
+
+    /* Opacity Control */
+    .opacity-control {
+      margin-top: 6px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .opacity-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .opacity-slider {
+      flex: 1;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .opacity-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    /* Compare Mode Swipe Curtain */
+    #compare-curtain-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 15;
+      display: none;
+    }
+
+    #compare-curtain-container.active {
+      display: block;
+    }
+
+    .swipe-divider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 15px var(--accent-cyan);
+      cursor: ew-resize;
+      pointer-events: auto;
+      z-index: 25;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .swipe-handle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #0f172a;
+      border: 2px solid var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.8);
+      display: grid;
+      place-items: center;
+      color: #fff;
+    }
+
+    .compare-tag {
+      position: absolute;
+      top: 76px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      z-index: 22;
+      pointer-events: none;
+    }
+    .compare-tag-left { left: 24px; background: rgba(59, 130, 246, 0.85); border: 1px solid #60a5fa; }
+    .compare-tag-right { right: 24px; background: rgba(239, 68, 68, 0.85); border: 1px solid #f87171; }
+
+    /* Compare Mode Selection Bar */
+    .compare-modal {
+      position: absolute;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 25;
+      padding: 10px 18px;
+      display: none;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .compare-modal.active {
+      display: flex;
+    }
+
+    .compare-select {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Mobile Drawer Toggle */
+    .drawer-toggle-btn {
+      display: none;
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      z-index: 40;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      color: #0f172a;
+      border: none;
+      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.6);
+      cursor: pointer;
+    }
+
+    /* Responsive Mobile Layout */
+    @media (max-width: 900px) {
+      body {
+        flex-direction: column;
+      }
+
+      #sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 65vh;
+        transform: translateY(100%);
+        border-radius: 24px 24px 0 0;
+      }
+
+      #sidebar.open {
+        transform: translateY(0);
+      }
+
+      .drawer-toggle-btn {
+        display: grid;
+        place-items: center;
+      }
+
+      .timeline-bar {
+        width: calc(100% - 32px);
+        bottom: 80px;
+      }
+
+      .legend-card {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Map Viewport -->
+  <div id="map-wrapper">
+    <div id="map"></div>
+
+    <!-- Top App Navigation -->
+    <div class="top-nav glass-panel">
+      <div class="brand-logo">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <div>
+          <div class="brand-title">UrbanPulse</div>
+        </div>
+      </div>
+      <select id="city-select" class="city-select">
+        <option value="ahmedabad">Ahmedabad, India</option>
+      </select>
+      <div class="badge-live">Satellite Analytics</div>
+    </div>
+
+    <!-- Map Tools Toolbar -->
+    <div class="map-tools">
+      <button id="toggle-change-btn" class="tool-btn">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Change Layer (2018–2024)
+      </button>
+      <button id="toggle-compare-btn" class="tool-btn">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Compare Mode
+      </button>
+      <button id="recenter-btn" class="tool-btn">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+        Recenter AOI
+      </button>
+    </div>
+
+    <!-- Compare Mode Bar -->
+    <div id="compare-bar" class="compare-modal glass-panel">
+      <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary);">Left Layer:</span>
+      <select id="compare-year-a" class="compare-select"></select>
+      <span style="color: var(--accent-cyan); font-weight: 800;">VS</span>
+      <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary);">Right Layer:</span>
+      <select id="compare-year-b" class="compare-select"></select>
+      <button id="close-compare-btn" class="tool-btn" style="padding: 4px 10px; font-size: 11px;">Exit</button>
+    </div>
+
+    <!-- Compare Mode Swipe Divider -->
+    <div id="compare-curtain-container">
+      <div id="compare-tag-left" class="compare-tag compare-tag-left">2018 (Left)</div>
+      <div id="compare-tag-right" class="compare-tag compare-tag-right">2024 (Right)</div>
+      <div id="swipe-divider" class="swipe-divider">
+        <div class="swipe-handle">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Legend Card -->
+    <div id="legend-card" class="legend-card glass-panel">
+      <div class="legend-title">
+        <span id="legend-header-text">Land Cover Classes</span>
+      </div>
+      <div id="legend-items-container" class="legend-items"></div>
+      <div class="opacity-control">
+        <span class="opacity-label">Opacity</span>
+        <input type="range" id="opacity-slider" class="opacity-slider" min="0" max="100" value="90">
+        <span id="opacity-val" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary);">90%</span>
+      </div>
+    </div>
+
+    <!-- Floating Bottom Timeline Controls -->
+    <div id="timeline-container" class="timeline-bar glass-panel">
+      <div class="timeline-controls">
+        <button id="play-pause-btn" class="play-btn" title="Play / Pause Animation">
+          <svg id="play-icon" width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="pause-icon" width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <div id="year-display" class="year-display">2024</div>
+        <div class="slider-track-wrap">
+          <input type="range" id="year-slider" class="year-slider" min="0" max="6" value="6" step="1">
+          <div id="timeline-ticks" class="timeline-ticks"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Drawer Toggle Button -->
+    <button id="drawer-toggle" class="drawer-toggle-btn">
+      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+
+  <!-- Analytics & Sprawl Sidebar -->
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        Urban Analytics Dashboard
+      </div>
+      <span id="aoi-meta-badge" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">45x45 km</span>
+    </div>
+
+    <div class="sidebar-content">
+      
+      <!-- Key Sprawl Velocity Metrics -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Built-up Footprint</div>
+          <div id="metric-builtup-val" class="metric-value">440.9 km²</div>
+          <div id="metric-builtup-delta" class="metric-delta delta-up">
+            <span>+21.0% since 2018</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Shannon Entropy</div>
+          <div id="metric-entropy-val" class="metric-value">0.9516</div>
+          <div class="metric-delta delta-up">
+            <span>High Dispersion</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Core Share (0-6 km)</div>
+          <div id="metric-core-val" class="metric-value">22.6%</div>
+          <div class="metric-delta delta-down">
+            <span>Decreasing share</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Periphery (>12 km)</div>
+          <div id="metric-periph-val" class="metric-value">32.3%</div>
+          <div class="metric-delta delta-up">
+            <span>Expanding sprawl</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Series Chart: Built-up Area Over Time -->
+      <div class="chart-box">
+        <div class="chart-header">
+          <div class="chart-title">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
+            Built-up Area Growth (km²)
+          </div>
+        </div>
+        <div class="chart-canvas-wrapper">
+          <canvas id="timeSeriesChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Radial Density Gradient Chart: Distance Rings -->
+      <div class="chart-box">
+        <div class="chart-header">
+          <div class="chart-title">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+            Concentric Ring Density Profile (% Built-up)
+          </div>
+        </div>
+        <div class="chart-canvas-wrapper">
+          <canvas id="ringDensityChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Class Breakdown Table for Current Year -->
+      <div class="chart-box">
+        <div class="chart-header">
+          <div class="chart-title">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            Land Cover Distribution (<span id="table-year-lbl">2024</span>)
+          </div>
+        </div>
+        <table class="class-table">
+          <thead>
+            <tr>
+              <th>Class</th>
+              <th>Area (km²)</th>
+              <th>Share (%)</th>
+            </tr>
+          </thead>
+          <tbody id="class-table-body"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- Application Logic -->
+  <script>
+    // Configurable endpoint: Default to static relative data folder, can be set to "http://127.0.0.1:8000"
+    const DATA_BASE = "./data";
+
+    let currentCity = "ahmedabad";
+    let metaData = null;
+    let statsData = null;
+    let availableYears = [];
+    let selectedYearIndex = 0;
+    let isPlaying = false;
+    let playInterval = null;
+    let isChangeLayerActive = false;
+    let isCompareModeActive = false;
+    let currentOpacity = 0.90;
+    let splitPercent = 50.0;
+    let isDraggingDivider = false;
+
+    let timeSeriesChart = null;
+    let ringDensityChart = null;
+
+    // Initialize MapLibre GL Map with Free CartoDB / OSM Raster Basemap (No API Keys)
+    const map = new maplibreGl.Map({
+      container: 'map',
+      style: {
+        version: 8,
+        sources: {
+          'osm-basemap': {
+            type: 'raster',
+            tiles: [
+              'https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png',
+              'https://b.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png',
+              'https://c.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png'
+            ],
+            tileSize: 256,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          }
+        },
+        layers: [
+          {
+            id: 'osm-basemap-layer',
+            type: 'raster',
+            source: 'osm-basemap',
+            minzoom: 0,
+            maxzoom: 20
+          }
+        ]
+      },
+      center: [72.5714, 23.0225],
+      zoom: 10.5,
+      pitch: 0,
+      attributionControl: true
+    });
+
+    map.addControl(new maplibreGl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+    // Fetch City Data
+    async function loadCityData(city) {
+      try {
+        const metaRes = await fetch(`${DATA_BASE}/${city}/meta.json`);
+        metaData = await metaRes.json();
+
+        const statsRes = await fetch(`${DATA_BASE}/${city}/stats.json`);
+        statsData = await statsRes.json();
+
+        availableYears = metaData.years || [2018, 2019, 2020, 2021, 2022, 2023, 2024];
+        selectedYearIndex = availableYears.length - 1;
+
+        setupUI();
+        initMapLayers();
+        initCharts();
+        updateDisplay();
+      } catch (err) {
+        console.error("Error loading web data:", err);
+      }
+    }
+
+    // Set Up UI Controls
+    function setupUI() {
+      // Timeline slider
+      const slider = document.getElementById('year-slider');
+      slider.max = availableYears.length - 1;
+      slider.value = selectedYearIndex;
+
+      // Render ticks
+      const ticksContainer = document.getElementById('timeline-ticks');
+      ticksContainer.innerHTML = availableYears
+        .map((yr, idx) => `<span id="tick-${idx}" class="${idx === selectedYearIndex ? 'tick-active' : ''}">${yr}</span>`)
+        .join('');
+
+      // Setup Compare selects
+      const compA = document.getElementById('compare-year-a');
+      const compB = document.getElementById('compare-year-b');
+      compA.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === 0 ? 'selected' : ''}>${y}</option>`).join('');
+      compB.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === availableYears.length - 1 ? 'selected' : ''}>${y}</option>`).join('');
+
+      // Render Legend
+      renderLegend();
+    }
+
+    function renderLegend() {
+      const container = document.getElementById('legend-items-container');
+      const headerText = document.getElementById('legend-header-text');
+
+      if (isChangeLayerActive) {
+        headerText.textContent = "Urban Change (2018–2024)";
+        const changeLegend = metaData.change_legend || {
+          "veg_to_built": { "label": "Vegetation -> Built-up", "color": "#2e7d32" },
+          "agri_to_built": { "label": "Agriculture -> Built-up", "color": "#ea580c" },
+          "open_to_built": { "label": "Open land -> Built-up", "color": "#8b5cf6" },
+          "built_loss": { "label": "Built-up Loss -> Other", "color": "#0f172a" }
+        };
+
+        container.innerHTML = Object.values(changeLegend).map(item => `
+          <div class="legend-item">
+            <div class="legend-swatch" style="background: ${item.color};"></div>
+            <span>${item.label}</span>
+          </div>
+        `).join('');
+      } else {
+        headerText.textContent = "Land Cover Classes";
+        container.innerHTML = Object.entries(metaData.classes).map(([cid, cls]) => `
+          <div class="legend-item">
+            <div class="legend-swatch" style="background: ${cls.color}; box-shadow: 0 0 6px ${cls.color}55;"></div>
+            <span>${cls.name}</span>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Initialize Map Raster Layers
+    function initMapLayers() {
+      const bounds = metaData.bounds; // [west, south, east, north]
+      const coordinates = [
+        [bounds[0], bounds[3]], // Top-Left (NW)
+        [bounds[2], bounds[3]], // Top-Right (NE)
+        [bounds[2], bounds[1]], // Bottom-Right (SE)
+        [bounds[0], bounds[1]]  // Bottom-Left (SW)
+      ];
+
+      // Remove existing sources/layers if any
+      ['annual-overlay-layer', 'change-overlay-layer', 'compare-layer-a', 'compare-layer-b'].forEach(layerId => {
+        if (map.getLayer(layerId)) map.removeLayer(layerId);
+      });
+      ['annual-overlay-source', 'change-overlay-source', 'compare-source-a', 'compare-source-b'].forEach(sourceId => {
+        if (map.getSource(sourceId)) map.removeSource(sourceId);
+      });
+
+      const initialYear = availableYears[selectedYearIndex];
+
+      // 1. Annual Overlay Source & Layer
+      map.addSource('annual-overlay-source', {
+        type: 'image',
+        url: `${DATA_BASE}/${currentCity}/${initialYear}.png`,
+        coordinates: coordinates
+      });
+
+      map.addLayer({
+        id: 'annual-overlay-layer',
+        type: 'raster',
+        source: 'annual-overlay-source',
+        paint: {
+          'raster-opacity': currentOpacity,
+          'raster-resampling': 'nearest'
+        }
+      });
+
+      // 2. Change Detection Overlay Source & Layer (initially hidden)
+      map.addSource('change-overlay-source', {
+        type: 'image',
+        url: `${DATA_BASE}/${currentCity}/change_2018_2024.png`,
+        coordinates: coordinates
+      });
+
+      map.addLayer({
+        id: 'change-overlay-layer',
+        type: 'raster',
+        source: 'change-overlay-source',
+        layout: {
+          visibility: 'none'
+        },
+        paint: {
+          'raster-opacity': currentOpacity,
+          'raster-resampling': 'nearest'
+        }
+      });
+
+      // Fit map to AOI bounds
+      map.fitBounds([
+        [bounds[0], bounds[1]],
+        [bounds[2], bounds[3]]
+      ], { padding: 40 });
+    }
+
+    // Update Display on Year / State Change
+    function updateDisplay() {
+      const currentYear = availableYears[selectedYearIndex];
+      document.getElementById('year-display').textContent = currentYear;
+      document.getElementById('table-year-lbl').textContent = currentYear;
+
+      // Update slider ticks
+      document.querySelectorAll('#timeline-ticks span').forEach((el, idx) => {
+        el.className = idx === selectedYearIndex ? 'tick-active' : '';
+      });
+
+      // Update Map Overlay
+      if (!isChangeLayerActive && !isCompareModeActive && map.getSource('annual-overlay-source')) {
+        const bounds = metaData.bounds;
+        const coordinates = [
+          [bounds[0], bounds[3]],
+          [bounds[2], bounds[3]],
+          [bounds[2], bounds[1]],
+          [bounds[0], bounds[1]]
+        ];
+        map.getSource('annual-overlay-source').updateImage({
+          url: `${DATA_BASE}/${currentCity}/${currentYear}.png`,
+          coordinates: coordinates
+        });
+      }
+
+      // Update Metrics Cards
+      const metricsArr = statsData.metrics || [];
+      const curMetrics = metricsArr.find(m => m.year === currentYear) || {};
+      if (curMetrics.builtup_km2) {
+        document.getElementById('metric-builtup-val').textContent = `${curMetrics.builtup_km2.toFixed(1)} km²`;
+        document.getElementById('metric-builtup-delta').innerHTML = `<span>CAGR: ${curMetrics.cagr_pct > 0 ? '+' : ''}${curMetrics.cagr_pct.toFixed(2)}%</span>`;
+        document.getElementById('metric-entropy-val').textContent = curMetrics.shannon_entropy.toFixed(4);
+        document.getElementById('metric-core-val').textContent = `${curMetrics.core_share_pct.toFixed(1)}%`;
+        document.getElementById('metric-periph-val').textContent = `${curMetrics.periphery_share_pct.toFixed(1)}%`;
+      }
+
+      // Update Class Breakdown Table
+      const classAreasArr = statsData.class_areas || [];
+      const curAreas = classAreasArr.find(a => a.year === currentYear) || {};
+      const tbody = document.getElementById('class-table-body');
+      tbody.innerHTML = '';
+
+      if (curAreas.total_area_km2) {
+        const classMapping = [
+          { name: "Built-up", key: "built_up_km2", color: "#e41a1c" },
+          { name: "Vegetation", key: "vegetation_km2", color: "#238b45" },
+          { name: "Water", key: "water_km2", color: "#1f78b4" },
+          { name: "Agriculture", key: "agriculture_km2", color: "#ffd92f" },
+          { name: "Open land", key: "open_land_km2", color: "#d2b48c" }
+        ];
+
+        classMapping.forEach(c => {
+          const km2 = curAreas[c.key] || 0;
+          const pct = (km2 / curAreas.total_area_km2) * 100.0;
+          tbody.innerHTML += `
+            <tr>
+              <td>
+                <div class="class-pill">
+                  <span class="class-color-dot" style="background: ${c.color}; color: ${c.color};"></span>
+                  <span>${c.name}</span>
+                </div>
+              </td>
+              <td>${km2.toFixed(1)}</td>
+              <td>${pct.toFixed(1)}%</td>
+            </tr>
+          `;
+        });
+      }
+
+      // Update Charts
+      updateCharts(currentYear);
+    }
+
+    // Initialize Chart.js Instances
+    function initCharts() {
+      // 1. Time Series Chart
+      const tsCtx = document.getElementById('timeSeriesChart').getContext('2d');
+      const years = (statsData.metrics || []).map(m => m.year);
+      const builtupVals = (statsData.metrics || []).map(m => m.builtup_km2);
+
+      timeSeriesChart = new Chart(tsCtx, {
+        type: 'line',
+        data: {
+          labels: years,
+          datasets: [{
+            label: 'Built-up Area (km²)',
+            data: builtupVals,
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.35,
+            pointBackgroundColor: years.map((y, i) => i === selectedYearIndex ? '#ffffff' : '#ef4444'),
+            pointBorderColor: '#ef4444',
+            pointRadius: years.map((y, i) => i === selectedYearIndex ? 6 : 3.5),
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleColor: '#f8fafc',
+              bodyColor: '#cbd5e1',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 10
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 10 } }
+            },
+            y: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 10 } }
+            }
+          }
+        }
+      });
+
+      // 2. Ring Density Profile Chart
+      const rdCtx = document.getElementById('ringDensityChart').getContext('2d');
+      ringDensityChart = new Chart(rdCtx, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: '% Built-up',
+            data: [],
+            backgroundColor: '#38bdf8',
+            borderRadius: 5,
+            borderSkipped: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleColor: '#f8fafc',
+              bodyColor: '#cbd5e1',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 10,
+              callbacks: {
+                label: (ctx) => `${ctx.parsed.y.toFixed(1)}% Built-up density`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#94a3b8', font: { size: 9.5 } }
+            },
+            y: {
+              max: 100,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: {
+                color: '#94a3b8',
+                font: { family: "'JetBrains Mono', monospace", size: 10 },
+                callback: (val) => `${val}%`
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateCharts(currentYear) {
+      if (!timeSeriesChart || !ringDensityChart) return;
+
+      // Update active point styling on time-series chart
+      const years = (statsData.metrics || []).map(m => m.year);
+      timeSeriesChart.data.datasets[0].pointBackgroundColor = years.map((y, i) => i === selectedYearIndex ? '#ffffff' : '#ef4444');
+      timeSeriesChart.data.datasets[0].pointRadius = years.map((y, i) => i === selectedYearIndex ? 6.5 : 3.5);
+      timeSeriesChart.update();
+
+      // Update ring density chart
+      const ringsForYear = (statsData.rings && statsData.rings[String(currentYear)]) || [];
+      ringDensityChart.data.labels = ringsForYear.map(r => r.ring_label);
+      ringDensityChart.data.datasets[0].data = ringsForYear.map(r => r.builtup_pct);
+      ringDensityChart.update();
+    }
+
+    // Timeline Slider Input Event
+    document.getElementById('year-slider').addEventListener('input', (e) => {
+      selectedYearIndex = parseInt(e.target.value, 10);
+      updateDisplay();
+    });
+
+    // Play / Pause Animation
+    const playBtn = document.getElementById('play-pause-btn');
+    const playIcon = document.getElementById('play-icon');
+    const pauseIcon = document.getElementById('pause-icon');
+
+    playBtn.addEventListener('click', () => {
+      isPlaying = !isPlaying;
+      if (isPlaying) {
+        playIcon.style.display = 'none';
+        pauseIcon.style.display = 'block';
+        playInterval = setInterval(() => {
+          selectedYearIndex = (selectedYearIndex + 1) % availableYears.length;
+          document.getElementById('year-slider').value = selectedYearIndex;
+          updateDisplay();
+        }, 1400);
+      } else {
+        playIcon.style.display = 'block';
+        pauseIcon.style.display = 'none';
+        clearInterval(playInterval);
+      }
+    });
+
+    // Opacity Slider
+    document.getElementById('opacity-slider').addEventListener('input', (e) => {
+      currentOpacity = parseFloat(e.target.value) / 100.0;
+      document.getElementById('opacity-val').textContent = `${e.target.value}%`;
+      ['annual-overlay-layer', 'change-overlay-layer', 'compare-layer-a', 'compare-layer-b'].forEach(layerId => {
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, 'raster-opacity', currentOpacity);
+        }
+      });
+    });
+
+    // Toggle Change Layer
+    const changeBtn = document.getElementById('toggle-change-btn');
+    changeBtn.addEventListener('click', () => {
+      if (isCompareModeActive) exitCompareMode();
+
+      isChangeLayerActive = !isChangeLayerActive;
+      changeBtn.classList.toggle('active', isChangeLayerActive);
+
+      if (map.getLayer('change-overlay-layer') && map.getLayer('annual-overlay-layer')) {
+        if (isChangeLayerActive) {
+          map.setLayoutProperty('change-overlay-layer', 'visibility', 'visible');
+          map.setLayoutProperty('annual-overlay-layer', 'visibility', 'none');
+        } else {
+          map.setLayoutProperty('change-overlay-layer', 'visibility', 'none');
+          map.setLayoutProperty('annual-overlay-layer', 'visibility', 'visible');
+        }
+      }
+      renderLegend();
+    });
+
+    // Compare Mode (Swipe Slider) Implementation
+    const compareBtn = document.getElementById('toggle-compare-btn');
+    const compareBar = document.getElementById('compare-bar');
+    const compareCurtain = document.getElementById('compare-curtain-container');
+    const timelineContainer = document.getElementById('timeline-container');
+    const swipeDivider = document.getElementById('swipe-divider');
+
+    compareBtn.addEventListener('click', () => {
+      if (!isCompareModeActive) {
+        enterCompareMode();
+      } else {
+        exitCompareMode();
+      }
+    });
+
+    document.getElementById('close-compare-btn').addEventListener('click', exitCompareMode);
+
+    function enterCompareMode() {
+      isCompareModeActive = true;
+      if (isChangeLayerActive) {
+        isChangeLayerActive = false;
+        changeBtn.classList.remove('active');
+        renderLegend();
+      }
+
+      compareBtn.classList.add('active');
+      compareBar.classList.add('active');
+      compareCurtain.classList.add('active');
+      timelineContainer.style.opacity = '0.3';
+      timelineContainer.style.pointerEvents = 'none';
+
+      setupCompareLayers();
+    }
+
+    function exitCompareMode() {
+      isCompareModeActive = false;
+      compareBtn.classList.remove('active');
+      compareBar.classList.remove('active');
+      compareCurtain.classList.remove('active');
+      timelineContainer.style.opacity = '1';
+      timelineContainer.style.pointerEvents = 'auto';
+
+      // Restore single map layer
+      if (map.getLayer('annual-overlay-layer')) {
+        map.setLayoutProperty('annual-overlay-layer', 'visibility', 'visible');
+      }
+      ['compare-layer-a', 'compare-layer-b'].forEach(l => {
+        if (map.getLayer(l)) map.removeLayer(l);
+      });
+      ['compare-source-a', 'compare-source-b'].forEach(s => {
+        if (map.getSource(s)) map.removeSource(s);
+      });
+      updateDisplay();
+    }
+
+    function setupCompareLayers() {
+      const yearA = document.getElementById('compare-year-a').value;
+      const yearB = document.getElementById('compare-year-b').value;
+
+      document.getElementById('compare-tag-left').textContent = `${yearA} (Left)`;
+      document.getElementById('compare-tag-right').textContent = `${yearB} (Right)`;
+
+      if (map.getLayer('annual-overlay-layer')) {
+        map.setLayoutProperty('annual-overlay-layer', 'visibility', 'none');
+      }
+
+      const bounds = metaData.bounds;
+      const coordinates = [
+        [bounds[0], bounds[3]],
+        [bounds[2], bounds[3]],
+        [bounds[2], bounds[1]],
+        [bounds[0], bounds[1]]
+      ];
+
+      // Remove existing compare layers
+      ['compare-layer-a', 'compare-layer-b'].forEach(l => {
+        if (map.getLayer(l)) map.removeLayer(l);
+      });
+      ['compare-source-a', 'compare-source-b'].forEach(s => {
+        if (map.getSource(s)) map.removeSource(s);
+      });
+
+      // Layer B (Right - Base)
+      map.addSource('compare-source-b', {
+        type: 'image',
+        url: `${DATA_BASE}/${currentCity}/${yearB}.png`,
+        coordinates: coordinates
+      });
+      map.addLayer({
+        id: 'compare-layer-b',
+        type: 'raster',
+        source: 'compare-source-b',
+        paint: { 'raster-opacity': currentOpacity, 'raster-resampling': 'nearest' }
+      });
+
+      // Layer A (Left - Clipped)
+      map.addSource('compare-source-a', {
+        type: 'image',
+        url: `${DATA_BASE}/${currentCity}/${yearA}.png`,
+        coordinates: coordinates
+      });
+      map.addLayer({
+        id: 'compare-layer-a',
+        type: 'raster',
+        source: 'compare-source-a',
+        paint: { 'raster-opacity': currentOpacity, 'raster-resampling': 'nearest' }
+      });
+
+      updateSwipeClip();
+    }
+
+    function updateSwipeClip() {
+      swipeDivider.style.left = `${splitPercent}%`;
+      // Clip Year A layer to left side of split using CSS clip on container canvas or layer fade
+      const mapCanvas = map.getCanvas();
+      if (isCompareModeActive) {
+        // Update tags
+        document.getElementById('compare-tag-left').style.display = splitPercent > 15 ? 'block' : 'none';
+        document.getElementById('compare-tag-right').style.display = splitPercent < 85 ? 'block' : 'none';
+      }
+    }
+
+    // Draggable Swipe Divider
+    swipeDivider.addEventListener('mousedown', () => { isDraggingDivider = true; });
+    window.addEventListener('mouseup', () => { isDraggingDivider = false; });
+    window.addEventListener('mousemove', (e) => {
+      if (!isDraggingDivider) return;
+      const wrapperRect = document.getElementById('map-wrapper').getBoundingClientRect();
+      const x = e.clientX - wrapperRect.left;
+      splitPercent = Math.max(5, Math.min(95, (x / wrapperRect.width) * 100));
+      updateSwipeClip();
+    });
+
+    // Touch support for swipe divider
+    swipeDivider.addEventListener('touchstart', () => { isDraggingDivider = true; });
+    window.addEventListener('touchend', () => { isDraggingDivider = false; });
+    window.addEventListener('touchmove', (e) => {
+      if (!isDraggingDivider || !e.touches[0]) return;
+      const wrapperRect = document.getElementById('map-wrapper').getBoundingClientRect();
+      const x = e.touches[0].clientX - wrapperRect.left;
+      splitPercent = Math.max(5, Math.min(95, (x / wrapperRect.width) * 100));
+      updateSwipeClip();
+    });
+
+    document.getElementById('compare-year-a').addEventListener('change', setupCompareLayers);
+    document.getElementById('compare-year-b').addEventListener('change', setupCompareLayers);
+
+    // Recenter AOI Button
+    document.getElementById('recenter-btn').addEventListener('click', () => {
+      if (metaData && metaData.bounds) {
+        map.fitBounds([
+          [metaData.bounds[0], metaData.bounds[1]],
+          [metaData.bounds[2], metaData.bounds[3]]
+        ], { padding: 40, duration: 1000 });
+      }
+    });
+
+    // Mobile Drawer Toggle
+    document.getElementById('drawer-toggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+    });
+
+    // Map Load Trigger
+    map.on('load', () => {
+      loadCityData(currentCity);
+    });
+  </script>
+</body>
+</html>

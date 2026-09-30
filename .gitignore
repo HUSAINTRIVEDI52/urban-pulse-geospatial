@@ -2,6 +2,7 @@
 venv/
 .venv/
 env/
+data/
 
 # Python cache & bytecode
 __pycache__/
@@ -23,6 +24,11 @@ data/*.gpkg
 data/raw/
 data/processed/
 data/outputs/
+
+# Archives
+*.zip
+*.tar.gz
+*.7z
 
 # OS specific
 .DS_Store

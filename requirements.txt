@@ -12,3 +12,7 @@ numpy
 pandas
 matplotlib
 pyyaml
+pytest
+fastapi
+uvicorn
+httpx
