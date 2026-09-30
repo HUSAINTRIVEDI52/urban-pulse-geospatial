@@ -700,13 +700,13 @@
       cursor: pointer;
     }
 
-    /* Mobile Drawer Toggle */
-    .drawer-toggle-btn {
+    /* Mobile Dashboard Bottom Sheet Toggle */
+    #dashToggle, .drawer-toggle-btn {
       display: none;
       position: absolute;
       bottom: calc(24px + env(safe-area-inset-bottom, 0px));
       right: 24px;
-      z-index: 40;
+      z-index: 90;
       width: 48px;
       height: 48px;
       border-radius: 50%;
@@ -715,6 +715,7 @@
       border: none;
       box-shadow: 0 4px 20px rgba(56, 189, 248, 0.6);
       cursor: pointer;
+      pointer-events: auto;
     }
 
     .sheet-handle-bar {
@@ -780,6 +781,14 @@
         padding: 5px 8px;
       }
 
+      /* Move MapLibre zoom controls to top-left on mobile so button doesn't cover them */
+      .maplibregl-ctrl-bottom-right {
+        bottom: auto !important;
+        top: calc(68px + env(safe-area-inset-top, 0px)) !important;
+        left: 10px !important;
+        right: auto !important;
+      }
+
       /* Collapse Change Layer, Compare Mode, Recenter AOI into icon-only column top-right below header */
       .map-tools {
         top: calc(68px + env(safe-area-inset-top, 0px));
@@ -820,6 +829,7 @@
         bottom: calc(88px + env(safe-area-inset-bottom, 0px));
         left: 50%;
         padding: 10px 14px;
+        transition: opacity 0.25s ease, transform 0.25s ease;
       }
 
       .year-display {
@@ -828,7 +838,7 @@
       }
 
       /* Bottom sheet dashboard */
-      #sidebar {
+      #dashboard, #sidebar {
         position: fixed;
         bottom: 0;
         left: 0;
@@ -838,33 +848,53 @@
         max-height: 70dvh;
         height: 70vh;
         height: 70dvh;
+        overflow-y: auto;
         transform: translateY(100%);
         border-radius: 20px 20px 0 0;
         border-left: none;
         border-top: 1px solid var(--border-subtle);
-        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.7);
-        z-index: 60;
-        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
+        z-index: 100;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        padding-bottom: env(safe-area-inset-bottom, 16px);
+        -webkit-overflow-scrolling: touch;
       }
 
-      #sidebar.open {
-        transform: translateY(0);
+      #dashboard.open, #sidebar.open {
+        transform: translateY(0) !important;
+      }
+
+      /* Hide year slider panel and legend when bottom sheet is open */
+      body.sheet-open #timeline-container,
+      body.sheet-open #legend-card {
+        display: none !important;
       }
 
       .sheet-handle-bar {
         display: flex;
+        width: 100%;
+        padding: 10px 0 4px 0;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      .sheet-handle {
+        width: 44px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.35);
+        border-radius: 4px;
       }
 
       .sidebar-close-btn {
         display: flex;
       }
 
-      .drawer-toggle-btn {
+      #dashToggle, .drawer-toggle-btn {
         display: grid;
         place-items: center;
         bottom: calc(30px + env(safe-area-inset-bottom, 0px));
         right: 18px;
-        z-index: 45;
+        z-index: 110;
       }
 
       /* Legend collapsed by default on mobile with extra bottom toolbar margin */
@@ -874,6 +904,7 @@
         padding: 8px 12px;
         min-width: auto;
         cursor: pointer;
+        transition: opacity 0.25s ease;
       }
 
       /* Compare Mode on Mobile */
@@ -896,6 +927,22 @@
         top: calc(115px + env(safe-area-inset-top, 0px));
         padding: 4px 8px;
         font-size: 11px;
+      }
+    }
+
+    /* Desktop View (768px and up) */
+    @media (min-width: 768px) {
+      #dashToggle, .drawer-toggle-btn {
+        display: none !important;
+      }
+      #dashboard, #sidebar {
+        transform: none !important;
+        display: flex !important;
+        max-height: none !important;
+      }
+      body.sheet-open #timeline-container,
+      body.sheet-open #legend-card {
+        display: flex !important;
       }
     }
 
@@ -1055,14 +1102,17 @@
       </div>
     </div>
 
-    <!-- Mobile Drawer Toggle Button -->
-    <button id="drawer-toggle" class="drawer-toggle-btn" title="Toggle Analytics Dashboard">
-      <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    <!-- Mobile Dashboard Bottom Sheet Toggle Button -->
+    <button id="dashToggle" class="drawer-toggle-btn" aria-label="Open dashboard" aria-expanded="false" title="Open dashboard">
+      <svg id="dashToggleIcon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path class="icon-hamburger" d="M4 6h16M4 12h16M4 18h16"/>
+        <path class="icon-close" d="M6 18L18 6M6 6l12 12" style="display: none;"/>
+      </svg>
     </button>
   </div>
 
-  <!-- Analytics & Sprawl Sidebar (Bottom sheet on mobile) -->
-  <aside id="sidebar">
+  <!-- Analytics & Sprawl Dashboard (Bottom sheet on mobile) -->
+  <aside id="dashboard" class="dashboard-panel">
     <div id="sheet-handle-bar" class="sheet-handle-bar" title="Swipe or click to close">
       <div class="sheet-handle"></div>
     </div>
@@ -1073,7 +1123,7 @@
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
         <span id="aoi-meta-badge" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">45x45 km</span>
-        <button id="close-sidebar-btn" class="sidebar-close-btn" title="Close Dashboard">&times;</button>
+        <button id="close-dashboard-btn" class="sidebar-close-btn" aria-label="Close dashboard" title="Close Dashboard">&times;</button>
       </div>
     </div>
 
@@ -2208,22 +2258,102 @@
           }
         }
 
-        // Close Mobile Sidebar Button & Sheet Handle
-        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+        // Urban Analytics Dashboard Bottom Sheet Toggle
+        const dashToggle = document.getElementById('dashToggle');
+        const dashboard = document.getElementById('dashboard') || document.getElementById('sidebar');
+        const closeDashBtn = document.getElementById('close-dashboard-btn') || document.getElementById('close-sidebar-btn');
         const sheetHandleBar = document.getElementById('sheet-handle-bar');
-        if (closeSidebarBtn && sidebar) {
-          closeSidebarBtn.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-          });
+        const mapWrapper = document.getElementById('map-wrapper');
+
+        function openDashboard() {
+          if (!dashboard) return;
+          dashboard.classList.add('open');
+          document.body.classList.add('sheet-open');
+          if (dashToggle) {
+            dashToggle.setAttribute('aria-expanded', 'true');
+            const iconHam = dashToggle.querySelector('.icon-hamburger');
+            const iconClose = dashToggle.querySelector('.icon-close');
+            if (iconHam) iconHam.style.display = 'none';
+            if (iconClose) iconClose.style.display = 'block';
+          }
+          // Resize Chart.js charts once the sheet animation completes
+          setTimeout(() => {
+            if (timeSeriesChart) {
+              try { timeSeriesChart.resize(); } catch (e) {}
+            }
+            if (ringDensityChart) {
+              try { ringDensityChart.resize(); } catch (e) {}
+            }
+          }, 320);
         }
-        if (sheetHandleBar && sidebar) {
-          sheetHandleBar.addEventListener('click', () => {
-            sidebar.classList.remove('open');
+
+        function closeDashboard() {
+          if (!dashboard) return;
+          dashboard.classList.remove('open');
+          document.body.classList.remove('sheet-open');
+          if (dashToggle) {
+            dashToggle.setAttribute('aria-expanded', 'false');
+            const iconHam = dashToggle.querySelector('.icon-hamburger');
+            const iconClose = dashToggle.querySelector('.icon-close');
+            if (iconHam) iconHam.style.display = 'block';
+            if (iconClose) iconClose.style.display = 'none';
+          }
+        }
+
+        function toggleDashboard(e) {
+          if (e) {
+            e.stopPropagation();
+          }
+          if (dashboard && dashboard.classList.contains('open')) {
+            closeDashboard();
+          } else {
+            openDashboard();
+          }
+        }
+
+        if (dashToggle) {
+          dashToggle.addEventListener('click', toggleDashboard);
+        }
+
+        if (closeDashBtn) {
+          closeDashBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeDashboard();
           });
         }
 
+        if (sheetHandleBar) {
+          sheetHandleBar.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeDashboard();
+          });
+        }
+
+        // Tapping map area closes dashboard on mobile
+        if (mapWrapper) {
+          mapWrapper.addEventListener('click', (e) => {
+            if (window.innerWidth < 768 && dashboard && dashboard.classList.contains('open')) {
+              if (!e.target.closest('#dashToggle') && !e.target.closest('#dashboard')) {
+                closeDashboard();
+              }
+            }
+          });
+        }
+
+        // Escape key closes dashboard
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' || e.key === 'Esc') {
+            if (dashboard && dashboard.classList.contains('open')) {
+              closeDashboard();
+            }
+          }
+        });
+
         // Responsive map viewport adaptation for mobile toolbars
         function handleViewportResize() {
+          if (window.innerWidth >= 768) {
+            closeDashboard();
+          }
           if (map) {
             try { map.resize(); } catch (e) {}
           }
