@@ -29,7 +29,7 @@ def run_year_pipeline(
     city: str = "ahmedabad",
     year: int = 2023,
     resolution: float = 60.0,
-    model_path: str | Path = "data/rf_model_2024.pkl",
+    model_path: str | Path | None = None,
     force: bool = False,
     config_path: str | Path | None = None,
     data_dir: str | Path = "data",
@@ -171,8 +171,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model",
         type=str,
-        default="data/rf_model_2024.pkl",
-        help="Path to trained classifier model (default: data/rf_model_2024.pkl)",
+        default=None,
+        help="Path to trained classifier model (default: data/{city}/rf_model_pooled.pkl)",
     )
     parser.add_argument(
         "--force",

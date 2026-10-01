@@ -80,6 +80,9 @@ def save_geotiff(
 ) -> None:
     """Saves a 2D numpy array as a single-band GeoTIFF with spatial metadata."""
     prof = profile.copy()
+    prof.pop("blockxsize", None)
+    prof.pop("blockysize", None)
+    prof.pop("tiled", None)
     prof.update(
         {
             "driver": "GTiff",
@@ -87,7 +90,6 @@ def save_geotiff(
             "dtype": "float32",
             "nodata": nodata_val,
             "compress": "lzw",
-            "tiled": True,
         }
     )
 

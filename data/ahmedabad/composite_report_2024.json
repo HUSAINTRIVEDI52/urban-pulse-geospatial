@@ -1,0 +1,37 @@
+{
+  "city": "ahmedabad",
+  "year": 2024,
+  "datetime_window": "2023-10-01/2024-03-31",
+  "window_widened_months": 0,
+  "scene_count": 20,
+  "scene_dates": [
+    "2023-10-04",
+    "2023-10-29",
+    "2023-11-03",
+    "2023-11-18",
+    "2023-12-08",
+    "2023-12-23",
+    "2024-01-12",
+    "2024-03-07",
+    "2024-03-12",
+    "2024-03-17",
+    "2024-03-22"
+  ],
+  "mgrs_tiles": [
+    "42QZL",
+    "43QBF"
+  ],
+  "mean_scene_cloud_cover_pct": 0.0001,
+  "min_valid_obs_threshold": 4,
+  "total_aoi_pixels": 602176,
+  "valid_pixels": 602176,
+  "nodata_pixels": 0,
+  "nodata_percentage": 0.0,
+  "band_means_reflectance": {
+    "red": 0.1174,
+    "green": 0.1024,
+    "blue": 0.0755,
+    "nir": 0.261,
+    "swir16": 0.2541
+  }
+}

@@ -935,6 +935,14 @@
         transition: opacity 0.25s ease;
       }
 
+      /* Focus Restore Bar on Mobile */
+      #focus-restore-bar {
+        top: calc(10px + env(safe-area-inset-top, 0px)) !important;
+        left: 10px !important;
+        padding: 5px 10px !important;
+        gap: 8px !important;
+      }
+
       /* Compare Mode on Mobile */
       .compare-modal {
         top: calc(68px + env(safe-area-inset-top, 0px));
@@ -1029,10 +1037,105 @@
         display: flex !important;
       }
 
-      body.sheet-open #timeline-container,
-      body.sheet-open #legend-card {
-        display: flex !important;
-      }
+    .tool-btn:focus-visible,
+    .play-btn:focus-visible,
+    .restore-focus-btn:focus-visible,
+    .drawer-toggle-btn:focus-visible,
+    .sidebar-close-btn:focus-visible,
+    .city-select:focus-visible {
+      outline: 2px solid var(--accent-cyan);
+      outline-offset: 2px;
+    }
+
+    /* Focus Mode Styles */
+    body.focus-mode .top-nav,
+    body.focus-mode #legend-card,
+    body.focus-mode #timeline-container,
+    body.focus-mode #dashboard,
+    body.focus-mode #sidebar,
+    body.focus-mode #dashToggle {
+      display: none !important;
+    }
+
+    body.focus-mode #map-wrapper {
+      width: 100vw !important;
+      min-width: 100vw !important;
+      max-width: 100vw !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      flex: 1 1 100% !important;
+    }
+
+    /* Focus Restore Top Panel */
+    #focus-restore-bar {
+      position: absolute;
+      top: calc(16px + env(safe-area-inset-top, 0px));
+      left: 16px;
+      z-index: 50;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 12px 6px 14px;
+      animation: fadeInFocus 0.25s ease forwards;
+    }
+
+    body.focus-mode #focus-restore-bar {
+      display: flex !important;
+    }
+
+    @keyframes fadeInFocus {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .focus-year-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .focus-year-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan);
+    }
+
+    .restore-focus-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 5px 10px;
+      color: var(--text-primary);
+      font-family: var(--font-main);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .restore-focus-btn:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: rgba(239, 68, 68, 0.6);
+      color: #fca5a5;
+    }
+
+    .kbd-hint {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
     }
 
     /* Visible Error Banner */
@@ -1104,6 +1207,19 @@
   <div id="map-wrapper">
     <div id="map"></div>
 
+    <!-- Focus Mode Restore Widget -->
+    <div id="focus-restore-bar" class="focus-restore-bar glass-panel">
+      <div class="focus-year-badge">
+        <span class="focus-year-dot"></span>
+        <span id="focus-year-display">2024</span>
+      </div>
+      <button id="restore-focus-btn" class="restore-focus-btn" aria-label="Exit Focus Mode (Esc)" title="Exit Focus Mode (Esc)">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        <span>Restore</span>
+        <kbd class="kbd-hint">Esc</kbd>
+      </button>
+    </div>
+
     <!-- Top App Navigation -->
     <div class="top-nav glass-panel">
       <div class="brand-logo">
@@ -1123,15 +1239,27 @@
 
     <!-- Map Tools Toolbar -->
     <div class="map-tools">
-      <button id="toggle-change-btn" class="tool-btn" title="Change Layer (2018–2024)">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        <span class="btn-text">Change Layer (2018–2024)</span>
+      <button id="toggle-overlay-btn" class="tool-btn active" title="Toggle Classified Layer" aria-pressed="true">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <span class="btn-text">Overlay</span>
       </button>
-      <button id="toggle-compare-btn" class="tool-btn" title="Compare Mode">
+      <button id="toggle-basemap-btn" class="tool-btn" title="Switch Basemap (OSM / Satellite)" aria-pressed="false">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        <span class="btn-text">Basemap</span>
+      </button>
+      <button id="toggle-focus-btn" class="tool-btn" title="Focus Mode (Full Map)" aria-pressed="false">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+        <span class="btn-text">Focus</span>
+      </button>
+      <button id="toggle-change-btn" class="tool-btn" title="Change Layer (2018–2024)" aria-pressed="false">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span class="btn-text">Change Layer</span>
+      </button>
+      <button id="toggle-compare-btn" class="tool-btn" title="Compare Mode" aria-pressed="false">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         <span class="btn-text">Compare Mode</span>
       </button>
-      <button id="recenter-btn" class="tool-btn" title="Recenter AOI">
+      <button id="recenter-btn" class="tool-btn" title="Recenter AOI" aria-label="Recenter AOI">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
         <span class="btn-text">Recenter AOI</span>
       </button>
@@ -1315,6 +1443,9 @@
     let selectedYearIndex = 6;
     let isPlaying = false;
     let playInterval = null;
+    let isOverlayVisible = true;
+    let currentBasemap = 'osm'; // 'osm' | 'satellite'
+    let isFocusModeActive = false;
     let isChangeLayerActive = false;
     let isCompareModeActive = false;
     let currentOpacity = 0.90;
@@ -1366,7 +1497,7 @@
       }
     }
 
-    // Basemap configuration generator (OpenStreetMap Raster Source)
+    // Basemap configuration generator (OpenStreetMap & Esri Satellite Raster Sources)
     function getBasemapStyle() {
       return {
         version: 8,
@@ -1377,7 +1508,16 @@
               'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
             ],
             tileSize: 256,
-            attribution: '© OpenStreetMap contributors',
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
+            maxzoom: 19
+          },
+          'satellite-basemap': {
+            type: 'raster',
+            tiles: [
+              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+            ],
+            tileSize: 256,
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
             maxzoom: 19
           }
         },
@@ -1387,7 +1527,20 @@
             type: 'raster',
             source: 'osm-basemap',
             minzoom: 0,
-            maxzoom: 19
+            maxzoom: 19,
+            layout: {
+              visibility: currentBasemap === 'osm' ? 'visible' : 'none'
+            }
+          },
+          {
+            id: 'satellite-basemap-layer',
+            type: 'raster',
+            source: 'satellite-basemap',
+            minzoom: 0,
+            maxzoom: 19,
+            layout: {
+              visibility: currentBasemap === 'satellite' ? 'visible' : 'none'
+            }
           }
         ]
       };
@@ -1595,6 +1748,9 @@
           id: 'annual-overlay-layer',
           type: 'raster',
           source: 'annual-overlay-source',
+          layout: {
+            visibility: (isOverlayVisible && !isChangeLayerActive) ? 'visible' : 'none'
+          },
           paint: {
             'raster-opacity': currentOpacity,
             'raster-resampling': 'nearest'
@@ -1613,7 +1769,7 @@
           type: 'raster',
           source: 'change-overlay-source',
           layout: {
-            visibility: 'none'
+            visibility: (isOverlayVisible && isChangeLayerActive) ? 'visible' : 'none'
           },
           paint: {
             'raster-opacity': currentOpacity,
@@ -1637,8 +1793,10 @@
       try {
         const currentYear = availableYears[selectedYearIndex];
         const yearDisplay = document.getElementById('year-display');
+        const focusYearDisplay = document.getElementById('focus-year-display');
         const tableYearLbl = document.getElementById('table-year-lbl');
         if (yearDisplay) yearDisplay.textContent = currentYear;
+        if (focusYearDisplay) focusYearDisplay.textContent = currentYear;
         if (tableYearLbl) tableYearLbl.textContent = currentYear;
 
         // Update timeline tick styling
@@ -1902,17 +2060,229 @@
       }
     }
 
-    // 7. Change Layer Toggle
+    // 7. Overlay Toggle (Classified Layer Visibility)
+    function toggleOverlay() {
+      try {
+        isOverlayVisible = !isOverlayVisible;
+        const overlayBtn = document.getElementById('toggle-overlay-btn');
+        if (overlayBtn) {
+          overlayBtn.classList.toggle('active', isOverlayVisible);
+          overlayBtn.setAttribute('aria-pressed', isOverlayVisible ? 'true' : 'false');
+        }
+
+        // Update single map layers
+        if (map && mapLoaded) {
+          if (isOverlayVisible) {
+            if (isChangeLayerActive) {
+              if (map.getLayer('change-overlay-layer')) map.setLayoutProperty('change-overlay-layer', 'visibility', 'visible');
+              if (map.getLayer('annual-overlay-layer')) map.setLayoutProperty('annual-overlay-layer', 'visibility', 'none');
+            } else {
+              if (map.getLayer('annual-overlay-layer')) map.setLayoutProperty('annual-overlay-layer', 'visibility', 'visible');
+              if (map.getLayer('change-overlay-layer')) map.setLayoutProperty('change-overlay-layer', 'visibility', 'none');
+            }
+          } else {
+            if (map.getLayer('annual-overlay-layer')) map.setLayoutProperty('annual-overlay-layer', 'visibility', 'none');
+            if (map.getLayer('change-overlay-layer')) map.setLayoutProperty('change-overlay-layer', 'visibility', 'none');
+          }
+        }
+
+        // Update compare maps layers
+        if (mapBefore && mapBeforeLoaded && mapBefore.getLayer('compare-overlay-layer-before')) {
+          mapBefore.setLayoutProperty('compare-overlay-layer-before', 'visibility', isOverlayVisible ? 'visible' : 'none');
+        }
+        if (mapAfter && mapAfterLoaded && mapAfter.getLayer('compare-overlay-layer-after')) {
+          mapAfter.setLayoutProperty('compare-overlay-layer-after', 'visibility', isOverlayVisible ? 'visible' : 'none');
+        }
+      } catch (err) {
+        showError("Toggle Overlay", err);
+      }
+    }
+
+    // 8. Basemap Switcher (OpenStreetMap <-> Esri World Imagery Satellite)
+    function switchBasemap() {
+      try {
+        currentBasemap = currentBasemap === 'osm' ? 'satellite' : 'osm';
+        const isSat = currentBasemap === 'satellite';
+        const basemapBtn = document.getElementById('toggle-basemap-btn');
+        if (basemapBtn) {
+          basemapBtn.classList.toggle('active', isSat);
+          basemapBtn.setAttribute('aria-pressed', isSat ? 'true' : 'false');
+          const btnText = basemapBtn.querySelector('.btn-text');
+          if (btnText) {
+            btnText.textContent = isSat ? 'Satellite' : 'Basemap';
+          }
+          basemapBtn.setAttribute('title', isSat ? 'Basemap: Satellite (Click for OSM)' : 'Basemap: OpenStreetMap (Click for Satellite)');
+        }
+
+        const updateMapBasemap = (m) => {
+          if (!m) return;
+          try {
+            if (m.getLayer('osm-basemap-layer')) {
+              m.setLayoutProperty('osm-basemap-layer', 'visibility', isSat ? 'none' : 'visible');
+            }
+            if (m.getLayer('satellite-basemap-layer')) {
+              m.setLayoutProperty('satellite-basemap-layer', 'visibility', isSat ? 'visible' : 'none');
+            }
+          } catch (e) {
+            console.warn("[Basemap Layer Update Warning]:", e);
+          }
+        };
+
+        updateMapBasemap(map);
+        updateMapBasemap(mapBefore);
+        updateMapBasemap(mapAfter);
+      } catch (err) {
+        showError("Switch Basemap", err);
+      }
+    }
+
+    // Dashboard Open / Close Controls
+    function openDashboard() {
+      const dashboard = document.getElementById('dashboard') || document.getElementById('sidebar');
+      const dashToggle = document.getElementById('dashToggle');
+      if (!dashboard) return;
+      dashboard.style.transform = '';
+      dashboard.style.transition = '';
+      dashboard.classList.add('open');
+      document.body.classList.add('sheet-open');
+      if (dashToggle) {
+        dashToggle.setAttribute('aria-expanded', 'true');
+        const iconHam = dashToggle.querySelector('.icon-hamburger');
+        const iconClose = dashToggle.querySelector('.icon-close');
+        if (iconHam) iconHam.style.display = 'none';
+        if (iconClose) iconClose.style.display = 'block';
+      }
+      // Resize Chart.js charts once the sheet animation completes
+      setTimeout(() => {
+        if (timeSeriesChart) {
+          try { timeSeriesChart.resize(); } catch (e) {}
+        }
+        if (ringDensityChart) {
+          try { ringDensityChart.resize(); } catch (e) {}
+        }
+      }, 320);
+    }
+
+    function closeDashboard() {
+      const dashboard = document.getElementById('dashboard') || document.getElementById('sidebar');
+      const dashToggle = document.getElementById('dashToggle');
+      if (!dashboard) return;
+      dashboard.classList.remove('open');
+      document.body.classList.remove('sheet-open');
+      dashboard.style.transform = '';
+      dashboard.style.transition = '';
+      if (dashToggle) {
+        dashToggle.setAttribute('aria-expanded', 'false');
+        const iconHam = dashToggle.querySelector('.icon-hamburger');
+        const iconClose = dashToggle.querySelector('.icon-close');
+        if (iconHam) iconHam.style.display = 'block';
+        if (iconClose) iconClose.style.display = 'none';
+      }
+    }
+
+    function toggleDashboard(e) {
+      if (e) {
+        e.stopPropagation();
+      }
+      const dashboard = document.getElementById('dashboard') || document.getElementById('sidebar');
+      if (dashboard && dashboard.classList.contains('open')) {
+        closeDashboard();
+      } else {
+        openDashboard();
+      }
+    }
+
+    // 9. Focus Mode Implementation (Full Map Focus)
+    function enterFocusMode() {
+      try {
+        isFocusModeActive = true;
+        document.body.classList.add('focus-mode');
+
+        // On mobile, close the bottom sheet
+        closeDashboard();
+
+        const focusBtn = document.getElementById('toggle-focus-btn');
+        if (focusBtn) {
+          focusBtn.classList.add('active');
+          focusBtn.setAttribute('aria-pressed', 'true');
+        }
+
+        const restoreBtn = document.getElementById('restore-focus-btn');
+        if (restoreBtn) {
+          restoreBtn.setAttribute('aria-pressed', 'true');
+        }
+
+        const focusYearDisplay = document.getElementById('focus-year-display');
+        if (focusYearDisplay) {
+          focusYearDisplay.textContent = availableYears[selectedYearIndex] || '2024';
+        }
+
+        // Trigger map resize after layout change
+        requestAnimationFrame(() => {
+          if (map) { try { map.resize(); } catch (e) {} }
+          if (isCompareModeActive) {
+            if (mapBefore) { try { mapBefore.resize(); } catch (e) {} }
+            if (mapAfter) { try { mapAfter.resize(); } catch (e) {} }
+          }
+        });
+      } catch (err) {
+        showError("Enter Focus Mode", err);
+      }
+    }
+
+    function exitFocusMode() {
+      try {
+        isFocusModeActive = false;
+        document.body.classList.remove('focus-mode');
+
+        const focusBtn = document.getElementById('toggle-focus-btn');
+        if (focusBtn) {
+          focusBtn.classList.remove('active');
+          focusBtn.setAttribute('aria-pressed', 'false');
+        }
+
+        const restoreBtn = document.getElementById('restore-focus-btn');
+        if (restoreBtn) {
+          restoreBtn.setAttribute('aria-pressed', 'false');
+        }
+
+        // Trigger map and chart resize
+        requestAnimationFrame(() => {
+          if (map) { try { map.resize(); } catch (e) {} }
+          if (isCompareModeActive) {
+            if (mapBefore) { try { mapBefore.resize(); } catch (e) {} }
+            if (mapAfter) { try { mapAfter.resize(); } catch (e) {} }
+          }
+          if (timeSeriesChart) { try { timeSeriesChart.resize(); } catch (e) {} }
+          if (ringDensityChart) { try { ringDensityChart.resize(); } catch (e) {} }
+        });
+      } catch (err) {
+        showError("Exit Focus Mode", err);
+      }
+    }
+
+    function toggleFocusMode() {
+      if (isFocusModeActive) exitFocusMode();
+      else enterFocusMode();
+    }
+
+    // 10. Change Layer Toggle
     function toggleChangeLayer() {
       try {
         const changeBtn = document.getElementById('toggle-change-btn');
         if (isCompareModeActive) exitCompareMode();
 
         isChangeLayerActive = !isChangeLayerActive;
-        if (changeBtn) changeBtn.classList.toggle('active', isChangeLayerActive);
+        if (changeBtn) {
+          changeBtn.classList.toggle('active', isChangeLayerActive);
+          changeBtn.setAttribute('aria-pressed', isChangeLayerActive ? 'true' : 'false');
+        }
 
         if (map && mapLoaded && map.getLayer('change-overlay-layer') && map.getLayer('annual-overlay-layer')) {
-          if (isChangeLayerActive) {
+          if (!isOverlayVisible) {
+            map.setLayoutProperty('change-overlay-layer', 'visibility', 'none');
+            map.setLayoutProperty('annual-overlay-layer', 'visibility', 'none');
+          } else if (isChangeLayerActive) {
             map.setLayoutProperty('change-overlay-layer', 'visibility', 'visible');
             map.setLayoutProperty('annual-overlay-layer', 'visibility', 'none');
           } else {
@@ -1926,7 +2296,7 @@
       }
     }
 
-    // 8. Dual Map Compare Mode Implementation
+    // 11. Dual Map Compare Mode Implementation
     function initCompareMaps() {
       try {
         const MapLibreClass = window.maplibregl || window.maplibreGl || (typeof maplibregl !== 'undefined' ? maplibregl : null);
@@ -2027,6 +2397,9 @@
               id: 'compare-overlay-layer-before',
               type: 'raster',
               source: 'compare-overlay-source-before',
+              layout: {
+                visibility: isOverlayVisible ? 'visible' : 'none'
+              },
               paint: { 'raster-opacity': currentOpacity, 'raster-resampling': 'nearest' }
             });
           }
@@ -2050,6 +2423,9 @@
               id: 'compare-overlay-layer-after',
               type: 'raster',
               source: 'compare-overlay-source-after',
+              layout: {
+                visibility: isOverlayVisible ? 'visible' : 'none'
+              },
               paint: { 'raster-opacity': currentOpacity, 'raster-resampling': 'nearest' }
             });
           }
@@ -2088,10 +2464,15 @@
         if (isChangeLayerActive) {
           isChangeLayerActive = false;
           const changeBtn = document.getElementById('toggle-change-btn');
-          if (changeBtn) changeBtn.classList.remove('active');
+          if (changeBtn) {
+            changeBtn.classList.remove('active');
+            changeBtn.setAttribute('aria-pressed', 'false');
+          }
           if (map && mapLoaded && map.getLayer('change-overlay-layer') && map.getLayer('annual-overlay-layer')) {
             map.setLayoutProperty('change-overlay-layer', 'visibility', 'none');
-            map.setLayoutProperty('annual-overlay-layer', 'visibility', 'visible');
+            if (isOverlayVisible) {
+              map.setLayoutProperty('annual-overlay-layer', 'visibility', 'visible');
+            }
           }
           renderLegend();
         }
@@ -2108,7 +2489,10 @@
         const compareBar = document.getElementById('compare-bar');
         const compareContainer = document.getElementById('compare-container');
 
-        if (compareBtn) compareBtn.classList.add('active');
+        if (compareBtn) {
+          compareBtn.classList.add('active');
+          compareBtn.setAttribute('aria-pressed', 'true');
+        }
         if (compareBar) compareBar.classList.add('active');
         if (compareContainer) compareContainer.classList.add('active');
 
@@ -2158,7 +2542,10 @@
         const timelineContainer = document.getElementById('timeline-container');
         const singleMapEl = document.getElementById('map');
 
-        if (compareBtn) compareBtn.classList.remove('active');
+        if (compareBtn) {
+          compareBtn.classList.remove('active');
+          compareBtn.setAttribute('aria-pressed', 'false');
+        }
         if (compareBar) compareBar.classList.remove('active');
         if (compareContainer) compareContainer.classList.remove('active');
         if (timelineContainer) timelineContainer.style.display = 'flex';
@@ -2198,13 +2585,36 @@
       }
     }
 
-    // 9. Attach UI Controls Event Listeners (Independent initialization)
+    // 12. Attach UI Controls Event Listeners (Independent initialization)
     function initControls() {
       try {
         // Error banner close button
         const errorCloseBtn = document.getElementById('error-close-btn');
         if (errorCloseBtn) {
           errorCloseBtn.addEventListener('click', clearError);
+        }
+
+        // Overlay Toggle Button
+        const overlayBtn = document.getElementById('toggle-overlay-btn');
+        if (overlayBtn) {
+          overlayBtn.addEventListener('click', toggleOverlay);
+        }
+
+        // Basemap Switcher Button
+        const basemapBtn = document.getElementById('toggle-basemap-btn');
+        if (basemapBtn) {
+          basemapBtn.addEventListener('click', switchBasemap);
+        }
+
+        // Focus Mode Toggle Button & Restore Button
+        const focusBtn = document.getElementById('toggle-focus-btn');
+        if (focusBtn) {
+          focusBtn.addEventListener('click', toggleFocusMode);
+        }
+
+        const restoreFocusBtn = document.getElementById('restore-focus-btn');
+        if (restoreFocusBtn) {
+          restoreFocusBtn.addEventListener('click', exitFocusMode);
         }
 
         // Timeline Slider
@@ -2240,7 +2650,7 @@
           });
         }
 
-        // Opacity Slider
+        // Opacity Slider (Keeps value even if overlay is hidden)
         const opacitySlider = document.getElementById('opacity-slider');
         const opacityVal = document.getElementById('opacity-val');
         if (opacitySlider) {
@@ -2360,56 +2770,6 @@
         const closeDashBtn = document.getElementById('close-dashboard-btn') || document.getElementById('close-sidebar-btn');
         const sheetHandleBar = document.getElementById('sheet-handle-bar');
         const mapWrapper = document.getElementById('map-wrapper');
-
-        function openDashboard() {
-          if (!dashboard) return;
-          dashboard.style.transform = '';
-          dashboard.style.transition = '';
-          dashboard.classList.add('open');
-          document.body.classList.add('sheet-open');
-          if (dashToggle) {
-            dashToggle.setAttribute('aria-expanded', 'true');
-            const iconHam = dashToggle.querySelector('.icon-hamburger');
-            const iconClose = dashToggle.querySelector('.icon-close');
-            if (iconHam) iconHam.style.display = 'none';
-            if (iconClose) iconClose.style.display = 'block';
-          }
-          // Resize Chart.js charts once the sheet animation completes
-          setTimeout(() => {
-            if (timeSeriesChart) {
-              try { timeSeriesChart.resize(); } catch (e) {}
-            }
-            if (ringDensityChart) {
-              try { ringDensityChart.resize(); } catch (e) {}
-            }
-          }, 320);
-        }
-
-        function closeDashboard() {
-          if (!dashboard) return;
-          dashboard.classList.remove('open');
-          document.body.classList.remove('sheet-open');
-          dashboard.style.transform = '';
-          dashboard.style.transition = '';
-          if (dashToggle) {
-            dashToggle.setAttribute('aria-expanded', 'false');
-            const iconHam = dashToggle.querySelector('.icon-hamburger');
-            const iconClose = dashToggle.querySelector('.icon-close');
-            if (iconHam) iconHam.style.display = 'block';
-            if (iconClose) iconClose.style.display = 'none';
-          }
-        }
-
-        function toggleDashboard(e) {
-          if (e) {
-            e.stopPropagation();
-          }
-          if (dashboard && dashboard.classList.contains('open')) {
-            closeDashboard();
-          } else {
-            openDashboard();
-          }
-        }
 
         if (dashToggle) {
           dashToggle.addEventListener('click', toggleDashboard);
@@ -2552,11 +2912,20 @@
           });
         }
 
-        // Escape key closes dashboard
+        // Escape key handling: prioritizes Focus Mode exit -> Dashboard close -> Compare Mode exit
         window.addEventListener('keydown', (e) => {
           if (e.key === 'Escape' || e.key === 'Esc') {
+            if (isFocusModeActive) {
+              exitFocusMode();
+              return;
+            }
             if (dashboard && dashboard.classList.contains('open')) {
               closeDashboard();
+              return;
+            }
+            if (isCompareModeActive) {
+              exitCompareMode();
+              return;
             }
           }
         });
@@ -2566,7 +2935,7 @@
           const isDesktop = window.innerWidth >= 768;
           if (isDesktop) {
             closeDashboard();
-            if (legendCard) legendCard.classList.remove('collapsed');
+            if (legendCard && !isFocusModeActive) legendCard.classList.remove('collapsed');
           }
           if (map) {
             try { map.resize(); } catch (e) {}
