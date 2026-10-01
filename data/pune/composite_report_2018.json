@@ -1,0 +1,28 @@
+{
+  "city": "pune",
+  "year": 2018,
+  "datetime_window": "2017-10-01/2018-03-31",
+  "window_widened_months": 1,
+  "scene_count": 3,
+  "scene_dates": [
+    "2018-03-06",
+    "2018-03-31"
+  ],
+  "mgrs_tiles": [
+    "43QCA",
+    "43QDA"
+  ],
+  "mean_scene_cloud_cover_pct": 0.6879,
+  "min_valid_obs_threshold": 4,
+  "total_aoi_pixels": 571536,
+  "valid_pixels": 571527,
+  "nodata_pixels": 9,
+  "nodata_percentage": 0.0016,
+  "band_means_reflectance": {
+    "red": 0.1244,
+    "green": 0.1009,
+    "blue": 0.0794,
+    "nir": 0.2001,
+    "swir16": 0.2351
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "city": "pune",
+  "year": 2023,
+  "datetime_window": "2022-11-01/2023-02-28",
+  "window_widened_months": 0,
+  "scene_count": 20,
+  "scene_dates": [
+    "2022-12-20",
+    "2022-12-25",
+    "2023-01-09",
+    "2023-01-14",
+    "2023-01-19",
+    "2023-01-24",
+    "2023-01-29",
+    "2023-02-03",
+    "2023-02-13",
+    "2023-02-18",
+    "2023-02-23",
+    "2023-02-28"
+  ],
+  "mgrs_tiles": [
+    "43QCA",
+    "43QDA"
+  ],
+  "mean_scene_cloud_cover_pct": 0.0009,
+  "min_valid_obs_threshold": 4,
+  "total_aoi_pixels": 571536,
+  "valid_pixels": 571536,
+  "nodata_pixels": 0,
+  "nodata_percentage": 0.0,
+  "band_means_reflectance": {
+    "red": 0.1027,
+    "green": 0.0846,
+    "blue": 0.0646,
+    "nir": 0.2009,
+    "swir16": 0.2123
+  }
+}

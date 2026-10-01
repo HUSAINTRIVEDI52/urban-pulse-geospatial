@@ -208,6 +208,7 @@ def plot_sprawl_metrics(
 def run_sprawl_metrics(
     city: str = "ahmedabad",
     data_dir: str | Path = "data",
+    use_raw: bool = False,
 ) -> pd.DataFrame:
     """
     Loads rings dataset and area summary dataset to compute multi-year sprawl metrics.
@@ -215,7 +216,13 @@ def run_sprawl_metrics(
     city_key = city.lower()
     data_path = Path(data_dir)
     rings_csv = data_path / f"{city_key}_rings.csv"
+    if not rings_csv.exists() and (data_path / city_key / "rings.csv").exists():
+        rings_csv = data_path / city_key / "rings.csv"
+
     areas_csv = data_path / f"{city_key}_class_areas.csv"
+    if not areas_csv.exists() and (data_path / city_key / "class_areas.csv").exists():
+        areas_csv = data_path / city_key / "class_areas.csv"
+
     output_csv = data_path / f"{city_key}_metrics.csv"
     output_png = data_path / f"{city_key}_metrics.png"
 
@@ -225,8 +232,9 @@ def run_sprawl_metrics(
             f"Please run 'python pipeline/ring_analysis.py --city {city}' first."
         )
 
+    mode_str = "RAW" if use_raw else "CLEAN (Temporally Consistent)"
     print("=" * 80)
-    print(f" URBANPULSE SPATIAL SPRAWL & SHANNON ENTROPY METRICS: {city.upper()}")
+    print(f" URBANPULSE SPATIAL SPRAWL & SHANNON ENTROPY METRICS [{mode_str}]: {city.upper()}")
     print(f" Input Rings CSV  : {rings_csv.resolve()}")
     print(f" Output Metrics   : {output_csv.resolve()}")
     print("=" * 80)
@@ -264,7 +272,7 @@ def run_sprawl_metrics(
         n_years = yr - first_year
         if n_years > 0 and yr in class_areas_map and first_year in class_areas_map:
             first_val = class_areas_map[first_year]
-            cagr_pct = (((builtup_km2 / first_val) ** (1.0 / n_years)) - 1.0) * 100.0
+            cagr_pct = (((builtup_km2 / first_val) ** (1.0 / n_years)) - 1.0) * 100.0 if first_val > 0 else 0.0
         elif n_years > 0:
             first_sub = df_rings[df_rings["year"] == first_year]
             first_val = float(first_sub["builtup_km2"].sum())
@@ -359,6 +367,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--data-dir", type=str, default="data", help="Directory for data rasters and CSVs"
     )
+    parser.add_argument(
+        "--raw", action="store_true", help="Use raw uncleaned classifications instead of clean/"
+    )
 
     args = parser.parse_args()
-    run_sprawl_metrics(city=args.city, data_dir=args.data_dir)
+    run_sprawl_metrics(city=args.city, data_dir=args.data_dir, use_raw=args.raw)

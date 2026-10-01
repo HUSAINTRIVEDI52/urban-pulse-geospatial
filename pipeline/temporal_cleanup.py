@@ -1,11 +1,11 @@
 """
-UrbanPulse - Temporal Consistency & Persistence Filter Module
-Post-processes annual classified satellite rasters (2018-2024):
-1. Rebuilds any outlier year (by scene count or stable-pixel means) using more scenes or wider dry-season months.
-2. Applies a temporal consistency filter: a pixel counts as Built-up in year t only if it is Built-up in at least 2 of years t-1, t, t+1.
-3. Enforces urban persistence: once a pixel is Built-up for 2 consecutive years, it remains Built-up for all subsequent years.
-4. Re-runs change detection with --min-patch 8 and prints gross gain, gross loss, and loss/gain ratio before and after cleanup.
-5. Re-exports web data and generates updated urban sprawl trends and change maps.
+UrbanPulse - Multi-Temporal Land Cover Consistency & Urban Persistence Filter
+Post-processes annual classified satellite rasters:
+1. Majority rule: Built-up in year t only if Built-up in at least 2 of (t-1, t, t+1) (nearest 2 for endpoints).
+2. Persistence rule: Once a pixel is Built-up for 2 consecutive years, it remains Built-up for all later years.
+3. Non-built-up assignment: Replaced pixels receive their multi-year modal non-built-up class.
+4. Outputs cleaned GeoTIFFs to data/{city}/clean/, leaving originals untouched.
+5. Generates comparison table and plot: data/{city}/cleanup_comparison.png.
 """
 
 import argparse
@@ -13,6 +13,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
 import rasterio
@@ -23,352 +25,353 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from pipeline.build_composite import build_composite
-from pipeline.change_detection import detect_changes
-from pipeline.compute_indices import compute_indices
-from pipeline.export_web import export_web_data
-from pipeline.ring_analysis import run_ring_analysis
-from pipeline.sprawl_metrics import run_sprawl_metrics
-from pipeline.train_classifier import PROJECT_CLASS_NAMES, classify_raster
+from pipeline.train_classifier import PROJECT_CLASS_NAMES
 
 
-def load_config(city: str = "ahmedabad", config_path: str | Path | None = None) -> dict[str, Any]:
-    """Loads city YAML configuration."""
-    cfg_file = Path(config_path) if config_path else Path(f"configs/{city.lower()}.yaml")
-    if not cfg_file.exists():
-        raise FileNotFoundError(f"Configuration file not found: {cfg_file.resolve()}")
-    with open(cfg_file, encoding="utf-8") as f:
-        return yaml.safe_load(f)
-
-
-def rebuild_outlier_year(
-    city: str = "ahmedabad",
-    year: int = 2019,
-    config_path: str | Path | None = None,
-    data_dir: str | Path = "data",
-) -> None:
+def clean_temporal_stack(
+    stack_3d: np.ndarray,
+) -> tuple[np.ndarray, dict[str, np.ndarray]]:
     """
-    Rebuilds composite, indices, and classified map for an outlier year
-    using wider dry-season parameters (Oct to Mar).
+    Applies majority and urban persistence rules to a 3D land cover stack (T, H, W).
+
+    Args:
+        stack_3d: Array of shape (T, H, W) with class IDs (1=Built-up, 2=Veg, 3=Water, 4=Agri, 5=Open land, 0=NoData).
+
+    Returns:
+        tuple of (cleaned_stack_3d, stats_dict)
     """
-    print("=" * 85)
-    print(f"[*] Rebuilding Outlier Year: {city.upper()} ({year}) with expanded seasonal window...")
-    print("=" * 85)
-    build_composite(
-        city=city,
-        year=year,
-        force=True,
-        config_path=config_path,
-        data_dir=data_dir,
-    )
-    compute_indices(
-        city=city,
-        year=year,
-        force=True,
-        config_path=config_path,
-        data_dir=data_dir,
-    )
-    classify_raster(
-        city=city,
-        year=year,
-        config_path=config_path,
-        data_dir=data_dir,
-    )
-    print(f"[+] Rebuild complete for {city.capitalize()} ({year}).\n")
+    n_years, height, width = stack_3d.shape
+    built_raw = (stack_3d == 1).astype(np.int32)
 
-
-def apply_temporal_cleanup(
-    city: str = "ahmedabad",
-    start_year: int = 2018,
-    end_year: int = 2024,
-    min_patch_size: int = 8,
-    rebuild_outliers: bool = False,
-    config_path: str | Path | None = None,
-    data_dir: str | Path = "data",
-) -> dict[str, Any]:
-    """
-    Executes full temporal cleanup and multi-temporal post-processing.
-    """
-    city_key = city.lower()
-    data_path = Path(data_dir)
-    years = list(range(start_year, end_year + 1))
-    n_years = len(years)
-
-    print("=" * 95)
-    print(
-        f" URBANPULSE TEMPORAL CONSISTENCY & PERSISTENCE POST-PROCESSING: {city.upper()} ({start_year}-{end_year})"
-    )
-    print(f" Minimum Change Patch Size : {min_patch_size} pixels")
-    print(f" Data Directory            : {data_path.resolve()}")
-    print("=" * 95)
-
-    # 1. Optionally rebuild outlier years
-    if rebuild_outliers:
-        rebuild_outlier_year(city=city_key, year=2019, config_path=config_path, data_dir=data_dir)
-
-    # 2. Compute BEFORE Cleanup Change Detection
-    print("\n>>> [Phase 1/4] Running Pre-Cleanup Baseline Change Detection...")
-    res_before = detect_changes(
-        city=city_key,
-        start_year=start_year,
-        end_year=end_year,
-        min_patch_size=min_patch_size,
-        data_dir=data_dir,
-    )
-    gain_before = res_before["gross_gain_km2"]
-    loss_before = res_before["gross_loss_km2"]
-    net_before = res_before["net_change_km2"]
-    ratio_before = (loss_before / gain_before) if gain_before > 0 else 0.0
-
-    # 3. Load all annual classified rasters
-    print("\n>>> [Phase 2/4] Applying Temporal Consistency & Urban Persistence Filters...")
-    raw_rasters = {}
-    profiles = {}
-    for y in years:
-        rf_path = data_path / f"{city_key}_{y}_classified.tif"
-        if not rf_path.exists():
-            raise FileNotFoundError(f"Missing classified raster: {rf_path.resolve()}")
-        with rasterio.open(rf_path) as src:
-            raw_rasters[y] = src.read(1)
-            profiles[y] = src.profile.copy()
-
-    first_y = years[0]
-    height, width = raw_rasters[first_y].shape
-    stack = np.stack([raw_rasters[y] for y in years], axis=0)  # Shape (N, H, W)
-    built_stack = (stack == 1).astype(np.int32)  # 1 if Built-up, 0 otherwise
-
-    # =========================================================================
-    # ALGORITHM STEP A: Temporal Consistency Filter (3-Year Moving Window)
     # -------------------------------------------------------------------------
-    # A pixel counts as Built-up in year t only if it is Built-up in at least
-    # 2 of the 3 consecutive years [t-1, t, t+1]. This eliminates single-year
-    # spectral noise and ephemeral seasonal confusion (e.g. dry harvested fields).
-    # =========================================================================
-    filtered_built = np.zeros_like(built_stack)
-
-    # Interior years (t = 1 to N-2)
-    for t in range(1, n_years - 1):
-        window_sum = built_stack[t - 1] + built_stack[t] + built_stack[t + 1]
-        filtered_built[t] = np.where(window_sum >= 2, 1, 0)
-
-    # Boundary Year: Start (t = 0 / 2018)
-    # Validated against immediate subsequent years (2019, 2020)
-    filtered_built[0] = np.where(
-        (built_stack[0] == 1) & ((built_stack[1] == 1) | (built_stack[2] == 1)),
-        1,
-        0,
-    )
-
-    # Boundary Year: End (t = N-1 / 2024)
-    # Validated against immediate preceding years (2023, 2022)
-    filtered_built[-1] = np.where(
-        (built_stack[-1] == 1) & ((built_stack[-2] == 1) | (built_stack[-3] == 1)),
-        1,
-        0,
-    )
-
-    # =========================================================================
-    # ALGORITHM STEP B: Urban Persistence Filter (Irreversibility Constraint)
+    # Rule 1: Majority Rule (3-Year Moving Window, nearest 2 at endpoints)
     # -------------------------------------------------------------------------
-    # Once a pixel is established as Built-up for 2 consecutive years in the
-    # temporally consistent series (i.e. filtered_built[t-1] == 1 and
-    # filtered_built[t] == 1), urban infrastructure persistence guarantees that
-    # it remains Built-up for all subsequent years (k >= t).
-    # =========================================================================
-    persisted_built = filtered_built.copy()
+    majority_built = np.zeros_like(built_raw)
+
+    if n_years == 1:
+        majority_built = built_raw.copy()
+    elif n_years == 2:
+        two_yr_agree = (built_raw[0] == 1) & (built_raw[1] == 1)
+        majority_built[0] = two_yr_agree.astype(np.int32)
+        majority_built[1] = two_yr_agree.astype(np.int32)
+    else:
+        # First year: check nearest two years (t=0, t=1)
+        majority_built[0] = np.where(
+            (built_raw[0] == 1) & (built_raw[1] == 1),
+            1,
+            0,
+        )
+
+        # Interior years: at least 2 of (t-1, t, t+1)
+        for t in range(1, n_years - 1):
+            window_sum = built_raw[t - 1] + built_raw[t] + built_raw[t + 1]
+            majority_built[t] = np.where(window_sum >= 2, 1, 0)
+
+        # Last year: check nearest two years (t=T-2, t=T-1)
+        majority_built[-1] = np.where(
+            (built_raw[-1] == 1) & (built_raw[-2] == 1),
+            1,
+            0,
+        )
+
+    rule1_changed_pixels = np.array(
+        [np.sum((built_raw[t] == 1) & (majority_built[t] == 0)) for t in range(n_years)],
+        dtype=np.int64,
+    )
+
+    # -------------------------------------------------------------------------
+    # Rule 2: Urban Persistence Rule (2 Consecutive Years Lock-In)
+    # -------------------------------------------------------------------------
+    # Urban land persistence assumption: once land is urbanized and built-up for 2
+    # consecutive years, it rarely reverts back to natural or agricultural land cover
+    # in an expanding metropolitan area.
+    persisted_built = majority_built.copy()
     locked_built = np.zeros((height, width), dtype=bool)
 
     for t in range(n_years):
         if t >= 1:
-            # Check for 2 consecutive years of confirmed built-up land
-            two_consecutive = (filtered_built[t - 1] == 1) & (filtered_built[t] == 1)
+            two_consecutive = (majority_built[t - 1] == 1) & (majority_built[t] == 1)
             locked_built |= two_consecutive
-        # Enforce persistence
-        persisted_built[t] = np.where(locked_built, 1, filtered_built[t])
+        persisted_built[t] = np.where(locked_built, 1, majority_built[t])
 
-    # =========================================================================
-    # ALGORITHM STEP C: Non-Built-Up Land Cover Class Assignment
+    rule2_changed_pixels = np.array(
+        [np.sum((majority_built[t] == 0) & (persisted_built[t] == 1)) for t in range(n_years)],
+        dtype=np.int64,
+    )
+
     # -------------------------------------------------------------------------
-    # For pixels where Built-up status is removed by the filter, we replace
-    # the false built-up label with the modal non-built-up class observed
-    # across the multi-year stack (e.g. Agriculture [4], Vegetation [2], Open land [5]).
-    # =========================================================================
-    # Create a non-built-up mask stack
-    non_built_stack = stack.copy()
-    non_built_stack[non_built_stack == 1] = 0  # Ignore built-up
+    # Rule 3: Non-Built-Up Classes Modal Assignment
+    # -------------------------------------------------------------------------
+    candidate_classes = [2, 3, 4, 5]
+    counts = np.stack([(stack_3d == cid).sum(axis=0) for cid in candidate_classes], axis=0)
+    max_idx = np.argmax(counts, axis=0)
+    has_any_non_built = counts.sum(axis=0) > 0
+    class_lut = np.array(candidate_classes, dtype=np.uint8)
+    modal_non_built = np.where(has_any_non_built, class_lut[max_idx], 4)
 
-    # Fast vectorized computation of dominant non-built-up class along time axis
-    def compute_non_built_mode_fast(arr_3d: np.ndarray) -> np.ndarray:
-        # Non-built-up candidate classes: [2 (Veg), 3 (Water), 4 (Agri), 5 (Open land)]
-        candidate_classes = [2, 3, 4, 5]
-        # Count frequency of each candidate class across time
-        counts = np.stack(
-            [(arr_3d == cid).sum(axis=0) for cid in candidate_classes], axis=0
-        )  # Shape (4, H, W)
-        max_idx = np.argmax(counts, axis=0)  # Shape (H, W), index 0..3
-        class_lut = np.array(candidate_classes, dtype=np.uint8)
-        return class_lut[max_idx]
+    cleaned_stack = np.zeros_like(stack_3d)
+    for t in range(n_years):
+        raw_arr = stack_3d[t].copy()
+        is_built = persisted_built[t] == 1
+        is_valid = raw_arr > 0
 
-    modal_non_built = compute_non_built_mode_fast(non_built_stack)
-
-    cleaned_rasters = {}
-    for idx, y in enumerate(years):
-        raw_arr = stack[idx].copy()
-        is_built = persisted_built[idx] == 1
-
-        cleaned_arr = np.zeros_like(raw_arr)
-        # 1. Built-up pixels
-        cleaned_arr[is_built] = 1
-
-        # 2. Non-built-up pixels: retain raw class if non-built, else assign modal non-built
-        non_built_mask = ~is_built & (raw_arr > 0)
-        cleaned_arr[non_built_mask] = np.where(
+        cleaned_stack[t][is_built] = 1
+        non_built_mask = (~is_built) & is_valid
+        cleaned_stack[t][non_built_mask] = np.where(
             raw_arr[non_built_mask] != 1,
             raw_arr[non_built_mask],
             modal_non_built[non_built_mask],
         )
 
-        cleaned_rasters[y] = cleaned_arr
-
-        # Save updated GeoTIFF
-        out_tif = data_path / f"{city_key}_{y}_classified.tif"
-        prof = profiles[y]
-        with rasterio.open(out_tif, "w", **prof) as dst:
-            dst.write(cleaned_arr, 1)
-
-    print(
-        f"[+] Successfully saved {n_years} temporally cleaned classified GeoTIFFs to {data_path.resolve()}"
-    )
-
-    # 4. Update Class Areas CSV
-    pixel_res_x = abs(profiles[first_y]["transform"].a)
-    pixel_res_y = abs(profiles[first_y]["transform"].e)
-    pixel_area_km2 = (pixel_res_x * pixel_res_y) / 1e6
-
-    area_rows = []
-    for y in years:
-        c_arr = cleaned_rasters[y]
-        valid_px = c_arr[c_arr > 0]
-        row_dict = {
-            "City": city.capitalize(),
-            "Year": y,
-            "Resolution_m": float(pixel_res_x),
-            "Composite_NoData_pct": 0.0,
-        }
-        total_km2 = 0.0
-        for cid in [1, 2, 3, 4, 5]:
-            cname = PROJECT_CLASS_NAMES[cid]
-            c_km2 = float(np.sum(valid_px == cid) * pixel_area_km2)
-            row_dict[cname] = round(c_km2, 2)
-            total_km2 += c_km2
-        row_dict["Total_Area_km2"] = round(total_km2, 2)
-        area_rows.append(row_dict)
-
-    df_clean_areas = pd.DataFrame(area_rows)
-    areas_csv_path = data_path / f"{city_key}_class_areas.csv"
-    df_clean_areas.to_csv(areas_csv_path, index=False)
-    print(f"[+] Updated class area statistics: {areas_csv_path.name}")
-
-    # 5. Re-run Downstream Analytics (Rings, Sprawl Metrics)
-    print("\n>>> [Phase 3/4] Updating Spatial Ring Gradients & Sprawl Entropy Metrics...")
-    run_ring_analysis(city=city_key, data_dir=data_dir)
-    run_sprawl_metrics(city=city_key, data_dir=data_dir)
-
-    # 6. Compute AFTER Cleanup Change Detection
-    print("\n>>> [Phase 4/4] Running Post-Cleanup Change Detection & Web Asset Export...")
-    res_after = detect_changes(
-        city=city_key,
-        start_year=start_year,
-        end_year=end_year,
-        min_patch_size=min_patch_size,
-        data_dir=data_dir,
-    )
-    gain_after = res_after["gross_gain_km2"]
-    loss_after = res_after["gross_loss_km2"]
-    net_after = res_after["net_change_km2"]
-    ratio_after = (loss_after / gain_after) if gain_after > 0 else 0.0
-
-    # 7. Re-export Web Application Data
-    export_web_data(city=city_key, data_dir=data_dir)
-
-    # 8. Print Summary Diagnostic Comparison Table
-    print("\n" + "=" * 90)
-    print(
-        f"[*] CHANGE DETECTION METRICS BEFORE vs AFTER TEMPORAL CLEANUP ({start_year} -> {end_year})"
-    )
-    print("=" * 90)
-    print(f"{'Metric':<32} | {'Before Cleanup':<22} | {'After Cleanup':<22} | {'Improvement'}")
-    print("-" * 90)
-    print(
-        f"{'Gross Built-up Gain':<32} | {gain_before:>18.2f} km² | {gain_after:>18.2f} km² | {gain_after - gain_before:>+10.2f} km²"
-    )
-    print(
-        f"{'Gross Built-up Loss':<32} | {loss_before:>18.2f} km² | {loss_after:>18.2f} km² | {loss_after - loss_before:>+10.2f} km²"
-    )
-    print(
-        f"{'Net Built-up Expansion':<32} | {net_before:>18.2f} km² | {net_after:>18.2f} km² | {net_after - net_before:>+10.2f} km²"
-    )
-    print(
-        f"{'Loss / Gain Ratio':<32} | {ratio_before:>21.4f} | {ratio_after:>21.4f} | {((ratio_after - ratio_before) * 100):>+9.2f}%"
-    )
-    print("=" * 90)
-
-    print("\n" + "=" * 80)
-    print(f"[*] NEW TEMPORAL BUILT-UP AREA TREND: {city.upper()} (2018-2024)")
-    print("=" * 80)
-    print(
-        f"{'Year':<6} | {'Built-up Area (km²)':<22} | {'Vegetation (km²)':<18} | {'Total Area (km²)'}"
-    )
-    print("-" * 80)
-    for _, r in df_clean_areas.iterrows():
-        print(
-            f"{int(r['Year']):<6} | {r['Built-up']:>18.2f} km² | {r['Vegetation']:>14.2f} km² | {r['Total_Area_km2']:>12.2f} km²"
-        )
-    print("=" * 80 + "\n")
-
-    return {
-        "before": res_before,
-        "after": res_after,
-        "class_areas": df_clean_areas,
+    stats = {
+        "rule1_removed_false_builtup": rule1_changed_pixels,
+        "rule2_enforced_persistence": rule2_changed_pixels,
+        "raw_builtup_pixels": np.array([(built_raw[t] == 1).sum() for t in range(n_years)], dtype=np.int64),
+        "clean_builtup_pixels": np.array([(persisted_built[t] == 1).sum() for t in range(n_years)], dtype=np.int64),
     }
 
+    return cleaned_stack, stats
 
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Temporal consistency and persistence post-processing for satellite land cover classifications."
+
+def plot_cleanup_comparison(
+    years: list[int],
+    raw_km2: list[float],
+    clean_km2: list[float],
+    city_name: str,
+    output_png: Path,
+    dpi: int = 200,
+) -> None:
+    """Plots before and after built-up area comparison."""
+    output_png.parent.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(10, 6), dpi=dpi)
+    fig.patch.set_facecolor("#0f172a")
+    ax.set_facecolor("#1e293b")
+
+    ax.grid(True, linestyle="--", linewidth=0.6, color="#334155", alpha=0.7, zorder=1)
+
+    # Raw line (dashed amber/red)
+    ax.plot(
+        years,
+        raw_km2,
+        color="#f59e0b",
+        linestyle="--",
+        linewidth=2.2,
+        marker="s",
+        markersize=7,
+        markerfacecolor="#fef3c7",
+        markeredgecolor="#d97706",
+        markeredgewidth=1.5,
+        label="Raw Classified Built-up (km²)",
+        zorder=3,
     )
-    parser.add_argument(
-        "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
+
+    # Cleaned line (solid emerald green)
+    ax.plot(
+        years,
+        clean_km2,
+        color="#10b981",
+        linestyle="-",
+        linewidth=3.0,
+        marker="o",
+        markersize=8,
+        markerfacecolor="#d1fae5",
+        markeredgecolor="#059669",
+        markeredgewidth=2.0,
+        label="Temporally Cleaned & Persisted Built-up (km²)",
+        zorder=4,
     )
+
+    ax.fill_between(years, clean_km2, color="#10b981", alpha=0.15, zorder=2)
+
+    # Annotate points
+    for yr, r_val, c_val in zip(years, raw_km2, clean_km2):
+        diff = c_val - r_val
+        diff_str = f" ({diff:+.1f})" if abs(diff) > 0.1 else ""
+        ax.annotate(
+            f"{c_val:.1f}{diff_str}",
+            (yr, c_val),
+            textcoords="offset points",
+            xytext=(0, 10),
+            ha="center",
+            fontsize=8.5,
+            fontweight="bold",
+            color="#f8fafc",
+            bbox=dict(boxstyle="round,pad=0.2", facecolor="#0f172a", edgecolor="#059669", alpha=0.85),
+        )
+
+    ax.set_title(
+        f"UrbanPulse: {city_name} Land Cover Temporal Cleanup Comparison (2018–2024)",
+        fontsize=13,
+        fontweight="bold",
+        color="#f8fafc",
+        pad=15,
+    )
+    ax.set_xlabel("Observation Year", fontsize=11, fontweight="medium", color="#cbd5e1", labelpad=10)
+    ax.set_ylabel("Built-up Footprint (km²)", fontsize=11, fontweight="medium", color="#cbd5e1", labelpad=10)
+
+    ax.set_xticks(years)
+    ax.tick_params(axis="both", colors="#94a3b8", labelsize=10)
+
+    legend = ax.legend(loc="upper left", frameon=True, facecolor="#0f172a", edgecolor="#475569", fontsize=9.5)
+    for text in legend.get_texts():
+        text.set_color("#e2e8f0")
+
+    for spine in ax.spines.values():
+        spine.set_edgecolor("#475569")
+        spine.set_linewidth(0.8)
+
+    plt.tight_layout()
+    plt.savefig(output_png, dpi=dpi, facecolor=fig.get_facecolor(), bbox_inches="tight")
+    plt.close()
+    print(f"[+] Saved comparison chart: {output_png.resolve()}")
+
+
+def run_temporal_cleanup(
+    city: str = "ahmedabad",
+    data_dir: str | Path = "data",
+    start_year: int = 2018,
+    end_year: int = 2024,
+) -> pd.DataFrame:
+    """
+    Executes temporal cleanup for all years of a city, saves cleaned rasters
+    to data/{city}/clean/, prints before/after stats, and saves comparison chart.
+    """
+    city_key = city.lower()
+    city_name = city.capitalize()
+    data_path = Path(data_dir)
+    clean_dir = data_path / city_key / "clean"
+    clean_dir.mkdir(parents=True, exist_ok=True)
+
+    years = list(range(start_year, end_year + 1))
+    n_years = len(years)
+
+    print("=" * 85)
+    print(f"[*] UrbanPulse Temporal Consistency & Persistence Cleanup: {city_name} ({start_year}–{end_year})")
+    print(f"    - Clean Outputs Directory: {clean_dir.resolve()}")
+    print("=" * 85)
+
+    # 1. Load all classified rasters
+    raw_rasters = []
+    profiles = []
+
+    for y in years:
+        candidates = [
+            data_path / f"{city_key}_{y}_classified.tif",
+            data_path / city_key / f"{city_key}_{y}_classified.tif",
+            data_path / city_key / f"{y}_classified.tif",
+        ]
+        chosen = None
+        for c in candidates:
+            if c.exists():
+                chosen = c
+                break
+        if chosen is None:
+            raise FileNotFoundError(f"Missing classified GeoTIFF for {city_name} {y} in {data_path.resolve()}")
+
+        with rasterio.open(chosen) as src:
+            raw_rasters.append(src.read(1))
+            profiles.append(src.profile.copy())
+
+    stack = np.stack(raw_rasters, axis=0)
+    transform = profiles[0]["transform"]
+    pixel_res_x = abs(transform.a)
+    pixel_res_y = abs(transform.e)
+    pixel_area_km2 = (pixel_res_x * pixel_res_y) / 1e6
+
+    # 2. Apply Temporal Cleanup
+    cleaned_stack, stats = clean_temporal_stack(stack)
+
+    # 3. Write Cleaned Rasters to data/{city}/clean/
+    for idx, y in enumerate(years):
+        out_tif = clean_dir / f"{city_key}_{y}_classified.tif"
+        prof = profiles[idx].copy()
+        prof.pop("blockxsize", None)
+        prof.pop("blockysize", None)
+        prof.pop("tiled", None)
+        prof.update({
+            "driver": "GTiff",
+            "count": 1,
+            "dtype": "uint8",
+            "nodata": 0,
+            "compress": "lzw",
+        })
+        with rasterio.open(out_tif, "w", **prof) as dst:
+            dst.write(cleaned_stack[idx], 1)
+
+    print(f"\n[+] Successfully saved {n_years} cleaned GeoTIFFs in: {clean_dir.resolve()}")
+
+    # 4. Compile and Print Before/After Table
+    raw_km2 = [stats["raw_builtup_pixels"][i] * pixel_area_km2 for i in range(n_years)]
+    clean_km2 = [stats["clean_builtup_pixels"][i] * pixel_area_km2 for i in range(n_years)]
+    r1_pix = stats["rule1_removed_false_builtup"]
+    r2_pix = stats["rule2_enforced_persistence"]
+
+    table_data = []
+    for i, y in enumerate(years):
+        table_data.append({
+            "Year": y,
+            "Raw_Builtup_km2": round(raw_km2[i], 2),
+            "Clean_Builtup_km2": round(clean_km2[i], 2),
+            "Net_Change_km2": round(clean_km2[i] - raw_km2[i], 2),
+            "Rule1_Spikes_Removed_px": int(r1_pix[i]),
+            "Rule2_Persisted_Added_px": int(r2_pix[i]),
+        })
+
+    df_summary = pd.DataFrame(table_data)
+
+    print("\n" + "=" * 92)
+    print(f"[*] TEMPORAL CLEANUP SUMMARY TABLE: {city_name.upper()} (2018–2024)")
+    print("=" * 92)
+    print(
+        f"{'Year':<6} | {'Raw Built-up':<16} | {'Clean Built-up':<16} | {'Net Diff':<12} | {'Rule 1 Removed':<16} | {'Rule 2 Persisted'}"
+    )
+    print("-" * 92)
+    for _, r in df_summary.iterrows():
+        print(
+            f"{int(r['Year']):<6} | {r['Raw_Builtup_km2']:>11.2f} km² | {r['Clean_Builtup_km2']:>11.2f} km² | "
+            f"{r['Net_Change_km2']:>+8.2f} km² | {int(r['Rule1_Spikes_Removed_px']):>13,} px | {int(r['Rule2_Persisted_Added_px']):>14,} px"
+        )
+    print("=" * 92 + "\n")
+
+    # 5. Save Comparison Chart
+    chart_path1 = data_path / city_key / "cleanup_comparison.png"
+    chart_path2 = data_path / f"{city_key}_cleanup_comparison.png"
+    plot_cleanup_comparison(
+        years=years,
+        raw_km2=raw_km2,
+        clean_km2=clean_km2,
+        city_name=city_name,
+        output_png=chart_path1,
+    )
+    if chart_path2 != chart_path1:
+        plot_cleanup_comparison(
+            years=years,
+            raw_km2=raw_km2,
+            clean_km2=clean_km2,
+            city_name=city_name,
+            output_png=chart_path2,
+        )
+
+    # Save summary CSV
+    df_summary.to_csv(data_path / city_key / "cleanup_summary.csv", index=False)
+    df_summary.to_csv(data_path / f"{city_key}_cleanup_summary.csv", index=False)
+
+    return df_summary
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Temporal consistency and persistence cleanup for land cover.")
+    parser.add_argument("--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)")
+    parser.add_argument("--data-dir", type=str, default="data", help="Data directory (default: data)")
     parser.add_argument("--start-year", type=int, default=2018, help="Start year (default: 2018)")
     parser.add_argument("--end-year", type=int, default=2024, help="End year (default: 2024)")
-    parser.add_argument(
-        "--min-patch",
-        type=int,
-        default=8,
-        help="Minimum connected component patch size (default: 8)",
-    )
-    parser.add_argument(
-        "--rebuild-outliers",
-        action="store_true",
-        help="Rebuild outlier years (e.g. 2019) with wider seasonal window",
-    )
-    parser.add_argument(
-        "--config", type=str, default="configs/ahmedabad.yaml", help="Path to YAML config"
-    )
-    parser.add_argument(
-        "--data-dir", type=str, default="data", help="Data directory (default: data)"
-    )
-    args = parser.parse_args()
 
-    apply_temporal_cleanup(
+    args = parser.parse_args()
+    run_temporal_cleanup(
         city=args.city,
+        data_dir=args.data_dir,
         start_year=args.start_year,
         end_year=args.end_year,
-        min_patch_size=args.min_patch,
-        rebuild_outliers=args.rebuild_outliers,
-        config_path=args.config,
-        data_dir=args.data_dir,
     )
 
 

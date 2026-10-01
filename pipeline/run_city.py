@@ -90,49 +90,80 @@ def run_city_pipeline(
     actual_end_year = max(successful_years)
 
     # --------------------------------------------------------------------------
-    # DATA QUALITY GATE: Validate NoData, built-up volatility, and accuracy
+    # STEP 2: Temporal Consistency & Persistence Cleanup
     # --------------------------------------------------------------------------
-    print(f"\n[*] Evaluating Data Quality Gate for {city_name}...")
+    print(f"\n[PHASE 2/5] Running Temporal Consistency & Persistence Cleanup for {city_name}...")
+    from pipeline.temporal_cleanup import run_temporal_cleanup
+
+    df_clean_summary = run_temporal_cleanup(
+        city=city_key,
+        data_dir="data",
+        start_year=actual_start_year,
+        end_year=actual_end_year,
+    )
+
+    # --------------------------------------------------------------------------
+    # STEP 3: Land Cover Change Detection (Cleaned Series)
+    # --------------------------------------------------------------------------
+    print(
+        f"\n[PHASE 3/5] Running Urban Land Cover Change Detection ({actual_start_year} -> {actual_end_year})..."
+    )
+    change_res = detect_changes(
+        city=city_key,
+        start_year=actual_start_year,
+        end_year=actual_end_year,
+        min_patch_size=8,
+        use_raw=False,
+    )
+    gross_gain_km2 = change_res["gross_gain_km2"]
+    gross_loss_km2 = change_res["gross_loss_km2"]
+
+    # --------------------------------------------------------------------------
+    # DATA QUALITY GATE: Validate NoData, built-up volatility, accuracy, and loss ratio
+    # --------------------------------------------------------------------------
+    print(f"\n[*] Evaluating Data Quality Gate for {city_name} on Cleaned Series...")
     try:
         from pipeline.quality_gate import DataQualityGateError, validate_quality_gate
 
-        # Evaluate model accuracy if available
-        acc = None
+        # Load per-year test accuracies if available
+        per_year_accs = {}
         try:
             import geopandas as gpd
             import joblib
-            import rasterio
             from sklearn.metrics import accuracy_score
 
-            model_file = data_path / f"{city_key}_rf_model_{actual_end_year}.pkl"
-            test_file = data_path / f"{city_key}_test_points.geojson"
-            if model_file.exists() and test_file.exists():
-                rf_clf = joblib.load(model_file)
-                test_gdf = gpd.read_file(test_file).to_crs(epsg=32643)
-                feats = ["blue", "green", "red", "nir", "swir16", "ndvi", "ndbi", "mndwi"]
-                rasters = {
-                    f: rasterio.open(data_path / f"{city_key}_{actual_end_year}_{f}.tif")
-                    for f in feats
-                    if (data_path / f"{city_key}_{actual_end_year}_{f}.tif").exists()
-                }
-                if len(rasters) == len(feats):
-                    coords = [(g.x, g.y) for g in test_gdf.geometry]
-                    X_vals = [[s[0] for s in rasters[f].sample(coords)] for f in feats]
-                    df_X = pd.DataFrame(dict(zip(feats, X_vals)))
-                    y_true = test_gdf["class_id"].values
-                    valid_m = ~df_X.isna().any(axis=1) & (y_true > 0)
-                    if valid_m.sum() > 0:
-                        y_p = rf_clf.predict(df_X[valid_m].values)
-                        acc = float(accuracy_score(y_true[valid_m], y_p))
+            pooled_model_file = data_path / f"{city_key}_rf_model_pooled.pkl"
+            if not pooled_model_file.exists():
+                pooled_model_file = data_path / city_key / "rf_model_pooled.pkl"
+
+            test_pooled_file = data_path / f"{city_key}_test_points_pooled.geojson"
+            if not test_pooled_file.exists():
+                test_pooled_file = data_path / city_key / "test_points_pooled.geojson"
+
+            if pooled_model_file.exists() and test_pooled_file.exists():
+                rf_clf = joblib.load(pooled_model_file)
+                test_gdf = gpd.read_file(test_pooled_file)
+                feats = ["red", "green", "blue", "nir", "swir16", "ndvi", "ndbi", "mndwi"]
+                if all(f in test_gdf.columns for f in feats) and "year" in test_gdf.columns:
+                    for yr in sorted(successful_years):
+                        sub_te = test_gdf[test_gdf["year"] == yr]
+                        if len(sub_te) > 0:
+                            X_sub = sub_te[feats].values
+                            y_sub = sub_te["class_id"].values
+                            y_p = rf_clf.predict(X_sub)
+                            per_year_accs[int(yr)] = float(accuracy_score(y_sub, y_p))
         except Exception:
             pass
 
         gate_summary = validate_quality_gate(
-            df_areas=df_areas,
-            overall_accuracy=acc,
+            df_areas=df_clean_summary,
+            per_year_accuracies=per_year_accs if per_year_accs else None,
+            gross_gain_km2=gross_gain_km2,
+            gross_loss_km2=gross_loss_km2,
             max_nodata_pct=5.0,
-            max_builtup_change_pct=25.0,
+            max_builtup_change_pct=15.0,
             min_accuracy=0.70,
+            max_loss_to_gain_ratio=0.30,
         )
         print(f"[+] Data Quality Gate PASSED: {gate_summary}")
 
@@ -176,42 +207,27 @@ def run_city_pipeline(
         raise qe
 
     # --------------------------------------------------------------------------
-    # STEP 2: Land Cover Change Detection & Transition Matrix
+    # STEP 4: Concentric Ring Urban Gradient Analysis
     # --------------------------------------------------------------------------
-    print(
-        f"\n[PHASE 2/5] Running Urban Land Cover Change Detection ({actual_start_year} -> {actual_end_year})..."
-    )
-    change_res = detect_changes(
-        city=city_key,
-        start_year=actual_start_year,
-        end_year=actual_end_year,
-        min_patch_size=3,
-    )
-
-    # --------------------------------------------------------------------------
-    # STEP 3: Concentric Ring Urban Gradient Analysis
-    # --------------------------------------------------------------------------
-    print(f"\n[PHASE 3/5] Running Concentric Ring Sprawl Analysis for {city_name}...")
+    print(f"\n[PHASE 4/5] Running Concentric Ring Sprawl Analysis for {city_name}...")
     df_rings = run_ring_analysis(
         city=city_key,
         ring_width_km=2.0,
         max_dist_km=22.0,
+        use_raw=False,
     )
 
     # --------------------------------------------------------------------------
-    # STEP 4: Sprawl Velocity & Shannon Spatial Entropy Metrics
+    # STEP 5: Sprawl Velocity & Shannon Spatial Entropy Metrics & Web Export
     # --------------------------------------------------------------------------
-    print(f"\n[PHASE 4/5] Computing Shannon Entropy & Sprawl Metrics for {city_name}...")
+    print(f"\n[PHASE 5/5] Computing Shannon Entropy & Exporting Web Client Datasets for {city_name}...")
     df_metrics = run_sprawl_metrics(
         city=city_key,
+        use_raw=False,
     )
-
-    # --------------------------------------------------------------------------
-    # STEP 5: Web Asset Export (Transparent PNGs, meta.json, stats.json)
-    # --------------------------------------------------------------------------
-    print(f"\n[PHASE 5/5] Exporting Web Client Datasets for {city_name}...")
     web_res = export_web_data(
         city=city_key,
+        use_raw=False,
     )
 
     # --------------------------------------------------------------------------

@@ -299,12 +299,16 @@ def build_composite(
         # Shape: (n_y, n_x)
         valid_obs_counts = np.sum(~np.isnan(processed_optical[0, :, :, :]), axis=0)
 
+        # Effective min valid obs: cannot exceed the number of scenes per tile available
+        max_depth = max(1, len(selected_items) // max(1, len(tile_dict)))
+        effective_min_obs = min(min_valid_obs, max_depth)
+
         for b_i, b_name in enumerate(optical_bands):
             band_time_series = processed_optical[b_i, :, :, :]
             # Per-pixel median across valid observations
             median_band = np.nanmedian(band_time_series, axis=0)
             # Require minimum valid observations per pixel
-            median_band[valid_obs_counts < min_valid_obs] = np.nan
+            median_band[valid_obs_counts < effective_min_obs] = np.nan
 
             final_composite[b_name] = median_band
             valid_pixels = median_band[np.isfinite(median_band) & (median_band > 0)]
@@ -319,7 +323,7 @@ def build_composite(
         print(f"    - Total Pixels        : {total_grid_pixels:>10,}")
         print(f"    - Valid Data Pixels   : {total_grid_pixels - nan_pixels:>10,} ({(100 - nodata_percentage):.2f}%)")
         print(f"    - NoData Pixels       : {nan_pixels:>10,} ({nodata_percentage:.4f}%)")
-        print(f"    - Min Valid Obs Gate  : {min_valid_obs} observations per pixel")
+        print(f"    - Min Valid Obs Gate  : {effective_min_obs} observations per pixel (requested: {min_valid_obs})")
         print("=" * 80)
 
         # If NoData > threshold and we haven't reached max widening, widen window

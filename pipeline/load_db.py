@@ -107,9 +107,23 @@ def load_city_metadata(conn, city: str, config_dir: Path) -> dict[str, Any]:
     return {"id": city_id, "name": city_name, "bbox": bbox}
 
 
+def resolve_data_csv(city_id: str, suffix: str, data_dir: Path) -> Path:
+    """Finds CSV in data_dir, data_dir/city_id, etc."""
+    candidates = [
+        data_dir / f"{city_id}_{suffix}.csv",
+        data_dir / city_id / f"{suffix}.csv",
+        data_dir / city_id / f"{city_id}_{suffix}.csv",
+        data_dir / f"{suffix}.csv",
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
+    return candidates[0]
+
+
 def load_lulc_stats(conn, city_id: str, data_dir: Path) -> int:
     """Upserts annual land cover area statistics into lulc_stats."""
-    csv_file = data_dir / f"{city_id}_class_areas.csv"
+    csv_file = resolve_data_csv(city_id, "class_areas", data_dir)
     if not csv_file.exists():
         return 0
 
@@ -164,7 +178,7 @@ def load_lulc_stats(conn, city_id: str, data_dir: Path) -> int:
 
 def load_rings(conn, city_id: str, data_dir: Path) -> int:
     """Upserts concentric distance ring gradient analytics into rings table."""
-    csv_file = data_dir / f"{city_id}_rings.csv"
+    csv_file = resolve_data_csv(city_id, "rings", data_dir)
     if not csv_file.exists():
         return 0
 
@@ -200,7 +214,7 @@ def load_rings(conn, city_id: str, data_dir: Path) -> int:
 
 def load_metrics(conn, city_id: str, data_dir: Path) -> int:
     """Upserts multi-year sprawl velocity and Shannon entropy metrics."""
-    csv_file = data_dir / f"{city_id}_metrics.csv"
+    csv_file = resolve_data_csv(city_id, "metrics", data_dir)
     if not csv_file.exists():
         return 0
 
@@ -267,20 +281,29 @@ def load_metrics(conn, city_id: str, data_dir: Path) -> int:
 
 
 def load_transitions(conn, city_id: str, data_dir: Path) -> int:
-    """Upserts all land cover transition matrices found in data_dir."""
-    pattern = re.compile(rf"^{re.escape(city_id)}_transition_(\d{{4}})_(\d{{4}})\.csv$")
+    """Upserts all land cover transition matrices found in data_dir or data_dir/city_id."""
+    pattern = re.compile(rf"^(?:{re.escape(city_id)}_)?transition_(\d{{4}})_(\d{{4}})\.csv$")
     total_rows = 0
 
-    for file_path in data_dir.glob(f"{city_id}_transition_*.csv"):
-        m = pattern.match(file_path.name)
-        if not m:
+    search_dirs = [data_dir / city_id, data_dir]
+    seen_files = set()
+
+    for s_dir in search_dirs:
+        if not s_dir.exists():
             continue
+        for file_path in s_dir.glob("*transition_*.csv"):
+            if file_path.name in seen_files:
+                continue
+            seen_files.add(file_path.name)
+            m = pattern.match(file_path.name)
+            if not m:
+                continue
 
-        start_yr = int(m.group(1))
-        end_yr = int(m.group(2))
+            start_yr = int(m.group(1))
+            end_yr = int(m.group(2))
 
-        df = pd.read_csv(file_path, index_col=0)
-        rows = []
+            df = pd.read_csv(file_path, index_col=0)
+            rows = []
 
         for row_label, row in df.iterrows():
             row_str = str(row_label).lower()
@@ -458,6 +481,11 @@ def main():
         type=Path,
         default=None,
         help="Path to configs/ directory containing city YAML",
+    )
+    parser.add_argument(
+        "--raw",
+        action="store_true",
+        help="Use raw uncleaned datasets instead of clean/",
     )
 
     args = parser.parse_args()

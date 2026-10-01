@@ -58,6 +58,7 @@ def detect_changes(
     end_year: int = 2024,
     min_patch_size: int = 3,
     data_dir: str | Path = "data",
+    use_raw: bool = False,
     output_png_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """
@@ -69,6 +70,7 @@ def detect_changes(
         end_year: Comparison/target year.
         min_patch_size: Minimum connected component pixel count to retain change.
         data_dir: Directory containing classified GeoTIFFs.
+        use_raw: If True, uses raw classified rasters instead of clean/ directory.
         output_png_path: Optional custom destination for the change visualization map.
 
     Returns:
@@ -76,11 +78,34 @@ def detect_changes(
     """
     city_key = city.lower()
     data_path = Path(data_dir)
-    start_raster_path = data_path / f"{city_key}_{start_year}_classified.tif"
-    end_raster_path = data_path / f"{city_key}_{end_year}_classified.tif"
+
+    def resolve_classified_path(yr: int) -> Path:
+        clean_candidates = [
+            data_path / city_key / "clean" / f"{city_key}_{yr}_classified.tif",
+            data_path / "clean" / f"{city_key}_{yr}_classified.tif",
+            data_path / city_key / "clean" / f"{yr}_classified.tif",
+        ]
+        raw_candidates = [
+            data_path / f"{city_key}_{yr}_classified.tif",
+            data_path / city_key / f"{city_key}_{yr}_classified.tif",
+            data_path / city_key / f"{yr}_classified.tif",
+        ]
+        if not use_raw:
+            for c in clean_candidates:
+                if c.exists():
+                    return c
+        for r in raw_candidates:
+            if r.exists():
+                return r
+        # Fallback to default expected path for clear error reporting
+        return raw_candidates[0] if use_raw else clean_candidates[0]
+
+    start_raster_path = resolve_classified_path(start_year)
+    end_raster_path = resolve_classified_path(end_year)
 
     print("=" * 80)
-    print(f" URBANPULSE LAND COVER CHANGE DETECTION: {city.upper()} ({start_year} -> {end_year})")
+    mode_str = "RAW" if use_raw else "CLEAN (Temporally Consistent)"
+    print(f" URBANPULSE LAND COVER CHANGE DETECTION [{mode_str}]: {city.upper()} ({start_year} -> {end_year})")
     print(f" Start Raster : {start_raster_path.resolve()}")
     print(f" End Raster   : {end_raster_path.resolve()}")
     print(f" Min Patch    : {min_patch_size} pixels")
@@ -89,13 +114,11 @@ def detect_changes(
     # 1. Verify existence of rasters
     if not start_raster_path.exists():
         raise FileNotFoundError(
-            f"Classified raster for {start_year} not found at {start_raster_path.resolve()}.\n"
-            f"Please run 'python pipeline/run_year.py --city {city} --year {start_year}' first."
+            f"Classified raster for {start_year} not found at {start_raster_path.resolve()}."
         )
     if not end_raster_path.exists():
         raise FileNotFoundError(
-            f"Classified raster for {end_year} not found at {end_raster_path.resolve()}.\n"
-            f"Please run 'python pipeline/run_year.py --city {city} --year {end_year}' first."
+            f"Classified raster for {end_year} not found at {end_raster_path.resolve()}."
         )
 
     # 2. Load rasters and validate CRS, shape, transform
@@ -215,6 +238,9 @@ def detect_changes(
         np.uint8
     )
 
+    start_profile.pop("blockxsize", None)
+    start_profile.pop("blockysize", None)
+    start_profile.pop("tiled", None)
     start_profile.update(
         {
             "driver": "GTiff",
@@ -222,7 +248,6 @@ def detect_changes(
             "dtype": "uint8",
             "nodata": 0,
             "compress": "lzw",
-            "tiled": True,
         }
     )
     with rasterio.open(change_raster_path, "w", **start_profile) as dst:
@@ -416,6 +441,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--min-patch", type=int, default=3, help="Minimum patch size in pixels (default: 3)"
     )
+    parser.add_argument(
+        "--raw", action="store_true", help="Use raw uncleaned classifications instead of clean/"
+    )
     parser.add_argument("--data-dir", type=str, default="data", help="Directory for data rasters")
     parser.add_argument("--out-map", type=str, default=None, help="Custom path for output PNG map")
 
@@ -426,5 +454,6 @@ if __name__ == "__main__":
         end_year=args.end,
         min_patch_size=args.min_patch,
         data_dir=args.data_dir,
+        use_raw=args.raw,
         output_png_path=args.out_map,
     )

@@ -143,6 +143,7 @@ def export_web_data(
     data_dir: str | Path = "data",
     web_dir: str | Path = "web/data",
     config_path: str | Path | None = None,
+    use_raw: bool = False,
 ) -> dict[str, Any]:
     """
     Exports all web visualization assets into web/data/{city}/.
@@ -155,20 +156,33 @@ def export_web_data(
     config = load_city_config(city=city, config_path=config_path)
     city_name = config.get("city", {}).get("name", city.capitalize())
 
+    mode_str = "RAW" if use_raw else "CLEAN (Temporally Consistent)"
     print("=" * 80)
-    print(f" URBANPULSE WEB ASSET EXPORTER: {city_name.upper()}")
+    print(f" URBANPULSE WEB ASSET EXPORTER [{mode_str}]: {city_name.upper()}")
     print(f" Source Directory : {data_path.resolve()}")
     print(f" Target Web Dir   : {web_dest_dir.resolve()}")
     print("=" * 80)
 
-    # 1. Discover all classified rasters
-    pattern = re.compile(rf"^{re.escape(city_key)}_(\d{{4}})_classified\.tif$")
+    # 1. Discover all classified rasters (clean/ by default, or raw)
+    pattern = re.compile(rf"^(?:{re.escape(city_key)}_)?(\d{{4}})_classified\.tif$")
     year_raster_map: dict[int, Path] = {}
-    for f in data_path.glob(f"{city_key}_*_classified.tif"):
-        match = pattern.match(f.name)
-        if match:
-            yr = int(match.group(1))
-            year_raster_map[yr] = f
+
+    clean_dirs = [data_path / city_key / "clean", data_path / "clean"]
+    raw_dirs = [data_path / city_key, data_path]
+
+    search_dirs = raw_dirs if use_raw else (clean_dirs + raw_dirs)
+
+    for s_dir in search_dirs:
+        if not s_dir.exists():
+            continue
+        for f in s_dir.glob("*.tif"):
+            match = pattern.match(f.name)
+            if match:
+                yr = int(match.group(1))
+                if yr not in year_raster_map:
+                    year_raster_map[yr] = f
+        if year_raster_map and not use_raw and s_dir in clean_dirs:
+            break
 
     sorted_years = sorted(year_raster_map.keys())
     if not sorted_years:
@@ -176,7 +190,7 @@ def export_web_data(
             f"No classified rasters found for {city_key} in {data_path.resolve()}"
         )
 
-    print(f"[+] Found {len(sorted_years)} classified years: {sorted_years}")
+    print(f"[+] Found {len(sorted_years)} classified years ({'clean' if not use_raw else 'raw'}): {sorted_years}")
 
     # 2. Export each classified year as transparent WGS84 PNG
     exported_bounds = None
@@ -244,24 +258,37 @@ def export_web_data(
     # Class Areas
     class_areas_list = []
     class_areas_csv = data_path / f"{city_key}_class_areas.csv"
+    if not class_areas_csv.exists() and (data_path / city_key / "class_areas.csv").exists():
+        class_areas_csv = data_path / city_key / "class_areas.csv"
+
     if class_areas_csv.exists():
         df_areas = pd.read_csv(class_areas_csv)
         for _, r in df_areas.iterrows():
+            built_val = float(r.get("Built-up", 0.0))
+            veg_val = float(r.get("Vegetation", 0.0))
+            water_val = float(r.get("Water", 0.0))
+            agri_val = float(r.get("Agriculture", 0.0))
+            open_val = float(r.get("Open land", 0.0))
+            tot_val = float(r.get("Total_Area_km2", r.get("total_area_km2", built_val + veg_val + water_val + agri_val + open_val)))
+
             class_areas_list.append(
                 {
                     "year": int(r["Year"]),
-                    "built_up_km2": float(r["Built-up"]),
-                    "vegetation_km2": float(r["Vegetation"]),
-                    "water_km2": float(r["Water"]),
-                    "agriculture_km2": float(r["Agriculture"]),
-                    "open_land_km2": float(r["Open land"]),
-                    "total_area_km2": float(r["Total_Area_km2"]),
+                    "built_up_km2": built_val,
+                    "vegetation_km2": veg_val,
+                    "water_km2": water_val,
+                    "agriculture_km2": agri_val,
+                    "open_land_km2": open_val,
+                    "total_area_km2": tot_val,
                 }
             )
 
     # Metrics
     metrics_list = []
     metrics_csv = data_path / f"{city_key}_metrics.csv"
+    if not metrics_csv.exists() and (data_path / city_key / "metrics.csv").exists():
+        metrics_csv = data_path / city_key / "metrics.csv"
+
     if metrics_csv.exists():
         df_metrics = pd.read_csv(metrics_csv)
         for _, r in df_metrics.iterrows():
@@ -269,13 +296,13 @@ def export_web_data(
                 {
                     "year": int(r["year"]),
                     "builtup_km2": float(r["builtup_km2"]),
-                    "annual_growth_pct": float(r["annual_growth_pct"]),
-                    "cagr_pct": float(r["cagr_from_start_pct"]),
-                    "shannon_entropy": float(r["shannon_entropy"]),
-                    "core_builtup_km2": float(r["core_builtup_0_6km_km2"]),
-                    "core_share_pct": float(r["core_share_0_6km_pct"]),
-                    "periphery_builtup_km2": float(r["periphery_builtup_gt_12km_km2"]),
-                    "periphery_share_pct": float(r["periphery_share_gt_12km_pct"]),
+                    "annual_growth_pct": float(r["annual_growth_pct"]) if not pd.isna(r.get("annual_growth_pct")) else 0.0,
+                    "cagr_pct": float(r["cagr_from_start_pct"]) if not pd.isna(r.get("cagr_from_start_pct")) else 0.0,
+                    "shannon_entropy": float(r["shannon_entropy"]) if not pd.isna(r.get("shannon_entropy")) else 0.0,
+                    "core_builtup_km2": float(r["core_builtup_0_6km_km2"]) if not pd.isna(r.get("core_builtup_0_6km_km2")) else 0.0,
+                    "core_share_pct": float(r["core_share_0_6km_pct"]) if not pd.isna(r.get("core_share_0_6km_pct")) else 0.0,
+                    "periphery_builtup_km2": float(r["periphery_builtup_gt_12km_km2"]) if not pd.isna(r.get("periphery_builtup_gt_12km_km2")) else 0.0,
+                    "periphery_share_pct": float(r["periphery_share_gt_12km_pct"]) if not pd.isna(r.get("periphery_share_gt_12km_pct")) else 0.0,
                 }
             )
 
@@ -361,6 +388,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("--web-dir", type=str, default="web/data", help="Target web data directory")
     parser.add_argument("--config", type=str, default=None, help="Custom city YAML config path")
+    parser.add_argument(
+        "--raw", action="store_true", help="Use raw uncleaned classifications instead of clean/"
+    )
 
     args = parser.parse_args()
     export_web_data(
@@ -368,4 +398,5 @@ if __name__ == "__main__":
         data_dir=args.data_dir,
         web_dir=args.web_dir,
         config_path=args.config,
+        use_raw=args.raw,
     )

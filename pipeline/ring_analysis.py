@@ -304,6 +304,7 @@ def run_ring_analysis(
     max_dist_km: float = 22.0,
     config_path: str | Path | None = None,
     data_dir: str | Path = "data",
+    use_raw: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Executes concentric ring density gradient analysis across all available classified years.
@@ -313,23 +314,38 @@ def run_ring_analysis(
     config = load_city_config(city=city, config_path=config_path)
     city_name = config.get("city", {}).get("name", city.capitalize())
 
-    # 1. Discover all classified rasters
-    pattern = re.compile(rf"^{re.escape(city_key)}_(\d{{4}})_classified\.tif$")
+    # 1. Discover all classified rasters (clean/ by default, or raw)
+    pattern = re.compile(rf"^(?:{re.escape(city_key)}_)?(\d{{4}})_classified\.tif$")
     year_raster_map: dict[int, Path] = {}
-    for f in data_path.glob(f"{city_key}_*_classified.tif"):
-        match = pattern.match(f.name)
-        if match:
-            yr = int(match.group(1))
-            year_raster_map[yr] = f
+
+    clean_dirs = [data_path / city_key / "clean", data_path / "clean"]
+    raw_dirs = [data_path / city_key, data_path]
+
+    search_dirs = raw_dirs if use_raw else (clean_dirs + raw_dirs)
+
+    for s_dir in search_dirs:
+        if not s_dir.exists():
+            continue
+        for f in s_dir.glob("*.tif"):
+            match = pattern.match(f.name)
+            if match:
+                yr = int(match.group(1))
+                if yr not in year_raster_map:
+                    year_raster_map[yr] = f
+        if year_raster_map and not use_raw and s_dir in clean_dirs:
+            # If found in clean directory, use clean
+            break
 
     if not year_raster_map:
         raise FileNotFoundError(
-            f"No classified rasters found matching pattern '{city_key}_<year>_classified.tif' in {data_path.resolve()}"
+            f"No classified rasters found for {city_key} in {data_path.resolve()}"
         )
 
     sorted_years = sorted(year_raster_map.keys())
+    mode_str = "RAW" if use_raw else "CLEAN (Temporally Consistent)"
     print("=" * 80)
-    print(f" URBANPULSE CONCENTRIC RING ANALYSIS: {city_name.upper()}")
+    print(f" URBANPULSE CONCENTRIC RING ANALYSIS [{mode_str}]: {city_name.upper()}")
+    print(f" Source Directory : {year_raster_map[sorted_years[0]].parent.resolve()}")
     print(f" Available Years  : {sorted_years}")
     print(f" Ring Width       : {ring_width_km} km")
     print(f" Max Distance     : {max_dist_km} km")
@@ -436,6 +452,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max-dist", type=float, default=22.0, help="Maximum radial distance in km (default: 22.0)"
     )
+    parser.add_argument(
+        "--raw", action="store_true", help="Use raw uncleaned classifications instead of clean/"
+    )
     parser.add_argument("--config", type=str, default=None, help="Custom city config file path")
     parser.add_argument(
         "--data-dir", type=str, default="data", help="Directory for data files (default: data)"
@@ -448,4 +467,5 @@ if __name__ == "__main__":
         max_dist_km=args.max_dist,
         config_path=args.config,
         data_dir=args.data_dir,
+        use_raw=args.raw,
     )
