@@ -2160,8 +2160,8 @@
 
         if (tooltipEl && methods) {
           const raw = methods.raw || {};
-          const clean = methods.cleaned || {};
-          const tls = methods.tls || {};
+          const clean = methods.clean || methods.cleaned || {};
+          const tls = methods.tls_norm || methods.tls || {};
           tooltipEl.innerHTML = `
             <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 8px; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">
               2020–2024 Change by Estimation Method
@@ -2169,28 +2169,28 @@
             <div style="margin-bottom: 8px;">
               <div style="display:flex; justify-content:space-between; align-items:center;">
                 <strong style="color: #38bdf8;">1. TLS-Normalised (Main):</strong>
-                <span style="font-family:var(--font-mono); font-weight:700; color:#38bdf8;">+${tls.change_km2 != null ? tls.change_km2.toFixed(1) : '59.9'} km² (+${tls.change_pct != null ? tls.change_pct.toFixed(1) : '14.7'}%)</span>
+                <span style="font-family:var(--font-mono); font-weight:700; color:#38bdf8;">+${tls.change_km2 != null ? tls.change_km2.toFixed(1) : '0.0'} km² (+${tls.change_pct != null ? tls.change_pct.toFixed(1) : '0.0'}%)</span>
               </div>
               <div style="color: #94a3b8; font-size: 12px; margin-top: 2px;">
-                ${tls.start_km2 != null ? tls.start_km2.toFixed(1) : '406.3'} &rarr; ${tls.end_km2 != null ? tls.end_km2.toFixed(1) : '466.2'} km² (PIF cross-calibrated)
+                ${tls.start_km2 != null ? tls.start_km2.toFixed(1) : ''} &rarr; ${tls.end_km2 != null ? tls.end_km2.toFixed(1) : ''} km² (${tls.description || 'PIF cross-calibrated'})
               </div>
             </div>
             <div style="margin-bottom: 8px;">
               <div style="display:flex; justify-content:space-between; align-items:center;">
                 <strong style="color: #10b981;">2. Cleaned:</strong>
-                <span style="font-family:var(--font-mono); font-weight:700; color:#10b981;">+${clean.change_km2 != null ? clean.change_km2.toFixed(1) : '84.0'} km² (+${clean.change_pct != null ? clean.change_pct.toFixed(1) : '21.9'}%)</span>
+                <span style="font-family:var(--font-mono); font-weight:700; color:#10b981;">+${clean.change_km2 != null ? clean.change_km2.toFixed(1) : '0.0'} km² (+${clean.change_pct != null ? clean.change_pct.toFixed(1) : '0.0'}%)</span>
               </div>
               <div style="color: #94a3b8; font-size: 12px; margin-top: 2px;">
-                ${clean.start_km2 != null ? clean.start_km2.toFixed(1) : '384.5'} &rarr; ${clean.end_km2 != null ? clean.end_km2.toFixed(1) : '468.5'} km² (Temporal persistence filter)
+                ${clean.start_km2 != null ? clean.start_km2.toFixed(1) : ''} &rarr; ${clean.end_km2 != null ? clean.end_km2.toFixed(1) : ''} km² (${clean.description || 'Temporal persistence filter on raw classification'})
               </div>
             </div>
             <div>
               <div style="display:flex; justify-content:space-between; align-items:center;">
                 <strong style="color: #f59e0b;">3. Raw:</strong>
-                <span style="font-family:var(--font-mono); font-weight:700; color:#f59e0b;">+${raw.change_km2 != null ? raw.change_km2.toFixed(1) : '53.0'} km² (+${raw.change_pct != null ? raw.change_pct.toFixed(1) : '12.6'}%)</span>
+                <span style="font-family:var(--font-mono); font-weight:700; color:#f59e0b;">+${raw.change_km2 != null ? raw.change_km2.toFixed(1) : '0.0'} km² (+${raw.change_pct != null ? raw.change_pct.toFixed(1) : '0.0'}%)</span>
               </div>
               <div style="color: #94a3b8; font-size: 12px; margin-top: 2px;">
-                ${raw.start_km2 != null ? raw.start_km2.toFixed(1) : '421.1'} &rarr; ${raw.end_km2 != null ? raw.end_km2.toFixed(1) : '474.0'} km² (Independent annual RF)
+                ${raw.start_km2 != null ? raw.start_km2.toFixed(1) : ''} &rarr; ${raw.end_km2 != null ? raw.end_km2.toFixed(1) : ''} km² (${raw.description || 'Original independent annual RF classification'})
               </div>
             </div>
           `;

@@ -2,10 +2,12 @@
 Unit tests for UrbanPulse stats.json consistency.
 Verifies that stats.json is the single consistent source of truth across both cities:
 - The five land-cover class areas sum to the valid AOI area within 0.5% for all years.
+- The Raw and TLS mapped areas are distinct (not identical) for all years.
 - The built-up row in class_areas strictly equals the card and growth_series norm_builtup_km2 value.
-- The gate count equals the number of passing gates in the tooltip/quality gate dictionary.
+- The ring built-up total matches the TLS series built-up area within 1% for all years.
+- The gate count equals the number of passing gates in the tooltip/quality gate dictionary (5/5).
 - Headline 2020-2024 range endpoints exactly equal the min and max of the three estimation methods (raw, cleaned, TLS).
-- Validation table mapped areas match Olofsson weighting inputs.
+- Validation table mapped areas match the corresponding raw/TLS mapped areas and Olofsson weighting inputs.
 - WorldCover 2021 comparison uses the TLS-normalised 2021 estimate and computes accurate differences.
 """
 
@@ -61,6 +63,24 @@ def test_class_areas_sum_to_aoi(city_stats):
         )
 
 
+def test_raw_and_tls_series_distinct(city_stats):
+    """
+    Asserts that the Raw and TLS-normalised mapped areas are distinct (not identical)
+    for all years, preventing duplicate assignment bugs.
+    """
+    city, data = city_stats
+    growth_series = data.get("growth_series", [])
+    assert len(growth_series) >= 5
+
+    for g in growth_series:
+        yr = g["year"]
+        raw_val = g["raw_builtup_km2"]
+        tls_val = g["norm_builtup_km2"]
+        assert raw_val != tls_val, (
+            f"Raw and TLS built-up areas are identical ({raw_val} km²) for {city} {yr}"
+        )
+
+
 def test_builtup_class_area_equals_card_value(city_stats):
     """
     Asserts that the built-up row in class_areas equals the card value and
@@ -78,6 +98,31 @@ def test_builtup_class_area_equals_card_value(city_stats):
         # Class areas built-up area must match TLS-normalised main series
         assert abs(ca["built_up_km2"] - g["norm_builtup_km2"]) < 0.01, (
             f"class_areas built_up_km2 ({ca['built_up_km2']}) != norm_builtup_km2 ({g['norm_builtup_km2']}) for {city} {yr}"
+        )
+
+
+def test_ring_builtup_total_matches_series_within_1pct(city_stats):
+    """
+    Asserts that the sum of built-up areas across all concentric rings equals the
+    TLS-normalised built-up series area within 1% tolerance for all years.
+    """
+    city, data = city_stats
+    rings = data.get("rings", {})
+    growth_series = data.get("growth_series", [])
+
+    for g in growth_series:
+        yr = str(g["year"])
+        assert yr in rings, f"Missing rings for year {yr} in {city}"
+        ring_list = rings[yr]
+        assert len(ring_list) == 11, f"Expected 11 concentric rings for {city} {yr}"
+
+        ring_built_sum = sum(r["builtup_km2"] for r in ring_list)
+        series_built = g["norm_builtup_km2"]
+
+        rel_diff = abs(ring_built_sum - series_built) / series_built
+        assert rel_diff < 0.01, (
+            f"Ring built-up sum ({ring_built_sum:.2f} km²) deviates from series ({series_built:.2f} km²) "
+            f"by {rel_diff * 100:.3f}% for {city} {yr} (threshold < 1%)"
         )
 
 
