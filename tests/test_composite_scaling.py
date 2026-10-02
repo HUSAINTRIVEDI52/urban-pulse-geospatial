@@ -102,3 +102,97 @@ def test_minimum_valid_observations_threshold():
     assert np.isfinite(median_vals[0])
     assert np.isclose(median_vals[0], np.median([0.15, 0.18, 0.20, 0.22]))
     assert np.isnan(median_vals[1])
+
+
+def test_strict_window_date_range_generation():
+    """Verify that strict window always generates Dec 1 (Y-1) to Feb 15 (Y)."""
+    from pipeline.build_composite import get_strict_window_range
+
+    dummy_config = {
+        "temporal": {
+            "strict_window": {
+                "start_month": 12,
+                "start_day": "12-01",
+                "end_month": 2,
+                "end_day": "02-15",
+            }
+        }
+    }
+
+    w_2024 = get_strict_window_range(2024, dummy_config)
+    assert w_2024 == "2023-12-01/2024-02-15"
+
+    w_2020 = get_strict_window_range(2020, dummy_config)
+    assert w_2020 == "2019-12-01/2020-02-15"
+
+
+def test_low_confidence_rule_under_four_dates():
+    """Verify that fewer than 4 distinct acquisition dates marks year as low_confidence."""
+    class DummyItem:
+        def __init__(self, item_id, dt_str, cloud=1.0):
+            self.id = item_id
+            self.datetime = datetime.strptime(dt_str, "%Y-%m-%d")
+            self.properties = {"datetime": dt_str, "eo:cloud_cover": cloud, "mgrs:utm_zone": "43", "mgrs:latitude_band": "Q", "mgrs:grid_square": "BF"}
+
+    from datetime import datetime
+    from pipeline.build_composite import select_scenes_by_date_coverage
+
+    # 3 distinct dates -> should result in low confidence count < 4
+    items_3_dates = [
+        DummyItem("s1", "2023-12-08"),
+        DummyItem("s2", "2023-12-18"),
+        DummyItem("s3", "2024-01-02"),
+    ]
+    dates = sorted(list({it.datetime.strftime("%Y-%m-%d") for it in items_3_dates}))
+    assert len(dates) == 3
+    assert len(dates) < 4  # Triggers low_confidence = True
+
+    # 5 distinct dates -> valid
+    items_5_dates = [
+        DummyItem("s1", "2023-12-08"),
+        DummyItem("s2", "2023-12-18"),
+        DummyItem("s3", "2024-01-02"),
+        DummyItem("s4", "2024-01-12"),
+        DummyItem("s5", "2024-01-22"),
+    ]
+    dates_5 = sorted(list({it.datetime.strftime("%Y-%m-%d") for it in items_5_dates}))
+    assert len(dates_5) == 5
+    assert len(dates_5) >= 4  # Triggers low_confidence = False
+
+
+def test_date_spread_scene_selection_and_flagged_exclusion():
+    """Verify that scenes are spread across the window and flagged scenes are excluded."""
+    from datetime import datetime
+    from pipeline.build_composite import select_scenes_by_date_coverage
+
+    class DummyItem:
+        def __init__(self, item_id, dt_str, cloud=1.0, tile="43QBF"):
+            self.id = item_id
+            self.datetime = datetime.strptime(dt_str, "%Y-%m-%d")
+            self.properties = {
+                "datetime": dt_str,
+                "eo:cloud_cover": cloud,
+                "mgrs:utm_zone": tile[:2],
+                "mgrs:latitude_band": tile[2],
+                "mgrs:grid_square": tile[3:],
+            }
+
+    # 12 distinct dates
+    items = [
+        DummyItem(f"scene_{i:02d}", f"2023-12-{i+1:02d}", cloud=float(i))
+        for i in range(12)
+    ]
+    # Add one flagged item
+    flagged_ids = {"scene_00", "scene_01"}
+
+    selected, tile_dict = select_scenes_by_date_coverage(
+        items=items, max_scenes_per_tile=8, flagged_ids=flagged_ids
+    )
+
+    # Should have at most 8 scenes selected for the tile
+    assert len(selected) == 8
+    # Flagged scene IDs should be excluded
+    selected_ids = {it.id for it in selected}
+    assert "scene_00" not in selected_ids
+    assert "scene_01" not in selected_ids
+

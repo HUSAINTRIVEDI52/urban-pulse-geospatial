@@ -67,7 +67,12 @@ def sample_training_points(
     city_subpath.mkdir(parents=True, exist_ok=True)
 
     if train_years is None:
-        train_years = [2018, 2021, 2024]
+        cfg = load_config(city=city_key, config_path=config_path)
+        ay = cfg.get("temporal", {}).get("analysis_years", {})
+        sy = ay.get("start_year", 2020)
+        ey = ay.get("end_year", 2024)
+        my = (sy + ey) // 2
+        train_years = [sy, my, ey] if sy != ey else [sy]
 
     if labels_raster_path is None:
         labels_path = data_path / f"{city_key}_worldcover_labels.tif"

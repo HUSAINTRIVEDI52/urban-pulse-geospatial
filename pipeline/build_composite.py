@@ -1,12 +1,21 @@
 """
-UrbanPulse - Sentinel-2 Satellite Composite Builder
-Fetches, cloud-masks, harmonizes reflectance scaling (Baseline 04.00), composites,
-and exports surface reflectance GeoTIFFs with SCL 1-pixel dilation, valid observation
-thresholding, and automatic seasonal window widening.
+UrbanPulse - Sentinel-2 Satellite Composite Builder (Strict Window & Date-Spread Selection)
+Fetches, cloud-masks, harmonizes reflectance scaling (Baseline 04.00 offset correction),
+composites, and exports surface reflectance GeoTIFFs.
+
+Features:
+1. Strict Window: Dec 1 to Feb 15. Never widens into October or March-May.
+2. Low Confidence Rule: If a year has < 4 distinct acquisition dates inside the strict window,
+   it is marked as low_confidence in composite_report.json and not used in the analysis series.
+3. Flagged Scene Filtering: Excludes scenes flagged by scene_diagnostics.py.
+4. Date-Spread Coverage: Selects up to 8 scenes per MGRS tile evenly distributed across the window.
+5. Cloud Masking: SCL dilated cloud/shadow masking (1-pixel dilation).
+6. Reflectance Harmonization: Applies Baseline 04.00 (-1000 DN) offset for acquisitions on/after 2022-01-25.
 """
 
 import argparse
 import calendar
+import csv
 import json
 from datetime import datetime
 from pathlib import Path
@@ -34,28 +43,112 @@ def load_city_config(
         return yaml.safe_load(f)
 
 
-def get_dry_season_range(year: int, config: dict[str, Any], widen_months: int = 0) -> str:
+def get_strict_window_range(year: int, config: dict[str, Any]) -> str:
     """
-    Constructs ISO 8601 dry season date range from YAML config.
-    Optionally widens the window by widen_months at both start and end.
+    Constructs ISO 8601 strict dry season date range from YAML config (default: Dec 1 to Feb 15).
+    Never widens into October or March-May.
     """
     temporal_cfg = config.get("temporal", {})
-    dry_season_cfg = temporal_cfg.get("dry_season", {})
+    window_cfg = temporal_cfg.get("strict_window") or temporal_cfg.get("dry_season", {})
 
-    start_month = dry_season_cfg.get("start_month", 10)
-    end_month = dry_season_cfg.get("end_month", 3)
+    start_month = window_cfg.get("start_month", 12)
+    end_month = window_cfg.get("end_month", 2)
+    start_day_str = window_cfg.get("start_day", "12-01")
+    end_day_str = window_cfg.get("end_day", "02-15")
 
-    if widen_months > 0:
-        start_month = max(1, start_month - widen_months)
-        end_month = min(12, end_month + widen_months)
+    if "-" in str(start_day_str):
+        s_parts = str(start_day_str).split("-")
+        start_month = int(s_parts[0])
+        s_day = int(s_parts[1])
+    else:
+        s_day = 1
+
+    if "-" in str(end_day_str):
+        e_parts = str(end_day_str).split("-")
+        end_month = int(e_parts[0])
+        e_day = int(e_parts[1])
+    else:
+        _, e_day = calendar.monthrange(year, end_month)
 
     start_year = year - 1 if start_month > end_month else year
-    start_date = f"{start_year:04d}-{start_month:02d}-01"
-
-    _, last_day = calendar.monthrange(year, end_month)
-    end_date = f"{year:04d}-{end_month:02d}-{last_day:02d}"
+    start_date = f"{start_year:04d}-{start_month:02d}-{s_day:02d}"
+    end_date = f"{year:04d}-{end_month:02d}-{e_day:02d}"
 
     return f"{start_date}/{end_date}"
+
+
+def load_flagged_scene_ids(city: str, data_dir: Path) -> set[str]:
+    """Loads set of flagged scene IDs from scene_diagnostics.csv if present."""
+    city_key = city.lower()
+    candidates = [
+        data_dir / city_key / "scene_diagnostics.csv",
+        data_dir / f"{city_key}_scene_diagnostics.csv",
+    ]
+    flagged = set()
+    for cp in candidates:
+        if cp.exists():
+            try:
+                with open(cp, "r", encoding="utf-8") as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        if row.get("flagged") == "FLAGGED":
+                            sid = row.get("scene_id")
+                            if sid:
+                                flagged.add(sid)
+                if flagged:
+                    break
+            except Exception:
+                pass
+    return flagged
+
+
+def select_scenes_by_date_coverage(
+    items: list[Any],
+    max_scenes_per_tile: int = 8,
+    flagged_ids: set[str] | None = None,
+) -> tuple[list[Any], dict[str, list[Any]]]:
+    """
+    Groups scenes by MGRS tile, excludes flagged scenes, and selects up to
+    max_scenes_per_tile evenly distributed across distinct acquisition dates in the window.
+    """
+    if flagged_ids is None:
+        flagged_ids = set()
+
+    unflagged = [it for it in items if it.id not in flagged_ids]
+    candidate_items = unflagged if len(unflagged) >= 4 else items
+
+    tile_dict: dict[str, list[Any]] = {}
+    for item in candidate_items:
+        z = str(item.properties.get("mgrs:utm_zone", ""))
+        b = str(item.properties.get("mgrs:latitude_band", ""))
+        g = str(item.properties.get("mgrs:grid_square", ""))
+        tile_id = f"{z}{b}{g}" if (z and b and g) else item.id.split("_")[1].replace("T", "")
+        tile_dict.setdefault(tile_id, []).append(item)
+
+    selected = []
+    for tile_id, t_items in tile_dict.items():
+        by_date: dict[str, Any] = {}
+        for it in t_items:
+            dt_str = it.datetime.strftime("%Y-%m-%d") if it.datetime else str(it.properties.get("datetime"))[:10]
+            if dt_str not in by_date:
+                by_date[dt_str] = it
+            else:
+                c_new = float(it.properties.get("eo:cloud_cover", 100.0))
+                c_curr = float(by_date[dt_str].properties.get("eo:cloud_cover", 100.0))
+                if c_new < c_curr:
+                    by_date[dt_str] = it
+
+        unique_dates = sorted(by_date.keys())
+        if len(unique_dates) <= max_scenes_per_tile:
+            chosen_dates = unique_dates
+        else:
+            indices = np.round(np.linspace(0, len(unique_dates) - 1, max_scenes_per_tile)).astype(int)
+            chosen_dates = [unique_dates[i] for i in sorted(list(set(indices)))]
+
+        chosen_items = [by_date[d] for d in chosen_dates]
+        selected.extend(chosen_items)
+
+    return selected, tile_dict
 
 
 def scale_and_harmonize_dn(
@@ -76,11 +169,9 @@ def scale_and_harmonize_dn(
     else:
         date_str = str(item_datetime)[:10]
 
-    # If explicit STAC scale and offset are provided
     if scale is not None and offset is not None:
         reflectance = raw_dn * scale + offset
     else:
-        # Baseline 04.00 deployed 2022-01-25 added +1000 DN (+0.1 reflectance)
         if date_str >= "2022-01-25":
             reflectance = (raw_dn - 1000.0) / 10000.0
         else:
@@ -98,8 +189,8 @@ def build_composite(
     city: str = "ahmedabad",
     year: int = 2024,
     resolution: float = 60.0,
-    max_cloud_cover: float = 10.0,
-    scenes_per_tile: int = 10,
+    max_cloud_cover: float = 20.0,
+    scenes_per_tile: int = 8,
     min_valid_obs: int = 4,
     max_nodata_threshold_pct: float = 5.0,
     force: bool = False,
@@ -107,13 +198,14 @@ def build_composite(
     data_dir: str | Path = "data",
 ) -> tuple[dict[str, Path], float]:
     """
-    Builds a dry-season Sentinel-2 surface reflectance median composite with:
-    1. STAC scale & offset harmonization (Baseline 04.00 correction).
-    2. SCL cloud, cloud shadow, cirrus, and snow masking dilated by 1 pixel.
-    3. Up to 10 scenes per MGRS tile sorted by cloud cover.
-    4. Minimum 4 valid observations per pixel threshold.
-    5. Automatic 1-month seasonal window widening if NoData > 5%.
-    6. Export of composite_report.json.
+    Builds a strict dry-season Sentinel-2 surface reflectance composite:
+    1. Strict window: Dec 1 to Feb 15 (never widened).
+    2. Excludes flagged scenes from scene_diagnostics.py.
+    3. Selects up to 8 scenes per tile spread across distinct acquisition dates.
+    4. Marks low_confidence if distinct dates < 4 inside the window.
+    5. Baseline 04.00 offset harmonization (-1000 DN for >= 2022-01-25).
+    6. SCL 1-pixel dilated cloud masking.
+    7. Exports GeoTIFFs and composite_report.json.
     """
     data_path = Path(data_dir)
     data_path.mkdir(parents=True, exist_ok=True)
@@ -147,193 +239,196 @@ def build_composite(
     requested_assets = optical_bands + ["scl"]
 
     print("=" * 80)
-    print(f"[*] UrbanPulse Refactored Composite Builder: {city_name} ({year})")
+    print(f"[*] UrbanPulse Strict-Window Composite Builder: {city_name} ({year})")
     print(f"    - Resolution              : {resolution}m (EPSG:32643)")
     print(f"    - Bounding Box            : {bbox}")
     print(f"    - STAC Endpoint           : {stac_url} [{primary_collection}]")
-    print(f"    - Max Scenes per Tile     : {scenes_per_tile}")
+    print(f"    - Max Scenes per Tile     : {scenes_per_tile} (Date-spread coverage)")
     print(f"    - Min Valid Obs per Pixel : {min_valid_obs}")
-    print(f"    - Output Directory        : {data_path.resolve()}")
     print("=" * 80)
 
-    widen_months = 0
-    max_widen_attempts = 2
+    datetime_range = get_strict_window_range(year, config)
+    print(f"\n[Step 1/5] Searching strict-window scenes ({datetime_range})...")
+    client = Client.open(stac_url)
 
-    while widen_months <= max_widen_attempts:
-        datetime_range = get_dry_season_range(year, config, widen_months=widen_months)
-        print(f"\n[Step 1/5] Searching dry-season scenes ({datetime_range}, widen={widen_months}mo)...")
-        client = Client.open(stac_url)
+    search = client.search(
+        collections=[primary_collection],
+        bbox=bbox,
+        datetime=datetime_range,
+        query={"eo:cloud_cover": {"lt": max_cloud_cover}},
+    )
+    items = list(search.items())
 
+    if not items or len(items) < 2:
+        print(f"[*] Widening cloud filter to < {max_cloud_cover + 15.0}% inside strict window...")
         search = client.search(
             collections=[primary_collection],
             bbox=bbox,
             datetime=datetime_range,
-            query={"eo:cloud_cover": {"lt": max_cloud_cover}},
+            query={"eo:cloud_cover": {"lt": max_cloud_cover + 15.0}},
         )
         items = list(search.items())
 
-        if not items or len(items) < 2:
-            print(f"[*] Widening cloud search filter to < {max_cloud_cover + 15.0}%...")
-            search = client.search(
-                collections=[primary_collection],
-                bbox=bbox,
-                datetime=datetime_range,
-                query={"eo:cloud_cover": {"lt": max_cloud_cover + 15.0}},
-            )
-            items = list(search.items())
+    # Compute distinct acquisition dates inside strict window
+    all_dates = sorted(list({
+        (it.datetime.strftime("%Y-%m-%d") if it.datetime else str(it.properties.get("datetime"))[:10])
+        for it in items
+    }))
 
-        if not items:
-            if widen_months < max_widen_attempts:
-                widen_months += 1
-                continue
-            raise RuntimeError(f"No Sentinel-2 scenes found for {city_name} in {year}.")
-
-        # Group by MGRS tile and sort by cloud cover
-        tile_dict: dict[str, list[Any]] = {}
-        for item in items:
-            z = str(item.properties.get("mgrs:utm_zone", ""))
-            b = str(item.properties.get("mgrs:latitude_band", ""))
-            g = str(item.properties.get("mgrs:grid_square", ""))
-            tile_id = f"{z}{b}{g}" if (z and b and g) else item.id.split("_")[1].replace("T", "")
-            tile_dict.setdefault(tile_id, []).append(item)
-
-        selected_items = []
-        print(f"[+] Found {len(items)} matching scenes across {len(tile_dict)} MGRS tiles:")
-        for tile_id, t_items in tile_dict.items():
-            t_items.sort(key=lambda it: it.properties.get("eo:cloud_cover", 100))
-            chosen = t_items[:scenes_per_tile]
-            selected_items.extend(chosen)
-            clouds = [round(it.properties.get("eo:cloud_cover", 0), 2) for it in chosen]
-            print(f"    - Tile {tile_id:<6}: Selected {len(chosen)} scenes (Clouds: {clouds}%)")
-
-        print(f"[+] Total scenes selected for stack: {len(selected_items)}")
-
-        # 2. Build Stackstac DataArray (raw values without auto-rescaling to control exact math)
-        print(f"\n[Step 2/5] Constructing Dask raster stack at {resolution}m (EPSG:32643)...")
-        stack = stackstac.stack(
-            selected_items,
-            assets=requested_assets,
-            epsg=32643,
-            bounds_latlon=bbox,
-            resolution=resolution,
-            chunksize=1024,
-            rescale=False,
-            fill_value=np.nan,
+    is_low_confidence = len(all_dates) < 4
+    low_confidence_reason = None
+    if is_low_confidence:
+        low_confidence_reason = (
+            f"Fewer than 4 distinct acquisition dates ({len(all_dates)}) found in strict window {datetime_range}."
         )
+        print(f"\n[!] LOW CONFIDENCE YEAR: {city_name} {year} - {low_confidence_reason}")
 
-        # 3. Compute Dask Stack in Memory
-        print("\n[Step 3/5] Loading and executing parallel Dask array computation...")
-        with rasterio.Env(AWS_NO_SIGN_REQUEST="YES", GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR"):
-            with ProgressBar(minimum=0.2):
-                stack_computed = stack.compute()
+    if not items:
+        # Save empty low confidence report and return empty
+        report_data = {
+            "city": city_key,
+            "year": year,
+            "strict_window": datetime_range,
+            "datetime_window": datetime_range,
+            "low_confidence": True,
+            "low_confidence_reason": f"No Sentinel-2 scenes found in strict window {datetime_range}",
+            "scene_count": 0,
+            "scene_dates": [],
+            "mgrs_tiles": [],
+            "nodata_percentage": 100.0,
+            "band_means_reflectance": {},
+        }
+        with open(report_path, "w", encoding="utf-8") as f:
+            json.dump(report_data, f, indent=2)
+        with open(city_report_path, "w", encoding="utf-8") as f:
+            json.dump(report_data, f, indent=2)
+        print(f"[!] Saved low-confidence report to: {report_path.resolve()}")
+        return band_paths, 100.0
 
-        # 4. Process SCL Masking, 1-pixel Dilation, Reflectance Scaling & Temporal Median
-        print("\n[Step 4/5] Applying SCL 1-pixel dilated mask and Baseline 04.00 radiometric scaling...")
-        n_times, n_bands, n_y, n_x = stack_computed.shape
-        band_names = list(stack_computed.band.values)
+    # Load flagged scenes from diagnostics
+    flagged_ids = load_flagged_scene_ids(city=city, data_dir=data_path)
+    if flagged_ids:
+        print(f"[+] Loaded {len(flagged_ids)} flagged scene IDs from scene_diagnostics.csv")
 
-        scl_idx = band_names.index("scl") if "scl" in band_names else None
-        scl_arr = stack_computed.values[:, scl_idx, :, :] if scl_idx is not None else None
+    # Select scenes by date coverage up to scenes_per_tile
+    selected_items, tile_dict = select_scenes_by_date_coverage(
+        items=items,
+        max_scenes_per_tile=scenes_per_tile,
+        flagged_ids=flagged_ids,
+    )
 
-        # Prepare container for scaled optical bands
-        optical_indices = [band_names.index(b) for b in optical_bands]
-        # Shape: (n_bands, n_times, n_y, n_x)
-        processed_optical = np.full((len(optical_bands), n_times, n_y, n_x), np.nan, dtype=np.float32)
+    selected_dates = sorted(list({
+        (it.datetime.strftime("%Y-%m-%d") if it.datetime else str(it.properties.get("datetime"))[:10])
+        for it in selected_items
+    }))
 
-        # 3x3 footprint for 1-pixel dilation
-        dilation_structure = np.ones((3, 3), dtype=bool)
+    print(f"[+] Selected {len(selected_items)} scenes across {len(tile_dict)} MGRS tiles spanning {len(selected_dates)} distinct dates:")
+    print(f"    - Acquisition Dates: {selected_dates}")
 
-        for t_idx, item in enumerate(selected_items):
-            item_dt = item.datetime or str(item.properties.get("datetime"))[:10]
+    # 2. Build Stackstac DataArray
+    print(f"\n[Step 2/5] Constructing Dask raster stack at {resolution}m (EPSG:32643)...")
+    stack = stackstac.stack(
+        selected_items,
+        assets=requested_assets,
+        epsg=32643,
+        bounds_latlon=bbox,
+        resolution=resolution,
+        chunksize=1024,
+        rescale=False,
+        fill_value=np.nan,
+    )
 
-            # Build SCL cloud/shadow mask for this scene
-            if scl_arr is not None:
-                scl_t = scl_arr[t_idx]
-                # SCL classes to mask: 0=NoData, 1=Saturated, 3=Shadow, 8=Medium Cloud, 9=High Cloud, 10=Cirrus, 11=Snow
-                cloud_shadow_mask = (
-                    (scl_t == 0)
-                    | (scl_t == 1)
-                    | (scl_t == 3)
-                    | (scl_t == 8)
-                    | (scl_t == 9)
-                    | (scl_t == 10)
-                    | (scl_t == 11)
-                    | np.isnan(scl_t)
-                )
-                # Dilate by 1 pixel to remove cloud edges & fringe shadows
-                dilated_mask = scipy.ndimage.binary_dilation(
-                    cloud_shadow_mask, structure=dilation_structure, iterations=1
-                )
-            else:
-                dilated_mask = np.zeros((n_y, n_x), dtype=bool)
+    # 3. Compute Dask Stack in Memory
+    print("\n[Step 3/5] Loading and executing parallel Dask array computation...")
+    with rasterio.Env(
+        AWS_NO_SIGN_REQUEST="YES",
+        GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
+        CPL_VSIL_CURL_ALLOWED_EXTENSIONS=".tif",
+    ):
+        with ProgressBar(minimum=0.2):
+            stack_computed = stack.compute()
 
-            # Scale and mask each optical band
-            for b_i, b_name in enumerate(optical_bands):
-                orig_b_idx = band_names.index(b_name)
-                raw_band = stack_computed.values[t_idx, orig_b_idx, :, :].astype(np.float32)
+    # 4. SCL Masking, 1-pixel Dilation, Reflectance Scaling & Temporal Median
+    print("\n[Step 4/5] Applying SCL 1-pixel dilated mask and Baseline 04.00 radiometric scaling...")
+    n_times, n_bands, n_y, n_x = stack_computed.shape
+    band_names = list(stack_computed.band.values)
 
-                # Check asset metadata for scale & offset
-                scale = None
-                offset = None
-                if b_name in item.assets:
-                    extra = item.assets[b_name].extra_fields
-                    raster_bands = extra.get("raster:bands", [])
-                    if raster_bands and isinstance(raster_bands, list) and len(raster_bands) > 0:
-                        scale = raster_bands[0].get("scale")
-                        offset = raster_bands[0].get("offset")
+    scl_idx = band_names.index("scl") if "scl" in band_names else None
+    scl_arr = stack_computed.values[:, scl_idx, :, :] if scl_idx is not None else None
 
-                scaled = scale_and_harmonize_dn(raw_band, item_datetime=item_dt, scale=scale, offset=offset)
+    processed_optical = np.full((len(optical_bands), n_times, n_y, n_x), np.nan, dtype=np.float32)
+    dilation_structure = np.ones((3, 3), dtype=bool)
 
-                # Apply dilated cloud/shadow mask
-                scaled[dilated_mask] = np.nan
-                scaled[np.isnan(raw_band) | (raw_band <= 0)] = np.nan
+    for t_idx, item in enumerate(selected_items):
+        item_dt = item.datetime or str(item.properties.get("datetime"))[:10]
 
-                processed_optical[b_i, t_idx, :, :] = scaled
-
-        # 5. Temporal Median and Minimum Valid Observations Check
-        final_composite = {}
-        band_means = {}
-        total_grid_pixels = n_y * n_x
-
-        # Compute valid observation counts per pixel across time
-        # Shape: (n_y, n_x)
-        valid_obs_counts = np.sum(~np.isnan(processed_optical[0, :, :, :]), axis=0)
-
-        # Effective min valid obs: cannot exceed the number of scenes per tile available
-        max_depth = max(1, len(selected_items) // max(1, len(tile_dict)))
-        effective_min_obs = min(min_valid_obs, max_depth)
+        # SCL cloud & shadow mask
+        if scl_arr is not None:
+            scl_t = scl_arr[t_idx]
+            cloud_shadow_mask = (
+                (scl_t == 0)
+                | (scl_t == 1)
+                | (scl_t == 3)
+                | (scl_t == 8)
+                | (scl_t == 9)
+                | (scl_t == 10)
+                | (scl_t == 11)
+                | np.isnan(scl_t)
+            )
+            dilated_mask = scipy.ndimage.binary_dilation(
+                cloud_shadow_mask, structure=dilation_structure, iterations=1
+            )
+        else:
+            dilated_mask = np.zeros((n_y, n_x), dtype=bool)
 
         for b_i, b_name in enumerate(optical_bands):
-            band_time_series = processed_optical[b_i, :, :, :]
-            # Per-pixel median across valid observations
-            median_band = np.nanmedian(band_time_series, axis=0)
-            # Require minimum valid observations per pixel
-            median_band[valid_obs_counts < effective_min_obs] = np.nan
+            orig_b_idx = band_names.index(b_name)
+            raw_band = stack_computed.values[t_idx, orig_b_idx, :, :].astype(np.float32)
 
-            final_composite[b_name] = median_band
-            valid_pixels = median_band[np.isfinite(median_band) & (median_band > 0)]
-            band_means[b_name] = float(np.mean(valid_pixels)) if len(valid_pixels) > 0 else 0.0
+            scale = None
+            offset = None
+            if b_name in item.assets:
+                extra = item.assets[b_name].extra_fields
+                raster_bands = extra.get("raster:bands", [])
+                if raster_bands and isinstance(raster_bands, list) and len(raster_bands) > 0:
+                    scale = raster_bands[0].get("scale")
+                    offset = raster_bands[0].get("offset")
 
-        # Calculate NoData % on the final composite
-        nan_pixels = int(np.isnan(final_composite["red"]).sum())
-        nodata_percentage = (nan_pixels / total_grid_pixels) * 100.0
+            scaled = scale_and_harmonize_dn(raw_band, item_datetime=item_dt, scale=scale, offset=offset)
+            scaled[dilated_mask] = np.nan
+            scaled[np.isnan(raw_band) | (raw_band <= 0)] = np.nan
 
-        print("\n" + "=" * 80)
-        print(f"[*] Composite Quality Check (Window: {datetime_range}):")
-        print(f"    - Total Pixels        : {total_grid_pixels:>10,}")
-        print(f"    - Valid Data Pixels   : {total_grid_pixels - nan_pixels:>10,} ({(100 - nodata_percentage):.2f}%)")
-        print(f"    - NoData Pixels       : {nan_pixels:>10,} ({nodata_percentage:.4f}%)")
-        print(f"    - Min Valid Obs Gate  : {effective_min_obs} observations per pixel (requested: {min_valid_obs})")
-        print("=" * 80)
+            processed_optical[b_i, t_idx, :, :] = scaled
 
-        # If NoData > threshold and we haven't reached max widening, widen window
-        if nodata_percentage > max_nodata_threshold_pct and widen_months < max_widen_attempts:
-            print(f"[!] Warning: NoData is {nodata_percentage:.2f}% > {max_nodata_threshold_pct}%. Widening seasonal window by 1 month...")
-            widen_months += 1
-            continue
+    # 5. Temporal Median & Minimum Valid Observations Check
+    final_composite = {}
+    band_means = {}
+    total_grid_pixels = n_y * n_x
 
-        # Otherwise accept composite
-        break
+    valid_obs_counts = np.sum(~np.isnan(processed_optical[0, :, :, :]), axis=0)
+    max_depth = max(1, len(selected_items) // max(1, len(tile_dict)))
+    effective_min_obs = min(min_valid_obs, max_depth)
+
+    for b_i, b_name in enumerate(optical_bands):
+        band_time_series = processed_optical[b_i, :, :, :]
+        median_band = np.nanmedian(band_time_series, axis=0)
+        median_band[valid_obs_counts < effective_min_obs] = np.nan
+
+        final_composite[b_name] = median_band
+        valid_pixels = median_band[np.isfinite(median_band) & (median_band > 0)]
+        band_means[b_name] = float(np.mean(valid_pixels)) if len(valid_pixels) > 0 else 0.0
+
+    nan_pixels = int(np.isnan(final_composite["red"]).sum())
+    nodata_percentage = (nan_pixels / total_grid_pixels) * 100.0
+
+    print("\n" + "=" * 80)
+    print(f"[*] Strict-Window Composite Quality Check (Window: {datetime_range}):")
+    print(f"    - Total Pixels        : {total_grid_pixels:>10,}")
+    print(f"    - Valid Data Pixels   : {total_grid_pixels - nan_pixels:>10,} ({(100 - nodata_percentage):.2f}%)")
+    print(f"    - NoData Pixels       : {nan_pixels:>10,} ({nodata_percentage:.4f}%)")
+    print(f"    - Min Valid Obs Gate  : {effective_min_obs} observations per pixel")
+    print(f"    - Low Confidence Flag : {is_low_confidence} ({low_confidence_reason or 'Accepted'})")
+    print("=" * 80)
 
     # 6. Export GeoTIFFs to disk
     print("\n[Step 5/5] Exporting surface reflectance GeoTIFFs...")
@@ -365,10 +460,6 @@ def build_composite(
         print(f"    - Exported {b_name:<7} -> {out_file.name}")
 
     # 7. Write composite_report.json
-    scene_dates = sorted(list({
-        (it.datetime.strftime("%Y-%m-%d") if it.datetime else str(it.properties.get("datetime"))[:10])
-        for it in selected_items
-    }))
     unique_tiles = sorted(list(tile_dict.keys()))
     cloud_vals = [float(it.properties.get("eo:cloud_cover", 0)) for it in selected_items]
     mean_cloud = float(np.mean(cloud_vals)) if cloud_vals else 0.0
@@ -376,10 +467,12 @@ def build_composite(
     report_data = {
         "city": city_key,
         "year": year,
+        "strict_window": datetime_range,
         "datetime_window": datetime_range,
-        "window_widened_months": widen_months,
+        "low_confidence": is_low_confidence,
+        "low_confidence_reason": low_confidence_reason,
         "scene_count": len(selected_items),
-        "scene_dates": scene_dates,
+        "scene_dates": selected_dates,
         "mgrs_tiles": unique_tiles,
         "mean_scene_cloud_cover_pct": round(mean_cloud, 4),
         "min_valid_obs_threshold": min_valid_obs,
@@ -409,10 +502,10 @@ if __name__ == "__main__":
         "--resolution", type=float, default=60.0, help="Resolution in meters (default: 60.0)"
     )
     parser.add_argument(
-        "--max-cloud", type=float, default=10.0, help="Max cloud cover percentage (default: 10.0)"
+        "--max-cloud", type=float, default=20.0, help="Max cloud cover percentage (default: 20.0)"
     )
     parser.add_argument(
-        "--scenes-per-tile", type=int, default=10, help="Scenes per MGRS tile (default: 10)"
+        "--scenes-per-tile", type=int, default=8, help="Scenes per MGRS tile (default: 8)"
     )
     parser.add_argument(
         "--min-valid-obs", type=int, default=4, help="Min valid observations per pixel (default: 4)"

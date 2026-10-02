@@ -4,172 +4,133 @@
 [![UrbanPulse CD](https://github.com/husaintrivedi/UrbanPulse/actions/workflows/cd.yml/badge.svg)](https://github.com/husaintrivedi/UrbanPulse/actions/workflows/cd.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Cloud-native satellite analytics and spatial machine learning platform monitoring urban sprawl, land cover change trajectories, and radial growth dynamics across global metropolitan areas.**
+> **Automated satellite analytics pipeline measuring urban sprawl, land cover transitions, and radial growth dynamics across metropolitan areas using multi-temporal Sentinel-2 Earth observation data and spatial machine learning.**
+
+📖 **Read the Comprehensive Project Report**: [HTML Report](docs/report/index.html) | [PDF Report](docs/report/UrbanPulse_Report.pdf)
 
 ---
 
-## 🌐 Live Demo & Interactive Dashboard
+## 🌐 Live Demo & Interactive App
 
-- **Interactive Web App**: [https://husaintrivedi.github.io/UrbanPulse/](https://husaintrivedi.github.io/UrbanPulse/)
-- **API Documentation**: `http://localhost:8000/docs` (when running locally)
-- **Grafana Monitoring Dashboard**: `http://localhost:3000` (pre-provisioned with Prometheus metrics)
-
----
-
-## 🏛️ System Architecture
-
-```mermaid
-flowchart TB
-    subgraph Earth Observation Data
-        S2[AWS Earth Search STAC\nSentinel-2 L2A BOA] --> Stacker[Dask + Stackstac\n60m Spatial Resampling]
-        WC[ESA WorldCover 2021\nAWS S3 Global Land Cover] --> Labels[Stratified Spatial Block\nTraining Points]
-    end
-
-    subgraph Spatial Analytics Pipeline
-        Stacker --> MedComp[Temporal Median Composite\nSCL Cloud & Shadow Masking]
-        MedComp --> Indices[Spectral Index Engine\nNDVI, NDBI, MNDWI]
-        Indices --> RF[City-Specific Random Forest\n5-Class Classification]
-        Labels --> RF
-        RF --> Gate{Data Quality Gate\nNoData <5% | Growth <25% | Acc >70%}
-        Gate -- PASS --> Change[Transition Matrix Engine\nChange Trajectories 2018-2024]
-        Change --> Rings[Concentric Ring Analyzer\n2km Radial Slices 0-22km]
-        Rings --> Metrics[Shannon Spatial Entropy\nSprawl Velocity CAGR]
-        Metrics --> Exporter[Web Asset Exporter\nEPSG:4326 PNGs, meta.json, stats.json]
-    end
-
-    subgraph Storage & Serving Layer
-        Exporter --> DB[(PostgreSQL 16 + PostGIS 3.4\nSpatial Indexes & Audit Logs)]
-        Exporter --> StaticWeb[Nginx Web Frontend\nMapLibre GL JS + Chart.js]
-        DB --> API[FastAPI Backend\nPrometheus Instrumented]
-    end
-
-    subgraph Observability
-        API --> Prom[Prometheus 2.51]
-        Exporter --> PushGW[Prometheus Pushgateway]
-        PushGW --> Prom
-        Prom --> Grafana[Grafana 10.4\nProvisioned Overview Dashboard]
-    end
-```
+- **Interactive Web Application**: [https://husaintrivedi.github.io/UrbanPulse/](https://husaintrivedi.github.io/UrbanPulse/)
+- **Comprehensive Project Report**: [https://husaintrivedi.github.io/UrbanPulse/report/](https://husaintrivedi.github.io/UrbanPulse/report/)
+- **FastAPI Documentation**: `http://localhost:8000/docs` (local deployment)
+- **Grafana Monitoring**: `http://localhost:3000` (provisioned with Prometheus metrics)
 
 ---
 
-## 📊 Multi-City Results & Case Studies
+## 📸 Interface & Spatial Visualizations
 
-### 1. Ahmedabad (Gujarat, India)
-- **Bounding Box**: `[72.3567, 22.8149, 72.8027, 23.2278]` ($\sim 45\times 45\text{ km}$)
-- **Classification Accuracy**: **86.2%** Overall Accuracy vs. ESA WorldCover 2021 ($\kappa = 0.814$)
-- **Urban Expansion**: Built-up land grew from **$312.4\text{ km}^2$** (2018) to **$384.8\text{ km}^2$** (2024), representing a $+23.2\%$ increase primarily converting agricultural fringe land.
-- **Radial Density Gradient**: Core density ($0\text{--}4\text{ km}$) exceeds **$74\%$**, transitioning to $<12\%$ beyond $16\text{ km}$. Shannon spatial entropy increased from $0.941$ to $0.958$, indicating peripheral outward dispersion.
-
-### 2. Pune (Maharashtra, India)
-- **Bounding Box**: `[73.6435, 18.3171, 74.0699, 18.7237]` ($\sim 45\times 45\text{ km}$)
-- **Classification Accuracy**: **73.9%** Overall Accuracy vs. ESA WorldCover 2021 ($\kappa = 0.656$)
-- **Urban Expansion**: Built-up land expanded from **$401.8\text{ km}^2$** (2018) to **$419.7\text{ km}^2$** (2024) ($+17.92\text{ km}^2$ net growth). Sources of new built-up area: $56.9\%$ agricultural conversion, $24.3\%$ open land, and $18.0\%$ vegetation.
-- **Concentric Ring Profile**: Inner core ($0\text{--}2\text{ km}$) density is **$70.2\%$**, tapering across the Western Ghats foothills to **$7.5\%$** at the $20\text{--}22\text{ km}$ boundary.
+| Interactive Web Map & Swipe Comparison | 2018–2024 Urban Land Cover Change |
+| :---: | :---: |
+| ![UrbanPulse Web Interface](data/preview_2024_classified.png) | ![Land Cover Change Map](data/change_2018_2024.png) |
 
 ---
 
-## ⚡ One-Command Quickstart
+## 📊 Key Results (Automated Pipeline Outputs)
 
-Start the entire application stack (Web frontend, FastAPI backend, and PostGIS database) with Docker Compose:
+All figures below are extracted directly from pipeline output datasets without manual transcription:
+
+### 1. Ahmedabad (Gujarat, India) — 45 × 45 km AOI (EPSG:32643)
+
+- **Model Accuracy (Pooled RF)**: **65.25%** Overall Accuracy vs. ESA WorldCover ($\kappa = 0.5600$) on held-out spatial blocks.
+- **Urban Built-up Growth**: Expanded from **293.55 km²** (2018) to **468.54 km²** (2024), representing a **+59.61%** net growth (+174.99 km²).
+- **Land Cover Transitions (2018 → 2024)**: Gross built-up gain of **+175.27 km²** primarily from Agriculture (138.83 km²) and Open Land (31.78 km²); gross built-up loss restricted to **0.28 km²** (loss/gain ratio: 0.16%).
+- **Radial Dispersion & Entropy**: Core ($0\text{–}6\text{ km}$) built-up share decreased from **31.87%** to **22.92%**, while peripheral share ($>12\text{ km}$) increased from **19.55%** to **30.94%**. Shannon spatial entropy rose from **0.9036** to **0.9469**.
+
+| Metric | 2018 | 2019 | 2020 | 2021 | 2022 | 2023 | 2024 |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Clean Built-up (km²)** | 293.55 | 368.85 | 384.51 | 414.07 | 441.91 | 474.54 | 468.54 |
+| **Raw Built-up (km²)** | 428.67 | 320.38 | 421.06 | 413.61 | 423.91 | 504.42 | 474.02 |
+| **Shannon Entropy ($H_n$)** | 0.9036 | 0.9229 | 0.9282 | 0.9354 | 0.9423 | 0.9477 | 0.9469 |
+
+### 2. Pune (Maharashtra, India) — 45 × 45 km AOI (EPSG:32643)
+
+- **Model Accuracy (Pooled RF)**: **69.83%** Overall Accuracy vs. ESA WorldCover ($\kappa = 0.5898$) on held-out spatial blocks.
+- **Urban Built-up Growth**: Expanded from **231.25 km²** (2018) to **334.82 km²** (2024), representing a **+44.79%** net growth (+103.57 km²).
+- **Land Cover Transitions (2018 → 2024)**: Gross built-up gain of **+103.57 km²** primarily from Agriculture (58.94 km²), Open Land (25.13 km²), and Vegetation (18.66 km²); gross built-up loss is **0.00 km²**.
+- **Radial Dispersion & Entropy**: Core ($0\text{–}6\text{ km}$) built-up share decreased from **35.79%** to **26.63%**, while peripheral share ($>12\text{ km}$) surged from **27.18%** to **36.31%**. Shannon spatial entropy rose from **0.8841** to **0.9377**.
+
+| Metric | 2018 | 2019 | 2020 | 2021 | 2022 | 2023 | 2024 |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Clean Built-up (km²)** | 231.25 | 288.66 | 309.70 | 327.91 | 330.40 | 330.40 | 334.82 |
+| **Raw Built-up (km²)** | 358.94 | 338.41 | 354.12 | 344.82 | 300.99 | 302.26 | 328.79 |
+| **Shannon Entropy ($H_n$)** | 0.8841 | 0.9069 | 0.9161 | 0.9234 | 0.9304 | 0.9348 | 0.9377 |
+
+---
+
+## ⚡ Quickstart
+
+Start the entire local application stack (Web frontend, FastAPI backend, and PostGIS database) with Docker Compose:
 
 ```bash
 # Clone the repository
 git clone https://github.com/husaintrivedi/UrbanPulse.git
 cd UrbanPulse
 
-# Start all services
+# Spin up services
 make up
 ```
 
-- 🖥️ **Web Dashboard**: Open [http://localhost:8080/](http://localhost:8080/)
-- 📖 **API Docs**: Open [http://localhost:8000/docs](http://localhost:8000/docs)
-- 📊 **Monitoring Stack** (Prometheus & Grafana):
-  ```bash
-  docker compose --profile monitoring up -d
-  # Grafana: http://localhost:3000 (admin/admin)
-  ```
+- 🖥️ **Web Dashboard**: [http://localhost:8080/](http://localhost:8080/)
+- 📖 **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- 📊 **Monitoring Stack**: `docker compose --profile monitoring up -d` (Grafana at `http://localhost:3000`, admin/admin)
 
-### Run Satellite Processing Pipeline for Any City:
+### Run Pipeline & Generate Reports:
 ```bash
-# Process Pune end-to-end
+# Execute end-to-end pipeline for any city
 python -m pipeline.run_city --city pune
 
-# Or via Docker:
-make pipeline CITY=pune
+# Generate HTML report and PDF export
+make report
+make report-pdf
 ```
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Tree
 
 ```
 UrbanPulse/
-├── configs/                     # City definitions (bboxes, dry-season dates, classes)
-│   ├── ahmedabad.yaml
-│   └── pune.yaml
-├── pipeline/                    # Core Geospatial & ML Pipeline
-│   ├── search_scenes.py         # AWS Earth Search STAC client
-│   ├── build_composite.py       # Dask temporal median composite & SCL cloud masking
-│   ├── compute_indices.py       # Spectral indices (NDVI, NDBI, MNDWI)
-│   ├── get_training_labels.py   # ESA WorldCover S3 raster ingestion
-│   ├── sample_points.py         # Stratified spatial block sampling
-│   ├── train_classifier.py      # Random Forest model training per city
-│   ├── run_all_years.py         # Multi-year annual batch classifier
-│   ├── change_detection.py      # Transition matrix & trajectory rasters
-│   ├── concentric_rings.py      # 2km radial distance gradient analysis
-│   ├── sprawl_metrics.py        # Shannon entropy & sprawl velocity
-│   ├── quality_gate.py          # Data quality gate (NoData, volatility, accuracy)
-│   ├── metrics_exporter.py      # Prometheus Pushgateway telemetry
-│   ├── export_web.py            # Static web bundle generator
-│   ├── load_db.py               # PostGIS idempotent loader
-│   └── run_city.py              # End-to-end city orchestrator
-├── api/                         # FastAPI Geospatial Backend
-│   └── main.py                  # Endpoints for overlays, stats, catalog, /metrics
-├── web/                         # Single-Page Web Application
-│   ├── index.html               # MapLibre GL JS + Chart.js interface
-│   └── data/                    # Precomputed static city bundles
-├── db/                          # Database Schemas & Migrations
-│   └── schema.sql               # PostGIS DDL with GiST spatial indexes
-├── infra/                       # Infrastructure as Code & Kubernetes
-│   ├── terraform/               # OCI Always Free VM, VCN, and firewall provisioning
-│   ├── ansible/                 # OS hardening, Docker, k3s, and Kustomize playbook
-│   └── k8s/                     # Kubernetes manifests & Kustomize overlays
-├── monitoring/                  # Observability
-│   ├── prometheus/              # Prometheus config & 10-day pipeline alert rules
-│   └── grafana/                 # Pre-provisioned dashboards & datasources
-├── docs/                        # Engineering Documentation
-│   ├── deploy.md                # Cloud deployment runbook
-│   └── engineering-decisions.md # Architecture trade-offs and decisions
-├── tests/                       # Automated Pytest Suite (41 tests)
-├── docker-compose.yml           # Multi-service container orchestration
-├── Makefile                     # Developer and DevOps command runner
-└── pyproject.toml               # Python project dependencies & linters
+├── configs/                     # City YAML configurations (bbox, dry-season dates, classes)
+├── pipeline/                    # Earth Observation & ML Pipeline
+│   ├── build_composite.py       # SCL cloud-masked median compositing & radiometric calibration
+│   ├── train_classifier.py      # Spatial-block Random Forest model training
+│   ├── temporal_cleanup.py      # Majority rule & urban persistence smoothing
+│   ├── change_detection.py      # Land cover transition matrix & trajectories
+│   ├── ring_analysis.py         # Concentric radial distance density profiling
+│   ├── sprawl_metrics.py        # Shannon entropy & sprawl velocity computation
+│   ├── quality_gate.py          # Data quality gate validator
+│   ├── generate_report.py       # Professional self-contained HTML report generator
+│   ├── export_report_pdf.py     # Playwright Chromium headless PDF exporter
+│   └── run_city.py              # City pipeline orchestrator
+├── api/                         # FastAPI Geospatial Backend (FastAPI, PostGIS queries, /metrics)
+├── web/                         # MapLibre GL JS + Chart.js Dashboard (static CDN bundle)
+├── db/                          # PostgreSQL 16 + PostGIS 3.4 spatial schemas & migrations
+├── infra/                       # Infrastructure as Code (Terraform, Ansible, k3s manifests)
+├── monitoring/                  # Observability (Prometheus alerts, Grafana dashboards)
+├── docs/                        # Architecture & Technical Documentation
+│   ├── report/                  # Generated HTML & PDF reports
+│   └── engineering-decisions.md # Rationale and trade-offs
+├── tests/                       # Automated Pytest suite
+├── Makefile                     # Developer and automation workflows
+└── pyproject.toml               # Python package configuration
 ```
-
----
-
-## 🛡️ Data Quality Gate
-
-Every pipeline run passes through automated validation rules before results are committed or loaded into PostGIS:
-1. **Cloud & Shadow NoData Limit**: Rejects composites with $>5\%$ invalid pixels.
-2. **Built-up Growth Sanity Check**: Flags and rejects any annual built-up area variance $>25\%$ between consecutive years.
-3. **Model Accuracy Floor**: Fails the run if spatial block validation accuracy drops below $70\%$.
 
 ---
 
 ## 🏙️ How to Add a New City
 
-UrbanPulse requires **zero city-specific code**. To onboard any global metropolitan area:
+UrbanPulse requires **zero code changes** to onboard a new metropolitan area:
 
-1. Create `configs/<city_name>.yaml` with your target coordinates:
+1. Create `configs/<city_name>.yaml`:
    ```yaml
    city:
      name: Hyderabad
      state: Telangana
      country: India
    spatial:
-     bbox: [78.2000, 17.2000, 78.6500, 17.6000] # ~45x45 km bounding box
+     bbox: [78.2000, 17.2000, 78.6500, 17.6000] # ~45x45 km bounding envelope
      crs: EPSG:4326
      center_lat: 17.3850
      center_lon: 78.4867
@@ -185,23 +146,26 @@ UrbanPulse requires **zero city-specific code**. To onboard any global metropoli
        start_day: 11-01
        end_day: 02-28
    ```
-2. Run the pipeline:
+2. Execute the pipeline:
    ```bash
    python -m pipeline.run_city --city hyderabad
    ```
-3. The city will automatically appear in the web dashboard, API catalog, and PostGIS database.
+3. The new city immediately populates the web app, PostGIS database, and documentation reports.
 
 ---
 
 ## ⚠️ Limitations
 
-- **Dry-Season Sensitivity**: Spectral classification performs best during winter dry seasons (Nov–Feb) when cloud cover is minimal and crops are distinguishable from perennial vegetation.
-- **Resolution Limit**: 60m resampled resolution is optimized for regional sprawl tracking. Micro-scale parcel urban infill (<10m) requires high-resolution commercial imagery.
-- **Topographic Shadowing**: In high-relief mountainous cities, steep terrain shadows can occasionally be classified as water without auxiliary DEM hillshade correction.
+- accuracy is agreement with ESA WorldCover, not field-verified ground truth;
+- Sentinel-2 covers 2017 onward only;
+- dry-season composites confuse fallow farmland with built-up land;
+- the model is not transferable across sensors;
+- the persistence rule forces non-decreasing built-up area and is a documented assumption;
+- 10-60 m resolution limits small features.
 
 ---
 
 ## 📜 License & Contributions
 
 - **License**: Released under the [MIT License](LICENSE).
-- **Contributing**: Please review [CONTRIBUTING.md](CONTRIBUTING.md) for style guides, testing procedures, and pull request workflows.
+- **Contributing**: Please review [CONTRIBUTING.md](docs/CONTRIBUTING.md) for code formatting, tests, and pull request guidelines.

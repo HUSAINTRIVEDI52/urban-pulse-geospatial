@@ -145,8 +145,8 @@ def plot_builtup_trend(
 
 def run_all_years(
     city: str = "ahmedabad",
-    start_year: int = 2017,
-    end_year: int = 2024,
+    start_year: int | None = None,
+    end_year: int | None = None,
     resolution: float = 60.0,
     model_path: str | Path | None = None,
     force: bool = False,
@@ -162,6 +162,14 @@ def run_all_years(
     data_path.mkdir(parents=True, exist_ok=True)
     csv_file = data_path / f"{city_key}_class_areas.csv"
     plot_file = data_path / f"{city_key}_builtup_trend.png"
+
+    from pipeline.build_composite import load_city_config
+    cfg = load_city_config(city=city_key, config_path=config_path)
+    ay = cfg.get("temporal", {}).get("analysis_years", {})
+    if start_year is None:
+        start_year = ay.get("start_year", 2020)
+    if end_year is None:
+        end_year = ay.get("end_year", 2024)
 
     all_years = list(range(start_year, end_year + 1))
     print("\n" + "=" * 80)

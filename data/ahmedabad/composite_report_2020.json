@@ -1,38 +1,37 @@
 {
   "city": "ahmedabad",
   "year": 2020,
-  "datetime_window": "2019-10-01/2020-03-31",
-  "window_widened_months": 0,
-  "scene_count": 20,
+  "strict_window": "2019-12-01/2020-02-15",
+  "datetime_window": "2019-12-01/2020-02-15",
+  "low_confidence": false,
+  "low_confidence_reason": null,
+  "scene_count": 14,
   "scene_dates": [
-    "2019-10-15",
-    "2019-11-29",
+    "2019-12-09",
     "2019-12-14",
-    "2020-01-18",
+    "2019-12-19",
+    "2019-12-24",
+    "2020-01-08",
     "2020-01-23",
+    "2020-02-02",
     "2020-02-07",
-    "2020-02-12",
-    "2020-02-17",
-    "2020-02-22",
-    "2020-02-27",
-    "2020-03-03",
-    "2020-03-08"
+    "2020-02-12"
   ],
   "mgrs_tiles": [
     "42QZL",
     "43QBF"
   ],
-  "mean_scene_cloud_cover_pct": 0.0,
+  "mean_scene_cloud_cover_pct": 6.0552,
   "min_valid_obs_threshold": 4,
   "total_aoi_pixels": 602176,
   "valid_pixels": 602176,
   "nodata_pixels": 0,
   "nodata_percentage": 0.0,
   "band_means_reflectance": {
-    "red": 0.1075,
-    "green": 0.096,
-    "blue": 0.0684,
-    "nir": 0.2583,
-    "swir16": 0.2335
+    "red": 0.1114,
+    "green": 0.0982,
+    "blue": 0.0733,
+    "nir": 0.245,
+    "swir16": 0.2386
   }
 }

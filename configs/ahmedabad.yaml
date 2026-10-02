@@ -16,13 +16,18 @@ spatial:
   aoi_size_km: 45.0
 temporal:
   analysis_years:
-    start_year: 2000
-    end_year: 2025
+    start_year: 2020
+    end_year: 2024
+  strict_window:
+    start_month: 12
+    start_day: 12-01
+    end_month: 2
+    end_day: 02-15
   dry_season:
-    start_month: 10
-    end_month: 3
-    start_day: 10-01
-    end_day: 03-31
+    start_month: 12
+    end_month: 2
+    start_day: 12-01
+    end_day: 02-15
 stac:
   earth_search_url: https://earth-search.aws.element84.com/v1
   microsoft_pc_url: https://planetarycomputer.microsoft.com/api/stac/v1

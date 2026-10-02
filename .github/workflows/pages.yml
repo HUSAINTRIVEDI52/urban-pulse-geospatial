@@ -7,16 +7,15 @@ on:
       - master
     paths:
       - "web/**"
+      - "docs/report/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
-# Sets top-level permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow one concurrent deployment, skipping runs queued between in-progress and latest.
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -35,6 +34,20 @@ jobs:
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
 
+      - name: Copy Documentation Report to Web App
+        run: |
+          mkdir -p web/report
+          if [ -d "docs/report" ]; then
+            cp -r docs/report/* web/report/
+          fi
+
+      - name: Upload PDF Report Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UrbanPulse-Project-Report-PDF
+          path: docs/report/UrbanPulse_Report.pdf
+          if-no-files-found: warn
+
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -43,4 +56,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-

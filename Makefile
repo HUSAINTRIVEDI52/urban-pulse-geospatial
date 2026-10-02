@@ -62,3 +62,16 @@ k3d-deploy:
 k3d-down:
 	k3d cluster delete $(CLUSTER_NAME)
 
+# ----------------------------------------------------------------------------
+# Documentation & Reporting Targets
+# ----------------------------------------------------------------------------
+
+report:
+	python pipeline/generate_report.py
+
+report-pdf: report
+	python pipeline/export_report_pdf.py
+
+docs: report report-pdf
+	@echo "[+] Documentation, HTML and PDF reports generated successfully."
+

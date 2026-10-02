@@ -129,7 +129,12 @@ def train_and_evaluate_classifier(
     city_subpath.mkdir(parents=True, exist_ok=True)
 
     if train_years is None:
-        train_years = [2018, 2021, 2024]
+        cfg = load_config(city=city_key)
+        ay = cfg.get("temporal", {}).get("analysis_years", {})
+        sy = ay.get("start_year", 2020)
+        ey = ay.get("end_year", 2024)
+        my = (sy + ey) // 2
+        train_years = [sy, my, ey] if sy != ey else [sy]
 
     if output_model_path is None:
         model_path = city_subpath / "rf_model_pooled.pkl"
@@ -515,8 +520,8 @@ def main():
         "--train-years",
         type=int,
         nargs="+",
-        default=[2018, 2021, 2024],
-        help="Training years to pool (default: 2018 2021 2024)",
+        default=None,
+        help="Training years to pool (default: derived from config analysis_years)",
     )
     parser.add_argument("--n-trees", type=int, default=200, help="Number of trees (default: 200)")
     parser.add_argument("--model-out", type=str, default=None, help="Output model path")

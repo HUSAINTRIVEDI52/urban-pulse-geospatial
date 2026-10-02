@@ -1,73 +1,62 @@
 # Architecture & Engineering Decisions
 
-This document details the core engineering and design trade-offs made in the **UrbanPulse** project.
+This document records the architectural decisions, alternatives evaluated, and trade-offs made in the **UrbanPulse** project.
 
 ---
 
-## 1. Static PNG Overlays vs. Dynamic Tile Servers (TiTiler / GeoServer)
+## 1. Static PNG Overlays vs. Dynamic Tile Servers
 
-### Decision:
-Precompute transparent, reprojected `EPSG:4326` PNG overlays (`<year>.png` and `change_<start>_<end>.png`) served directly as static assets from Nginx / GitHub Pages CDN alongside Cloud-Optimized GeoTIFFs (COGs) for analytical backend queries.
-
-### Rationale:
-- **Cost & Zero-Backend Reliability**: Dynamic raster tile servers (such as TiTiler, MapServer, or GeoServer) require continuous CPU/GPU resources to resample, color-map, and compress raster tiles on every pan/zoom interaction. Static PNG overlays allow the frontend to run entirely as static files on GitHub Pages or edge CDNs with zero backend cost.
-- **Client Latency**: Transparent PNG overlays for a 45×45 km metropolitan AOI are approximately 100–140 KB in size. MapLibre GL JS renders them instantly in WebGL as an `ImageSource` bounding box with smooth opacity blending and hardware-accelerated swipe transitions.
-- **Scalability**: Overlays can be cached indefinitely on CDNs (`Cache-Control: public, max-age=86400`) and served to thousands of simultaneous users without generating cloud compute spikes.
+- **Decision**: Precompute transparent `EPSG:4326` PNG overlays (`<year>.png` and `change_2018_2024.png`) served as static CDN assets alongside Cloud-Optimized GeoTIFFs (COGs) for backend analytical extraction.
+- **Alternatives Considered**: Dynamic raster tile servers (TiTiler, GeoServer, MapServer, pg_tileserv).
+- **Trade-off**: Dynamic tile servers provide on-the-fly multi-scale band arithmetic and custom colormaps but require continuous CPU/GPU instances and incur high cloud compute costs. Static PNG overlays (~100–160 KB per city) render instantaneously via WebGL in MapLibre GL JS, scale to thousands of users for $0 hosting cost on GitHub Pages/CDN, but require re-exporting if colormaps or bounding boxes change.
 
 ---
 
 ## 2. PostGIS as the Spatial Source of Truth
 
-### Decision:
-Store all spatial metadata (bounding box geometries, annual LULC class statistics, transition matrices, concentric ring densities, and Shannon entropy metrics) in a **PostgreSQL 16 + PostGIS 3.4** spatial database with fallback to static JSON files.
-
-### Rationale:
-- **Spatial Geometry Operations**: Storing city AOI bounding envelopes as `geometry(Polygon, 4326)` with GiST spatial indexes allows fast spatial intersections, proximity queries, and integration with GIS tools (QGIS, ArcGIS).
-- **Relational Integrity**: Foreign key constraints and composite primary keys `(city, year, class)` guarantee idempotent re-runs of the processing pipeline without duplicating historical records.
-- **Rich Analytics**: PostGIS enables SQL-level spatial aggregations, time-series joins, and rapid audit logging via the `pipeline_runs` table.
+- **Decision**: Persist all spatial envelopes, annual land cover class statistics, transition matrices, concentric ring densities, Shannon entropy metrics, and `pipeline_runs` audit logs in **PostgreSQL 16 + PostGIS 3.4**.
+- **Alternatives Considered**: Pure flat file storage (GeoJSON / Parquet on S3) or Document databases (MongoDB, DynamoDB).
+- **Trade-off**: Flat files avoid running a database daemon but lack transactional ACID guarantees, relational integrity, and fast spatial intersection indexes (`GiST`). PostGIS enables fast bounding envelope queries, time-series aggregations, and idempotent pipeline re-runs via composite primary keys `(city, year, class)`.
 
 ---
 
-## 3. Lightweight k3s over Managed Kubernetes (EKS / GKE / AKS)
+## 3. Lightweight k3s over Managed Kubernetes
 
-### Decision:
-Use **k3s** packaged in a lightweight containerized distribution with built-in Traefik Ingress and local storage provisioner, rather than managed cloud Kubernetes offerings.
-
-### Rationale:
-- **Cost Efficiency on Free-Tier Cloud**: Managed Kubernetes control planes (EKS, GKE) cost ~$70+/month for the control plane alone. k3s runs comfortably inside a single Oracle Cloud Always Free Ampere A1 instance (4 OCPUs, 24 GB RAM).
-- **Developer Parity (k3d)**: Developers can run the exact same Kubernetes manifests locally using `k3d` (k3s in Docker) in seconds without differences in Ingress controllers or storage classes.
-- **Low Footprint**: k3s replaces heavyweight Kubernetes components with sqlite/embedded etcd, reducing idle memory overhead to under 512 MB.
+- **Decision**: Deploy infrastructure on a single-node **k3s** cluster orchestrated with Helm and Kustomize overlays.
+- **Alternatives Considered**: Managed Kubernetes services (AWS EKS, GCP GKE, Azure AKS) or plain Docker Compose.
+- **Trade-off**: Managed cloud Kubernetes costs $70+/month for control planes alone. k3s runs with embedded SQLite/etcd consuming <512 MB memory on Oracle Cloud Always Free Ampere A1 (4 OCPU, 24 GB RAM) while providing full Kubernetes API compatibility, Traefik Ingress, and seamless local reproduction via `k3d`.
 
 ---
 
-## 4. City-Specific ML Models vs. Generalized Global Classifiers
+## 4. Per-City Models and Pooled Multi-Year Training
 
-### Decision:
-Train independent Random Forest classifiers for each city (`data/{city}_rf_model_{year}.pkl`) using that city's local ESA WorldCover 2021 ground truth, rather than applying a single universal classifier.
-
-### Rationale:
-- **Spectral Variations Across Biomes**: Soil spectral reflectance, vegetation phenology, and building materials vary significantly between geographic zones (e.g., arid alluvial soils in Ahmedabad vs. basaltic Deccan trap terrain and hill topography in Pune).
-- **Reduced Spectral Confusion**: Local models avoid confusion between dry fallow agricultural fields and bare urban soil by learning city-specific dry-season spectral index distributions (`NDVI`, `NDBI`, `MNDWI`).
-- **Targeted Accuracy**: Local training achieves high overall accuracy (>73–85%) and robust Cohen's Kappa without requiring massive multi-gigabyte training sets.
+- **Decision**: Train city-specific Random Forest classifiers pooled across three representative dry-season years (2018, 2021, 2024) at identical sample point locations with strict spatial-block partitioning.
+- **Alternatives Considered**: A single global/universal classifier, or independent year-by-year models without pooling.
+- **Trade-off**: Universal classifiers suffer from severe regional soil/phenology domain shift (e.g., basaltic Deccan traps in Pune vs. alluvial soils in Ahmedabad). Single-year models suffer from inter-annual decision boundary flicker. The pooled per-city model stabilizes class definitions across the 7-year timeline while respecting local biome spectral distributions.
 
 ---
 
-## 5. Sentinel-2 L2A Scope (2017–Present)
+## 5. Sentinel-2-Only Scope (2017–Present)
 
-### Decision:
-Scope the primary automated pipeline to Sentinel-2 Level-2A surface reflectance (Bottom-of-Atmosphere / BOA) from 2017/2018 to 2024.
-
-### Rationale:
-- **Consistent Atmospheric Correction**: Sentinel-2 L2A provides harmonized 10m–20m multispectral bands with standardized Scene Classification Layer (SCL) cloud/shadow masking on AWS Earth Search STAC.
-- **Avoiding Cross-Sensor Radiometric Gaps**: Merging older Landsat 5/7 data (30m) with Sentinel-2 (10m) introduces spatial resolution artifacts and sensor calibration biases in automated change detection.
+- **Decision**: Scope the automated production pipeline to Sentinel-2 Level-2A surface reflectance (MSI BOA) from 2017/2018 to 2024.
+- **Alternatives Considered**: Combining historical Landsat 5/7/8 (1984–present) with Sentinel-2.
+- **Trade-off**: Including Landsat extends time series to 40 years but introduces significant cross-sensor resolution mismatches (30m vs. 10m/20m), band wavelength shifts, and Landsat 7 Scan Line Corrector (SLC-off) data gaps. Sentinel-2 provides consistent 10–20m multispectral bands with standardized SCL cloud masking for clean, high-precision urban boundary tracking.
 
 ---
 
-## 6. What We Would Change at Continental Scale (100+ Cities)
+## 6. Temporal Cleanup Rules (Majority & Persistence)
 
-If scaling UrbanPulse to monitor hundreds or thousands of global cities continuously:
+- **Decision**: Apply post-classification temporal rules (2-of-3 year majority filter and 2-consecutive-year urban persistence) on predicted rasters to eliminate spurious inter-annual classification flips.
+- **Alternatives Considered**: Raw pixel predictions without temporal smoothing, or HMM / CRFs temporal graph modeling.
+- **Trade-off**: Raw satellite classifications contain seasonal phenological noise where fallow dry agricultural fields transiently flip to built-up land and back. The persistence rule codifies the physical reality that urbanized land rarely reverts to natural cover, eliminating false de-urbanization speckle at the cost of assuming irreversible urban development.
 
-1. **Distributed Raster Engine**: Replace local single-node Dask execution with **Apache Sedona** or **Ray on KubeRay** running on a scalable cluster for parallel STAC ingestion.
-2. **Dynamic Vector Tile Pipeline**: Pre-generate Mapbox Vector Tiles (MVT) for street-level urban sprawl boundaries and building footprints using Martin or pg_tileserv.
-3. **Deep Learning Vision Models**: Transition from pixel-level Random Forest to a lightweight geospatial vision transformer (e.g., Prithvi / SatMAE) running on GPU inference workers for improved semantic feature extraction.
-4. **Serverless STAC Compositing**: Deploy serverless AWS Lambda workers running `cog-mosaic` to create temporal median composites on-demand in cloud object storage.
+---
+
+## 7. What I Would Change at Scale (100+ Cities)
+
+- **Decision**: Current architecture processes cities sequentially via Dask on local/VM cores.
+- **Alternatives Considered / Scale Architecture**:
+  1. **Distributed Compute**: Replace single-node processing with **Ray on Kubernetes (KubeRay)** or **Apache Sedona** for massively parallel STAC fetching and spatial indexing.
+  2. **Vector Tile Serving**: Precompute Mapbox Vector Tiles (MVT) for parcel-level sprawl vectors using Martin or Tippecanoe.
+  3. **Deep Learning Foundation Models**: Transition from pixel-level Random Forest to geospatial vision transformers (e.g., Prithvi / SatMAE) running on GPU inference pools.
+  4. **Serverless Compositing**: Deploy event-driven AWS Lambda workers running `cog-mosaic` to synthesize cloud-free composites on object storage directly.

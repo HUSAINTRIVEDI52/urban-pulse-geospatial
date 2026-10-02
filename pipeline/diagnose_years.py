@@ -32,18 +32,32 @@ def load_config(city: str = "ahmedabad", config_path: str | Path | None = None) 
 
 
 def get_dry_season_range(year: int, config: dict[str, Any]) -> str:
-    """Constructs ISO 8601 dry season date range from YAML config (Nov to Feb)."""
+    """Constructs ISO 8601 strict dry season date range from YAML config (default: Dec 1 to Feb 15)."""
     temporal_cfg = config.get("temporal", {})
-    dry_season_cfg = temporal_cfg.get("dry_season", {})
+    window_cfg = temporal_cfg.get("strict_window") or temporal_cfg.get("dry_season", {})
 
-    start_month = dry_season_cfg.get("start_month", 11)
-    end_month = dry_season_cfg.get("end_month", 2)
+    start_month = window_cfg.get("start_month", 12)
+    end_month = window_cfg.get("end_month", 2)
+    start_day_str = window_cfg.get("start_day", "12-01")
+    end_day_str = window_cfg.get("end_day", "02-15")
+
+    if "-" in str(start_day_str):
+        s_parts = str(start_day_str).split("-")
+        start_month = int(s_parts[0])
+        s_day = int(s_parts[1])
+    else:
+        s_day = 1
+
+    if "-" in str(end_day_str):
+        e_parts = str(end_day_str).split("-")
+        end_month = int(e_parts[0])
+        e_day = int(e_parts[1])
+    else:
+        _, e_day = calendar.monthrange(year, end_month)
 
     start_year = year - 1 if start_month > end_month else year
-    start_date = f"{start_year:04d}-{start_month:02d}-01"
-
-    _, last_day = calendar.monthrange(year, end_month)
-    end_date = f"{year:04d}-{end_month:02d}-{last_day:02d}"
+    start_date = f"{start_year:04d}-{start_month:02d}-{s_day:02d}"
+    end_date = f"{year:04d}-{end_month:02d}-{e_day:02d}"
 
     return f"{start_date}/{end_date}"
 
@@ -51,11 +65,11 @@ def get_dry_season_range(year: int, config: dict[str, Any]) -> str:
 def query_stac_scenes_for_year(
     year: int,
     config: dict[str, Any],
-    max_cloud_cover: float = 10.0,
-    scenes_per_tile: int = 4,
+    max_cloud_cover: float = 20.0,
+    scenes_per_tile: int = 8,
 ) -> tuple[int, list[str], list[str], float, list[Any]]:
     """
-    Queries STAC catalog for Sentinel-2 L2A scenes used in the dry-season composite.
+    Queries STAC catalog for Sentinel-2 L2A scenes used in the strict-window composite.
 
     Returns:
         (scene_count, scene_dates_list, unique_mgrs_tiles, mean_cloud_cover, selected_items)
@@ -87,19 +101,8 @@ def query_stac_scenes_for_year(
             items = list(search.items())
 
         if not items:
-            alt_range = f"{year:04d}-01-01/{year:04d}-05-31"
-            search = client.search(
-                collections=[collection],
-                bbox=bbox,
-                datetime=alt_range,
-                query={"eo:cloud_cover": {"lt": 30.0}},
-            )
-            items = list(search.items())
-
-        if not items:
             return 0, [], [], 0.0, []
 
-        # Group by MGRS tile and pick lowest cloud cover per tile
         tile_dict: dict[str, list[Any]] = {}
         for item in items:
             z = str(item.properties.get("mgrs:utm_zone", ""))
@@ -110,8 +113,18 @@ def query_stac_scenes_for_year(
 
         selected_items = []
         for _, t_items in tile_dict.items():
-            t_items.sort(key=lambda it: it.properties.get("eo:cloud_cover", 100))
-            selected_items.extend(t_items[:scenes_per_tile])
+            by_date = {}
+            for it in t_items:
+                dt_str = it.datetime.strftime("%Y-%m-%d") if it.datetime else str(it.properties.get("datetime"))[:10]
+                if dt_str not in by_date or float(it.properties.get("eo:cloud_cover", 100)) < float(by_date[dt_str].properties.get("eo:cloud_cover", 100)):
+                    by_date[dt_str] = it
+            u_dates = sorted(by_date.keys())
+            if len(u_dates) <= scenes_per_tile:
+                chosen_d = u_dates
+            else:
+                idxs = np.round(np.linspace(0, len(u_dates) - 1, scenes_per_tile)).astype(int)
+                chosen_d = [u_dates[i] for i in sorted(list(set(idxs)))]
+            selected_items.extend([by_date[d] for d in chosen_d])
 
         dates = sorted(
             list(
@@ -126,7 +139,7 @@ def query_stac_scenes_for_year(
             )
         )
         unique_tiles = sorted(list(tile_dict.keys()))
-        clouds = [it.properties.get("eo:cloud_cover", 0.0) for it in selected_items]
+        clouds = [float(it.properties.get("eo:cloud_cover", 0.0)) for it in selected_items]
         mean_cloud = float(np.mean(clouds)) if clouds else 0.0
 
         return len(selected_items), dates, unique_tiles, mean_cloud, selected_items
@@ -256,13 +269,19 @@ def diagnose_years(
     print(f"[*] UrbanPulse Multi-Year Diagnostic & Radiometric Analysis: {city_clean.upper()} ({start_year} - {end_year})")
     print("=" * 115)
 
-    # 1. Load classified maps and compute stable mask (Water [3] or Built-up [1] in >= 6 of 7 years)
+    # 1. Load classified maps and compute stable mask (Water [3] or Built-up [1] in >= len(years)-1 years)
     classes_dict = {}
     for y in years:
-        class_file = data_path / f"{city_clean}_{y}_classified.tif"
-        if not class_file.exists():
-            raise FileNotFoundError(f"Missing classified map: {class_file.resolve()}")
-        with rasterio.open(class_file) as src:
+        candidates = [
+            data_path / city_clean / "clean" / f"{city_clean}_{y}_classified.tif",
+            data_path / "clean" / f"{city_clean}_{y}_classified.tif",
+            data_path / city_clean / f"{city_clean}_{y}_classified.tif",
+            data_path / f"{city_clean}_{y}_classified.tif",
+        ]
+        chosen = next((p for p in candidates if p.exists()), None)
+        if not chosen:
+            raise FileNotFoundError(f"Missing classified map for {y}: looked in {[str(c) for c in candidates]}")
+        with rasterio.open(chosen) as src:
             classes_dict[y] = src.read(1)
 
     first_year = years[0]
@@ -271,7 +290,7 @@ def diagnose_years(
         c_arr = classes_dict[y]
         builtup_or_water_counts += ((c_arr == 1) | (c_arr == 3)).astype(np.int32)
 
-    # Stable pixels threshold: at least 6 of 7 years
+    # Stable pixels threshold: at least len(years)-1 years
     min_stable_years = max(1, len(years) - 1)
     stable_mask = builtup_or_water_counts >= min_stable_years
 
@@ -287,33 +306,64 @@ def diagnose_years(
     stac_items_sample = {}
 
     for y in years:
-        # A. Query STAC for scene metadata
-        scene_count, scene_dates, unique_tiles, mean_cloud, items = query_stac_scenes_for_year(year=y, config=config)
+        # Check if composite_report_{year}.json exists
+        report_candidates = [
+            data_path / city_clean / f"composite_report_{y}.json",
+            data_path / f"{city_clean}_{y}_composite_report.json",
+        ]
+        rep_file = next((p for p in report_candidates if p.exists()), None)
+        if rep_file:
+            import json
+            with open(rep_file, encoding="utf-8") as f:
+                rdata = json.load(f)
+            scene_count = rdata.get("scene_count", 0)
+            scene_dates = rdata.get("scene_dates", [])
+            unique_tiles = rdata.get("mgrs_tiles", [])
+            mean_cloud = rdata.get("mean_scene_cloud_cover_pct", 0.0)
+            items = []
+        else:
+            scene_count, scene_dates, unique_tiles, mean_cloud, items = query_stac_scenes_for_year(year=y, config=config)
+
         dates_str = ", ".join(scene_dates) if scene_dates else "N/A"
         tiles_str = ", ".join(unique_tiles) if unique_tiles else "N/A"
         if items:
             stac_items_sample[y] = items[0]
 
         # B. Load band GeoTIFFs
-        red_p = data_path / f"{city_clean}_{y}_red.tif"
-        nir_p = data_path / f"{city_clean}_{y}_nir.tif"
-        swir16_p = data_path / f"{city_clean}_{y}_swir16.tif"
-        ndvi_p = data_path / f"{city_clean}_{y}_ndvi.tif"
-        ndbi_p = data_path / f"{city_clean}_{y}_ndbi.tif"
-        mndwi_p = data_path / f"{city_clean}_{y}_mndwi.tif"
+        def find_band_file(b_name: str) -> Path:
+            b_cands = [
+                data_path / f"{city_clean}_{y}_{b_name}.tif",
+                data_path / city_clean / f"{city_clean}_{y}_{b_name}.tif",
+            ]
+            chosen_b = next((p for p in b_cands if p.exists()), None)
+            if not chosen_b:
+                raise FileNotFoundError(f"Missing {b_name} band for {y}")
+            return chosen_b
 
+        red_p = find_band_file("red")
+        nir_p = find_band_file("nir")
+        swir16_p = find_band_file("swir16")
+        
         with rasterio.open(red_p) as src_r:
             red = src_r.read(1).astype(np.float32)
         with rasterio.open(nir_p) as src_n:
             nir = src_n.read(1).astype(np.float32)
         with rasterio.open(swir16_p) as src_s:
             swir16 = src_s.read(1).astype(np.float32)
-        with rasterio.open(ndvi_p) as src_vi:
-            ndvi = src_vi.read(1).astype(np.float32)
-        with rasterio.open(ndbi_p) as src_bi:
-            ndbi = src_bi.read(1).astype(np.float32)
-        with rasterio.open(mndwi_p) as src_wi:
-            mndwi = src_wi.read(1).astype(np.float32)
+
+        # Compute NDVI, NDBI, MNDWI dynamically if files don't exist
+        with np.errstate(divide="ignore", invalid="ignore"):
+            ndvi = np.where((nir + red) != 0, (nir - red) / (nir + red), np.nan)
+            ndbi = np.where((swir16 + nir) != 0, (swir16 - nir) / (swir16 + nir), np.nan)
+            # For MNDWI we can use green if available, otherwise swir16/nir
+            green_cands = [data_path / f"{city_clean}_{y}_green.tif", data_path / city_clean / f"{city_clean}_{y}_green.tif"]
+            green_p = next((p for p in green_cands if p.exists()), None)
+            if green_p:
+                with rasterio.open(green_p) as src_g:
+                    green = src_g.read(1).astype(np.float32)
+                mndwi = np.where((green + swir16) != 0, (green - swir16) / (green + swir16), np.nan)
+            else:
+                mndwi = np.zeros_like(red)
 
         # C. Nodata calculation
         nodata_mask = np.isnan(red) | (red == -9999.0) | (red <= 0.0)
