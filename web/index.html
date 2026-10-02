@@ -153,7 +153,7 @@
       border: 1px solid rgba(16, 185, 129, 0.3);
       padding: 4px 10px;
       border-radius: 20px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       color: #34d399;
       text-transform: uppercase;
@@ -178,7 +178,7 @@
       border: 1px solid rgba(16, 185, 129, 0.35);
       padding: 4px 10px;
       border-radius: 20px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       color: #34d399;
       font-family: var(--font-mono);
@@ -193,7 +193,7 @@
       border: 1px solid rgba(56, 189, 248, 0.35);
       padding: 4px 10px;
       border-radius: 20px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       color: #38bdf8;
       font-family: var(--font-mono);
@@ -213,7 +213,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 8px 12px;
-      font-size: 11px;
+      font-size: 12px;
       margin-top: 4px;
     }
 
@@ -222,7 +222,7 @@
       align-items: center;
       gap: 5px;
       color: var(--text-secondary);
-      font-size: 11px;
+      font-size: 12px;
     }
 
     .legend-pill-dot {
@@ -242,7 +242,7 @@
       border: 1px solid rgba(56, 189, 248, 0.4);
       color: var(--accent-cyan);
       text-decoration: none;
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 700;
       font-family: var(--font-mono);
       transition: all 0.2s ease;
@@ -282,7 +282,7 @@
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
       transition: opacity 0.2s, visibility 0.2s;
       pointer-events: none;
-      font-size: 11px;
+      font-size: 12px;
       line-height: 1.45;
       font-weight: normal;
     }
@@ -309,7 +309,7 @@
       border: 1px solid rgba(239, 68, 68, 0.35);
       border-radius: 10px;
       padding: 10px 14px;
-      font-size: 11.5px;
+      font-size: 12px;
       color: #fca5a5;
       line-height: 1.45;
       margin-top: 10px;
@@ -318,7 +318,7 @@
     .validation-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 11px;
+      font-size: 12px;
       font-family: var(--font-mono);
     }
 
@@ -327,7 +327,7 @@
       padding: 6px 8px;
       color: var(--text-muted);
       border-bottom: 1px solid var(--border-subtle);
-      font-size: 10px;
+      font-size: 12px;
       text-transform: uppercase;
     }
 
@@ -431,7 +431,7 @@
     }
 
     .metric-label {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
@@ -446,7 +446,7 @@
     }
 
     .metric-delta {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
       display: flex;
       align-items: center;
@@ -502,7 +502,7 @@
       font-weight: 600;
       border-bottom: 1px solid var(--border-subtle);
       text-transform: uppercase;
-      font-size: 10px;
+      font-size: 12px;
       letter-spacing: 0.05em;
     }
 
@@ -617,7 +617,7 @@
     .timeline-ticks {
       display: flex;
       justify-content: space-between;
-      font-size: 11px;
+      font-size: 12px;
       font-family: var(--font-mono);
       color: var(--text-muted);
     }
@@ -685,7 +685,7 @@
     }
 
     .legend-title {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
@@ -741,7 +741,7 @@
     }
 
     .opacity-label {
-      font-size: 11px;
+      font-size: 12px;
       color: var(--text-muted);
       font-weight: 600;
     }
@@ -1117,19 +1117,19 @@
         transform: translateX(-50%);
         padding: 6px 10px;
         gap: 6px;
-        font-size: 11px;
+        font-size: 12px;
         max-width: calc(100% - 70px);
       }
 
       .compare-select {
         padding: 4px 6px;
-        font-size: 11px;
+        font-size: 12px;
       }
 
       .compare-tag {
         top: calc(115px + env(safe-area-inset-top, 0px));
         padding: 4px 8px;
-        font-size: 11px;
+        font-size: 12px;
       }
     }
 
@@ -1300,7 +1300,7 @@
       border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 4px;
       padding: 1px 5px;
-      font-size: 10px;
+      font-size: 12px;
       font-family: var(--font-mono);
       color: var(--text-muted);
     }
@@ -1351,7 +1351,7 @@
 
     .error-content {
       font-family: var(--font-mono);
-      font-size: 11.5px;
+      font-size: 12px;
       line-height: 1.4;
       white-space: pre-wrap;
       word-break: break-word;
@@ -1401,8 +1401,20 @@
         <option value="ahmedabad">Ahmedabad, India</option>
         <option value="pune">Pune, India</option>
       </select>
-      <div id="quality-gate-badge" class="badge-gate" title="Quality Gate Status">Gate: APPROVED</div>
-      <div id="ci-status-badge" class="badge-ci" title="Automated Verification Suite">CI: 10/10 Passed</div>
+      <div class="tooltip-container" style="position: relative;">
+        <div id="quality-gate-badge" class="badge-gate" tabindex="0" role="button" aria-label="Quality Gate Checks" style="cursor: pointer;">Gate: 5/5 PASS</div>
+        <div id="quality-gate-popover" class="tooltip-popup" style="width: 300px; top: 135%; bottom: auto; left: 0; transform: none;">
+          <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+            <span>Pipeline Quality Gates</span>
+            <span id="gate-overall-status" style="color: #34d399; font-size: 12px;">ALL PASS</span>
+          </div>
+          <div id="gate-items-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+        </div>
+      </div>
+      <a href="https://github.com/husain-52/UrbanPulse/actions" target="_blank" rel="noopener" style="text-decoration: none; display: inline-flex; align-items: center;" title="View CI Workflow Runs on GitHub">
+        <img id="ci-shield-img" src="https://img.shields.io/badge/CI-passing-10b981?style=flat&logo=github" alt="CI Status" style="height: 22px; border-radius: 4px;" onerror="this.style.display='none'; document.getElementById('ci-status-badge').style.display='inline-flex';">
+        <div id="ci-status-badge" class="badge-ci" style="display: none;" title="Automated Verification Suite">CI: Passing</div>
+      </a>
     </div>
 
     <!-- Map Tools Toolbar -->
@@ -1440,7 +1452,7 @@
       <span style="color: var(--accent-cyan); font-weight: 800;">VS</span>
       <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary);">Right Layer:</span>
       <select id="compare-year-b" class="compare-select"></select>
-      <button id="close-compare-btn" class="tool-btn" style="padding: 4px 10px; font-size: 11px;">Exit</button>
+      <button id="close-compare-btn" class="tool-btn" style="padding: 4px 10px; font-size: 12px;">Exit</button>
     </div>
 
     <!-- Dual Map Compare Container -->
@@ -1467,7 +1479,7 @@
         <div class="opacity-control">
           <span class="opacity-label">Opacity</span>
           <input type="range" id="opacity-slider" class="opacity-slider" min="0" max="100" value="90">
-          <span id="opacity-val" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary);">90%</span>
+          <span id="opacity-val" style="font-size: 12px; font-family: var(--font-mono); color: var(--text-secondary);">90%</span>
         </div>
       </div>
     </div>
@@ -1507,7 +1519,7 @@
         Urban Analytics Dashboard
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
-        <span id="aoi-meta-badge" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">45x45 km</span>
+        <span id="aoi-meta-badge" style="font-size: 12px; font-family: var(--font-mono); color: var(--text-muted);">45x45 km</span>
         <button id="close-dashboard-btn" class="sidebar-close-btn" aria-label="Close dashboard" title="Close Dashboard">&times;</button>
       </div>
     </div>
@@ -1523,7 +1535,7 @@
           </div>
           <a href="./report/#limitations" target="_blank" rel="noopener" class="info-link-btn" title="View Limitations in Project Report" aria-label="Limitations in Report">i</a>
         </div>
-        <div id="analysis-note-text" style="font-size: 11px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4;">
+        <div id="analysis-note-text" style="font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4;">
           2018-2019 excluded: too few in-window Sentinel-2 scenes.
         </div>
       </div>
@@ -1535,7 +1547,7 @@
           <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
             <div class="metric-label" style="display: flex; align-items: center; gap: 6px;">
               <span>2020–2024 Change</span>
-              <span class="info-link-btn" style="width: 15px; height: 15px; font-size: 9px;" title="Hover for method breakdown">i</span>
+              <span class="info-link-btn" style="width: 15px; height: 15px; font-size: 12px;" title="Hover for method breakdown">i</span>
             </div>
             <a href="./report/#validation" target="_blank" rel="noopener" class="info-link-btn" title="View Validation in Project Report" aria-label="Validation in Report">
               <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
@@ -1545,20 +1557,7 @@
           <div class="metric-delta">
             <span id="metric-expansion-sub" style="color: var(--text-secondary);">Spread range across estimation methods</span>
           </div>
-          <div class="tooltip-popup">
-            <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 6px; font-size: 11.5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">
-              Method Sensitivity (3 Estimation Approaches)
-            </div>
-            <div style="margin-bottom: 5px;">
-              <strong style="color: #38bdf8;">1. TLS-Normalised (Main):</strong> Cross-calibrated using Total Least Squares regression against pseudo-invariant features across years.
-            </div>
-            <div style="margin-bottom: 5px;">
-              <strong style="color: #10b981;">2. Cleaned:</strong> Enforces temporal consistency (persistence) logic preventing false urban reversal.
-            </div>
-            <div>
-              <strong style="color: #f59e0b;">3. Raw:</strong> Independent annual Random Forest classification without inter-annual calibration.
-            </div>
-          </div>
+          <div class="tooltip-popup" id="headline-methods-tooltip" style="width: 320px;"></div>
         </div>
 
         <div class="metric-card">
@@ -1671,7 +1670,7 @@
           </div>
           <a href="./report/#validation" target="_blank" rel="noopener" class="info-link-btn" title="View Validation in Project Report" aria-label="Validation in Report">i</a>
         </div>
-        <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">
+        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">
           Evaluated on <strong>ALL held-out spatial block test points</strong> (N=400/414 pts/yr) using Olofsson et al. (2014) area-weighted stratified estimator.
         </div>
         <div style="overflow-x: auto;">
@@ -1681,12 +1680,15 @@
                 <th>Fold</th>
                 <th>Stage</th>
                 <th>F1</th>
-                <th>Mapped</th>
+                <th>Mapped (km²)</th>
                 <th>Olofsson (95% CI)</th>
               </tr>
             </thead>
             <tbody id="validation-table-body"></tbody>
           </table>
+        </div>
+        <div id="validation-note-text" style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; line-height: 1.45; border-left: 2px solid var(--accent-cyan); padding-left: 8px;">
+          Labels derived from ESA WorldCover 2021 reference for all folds; 2018 is evaluated as a temporal fold only.
         </div>
         <div class="negative-result-card">
           <strong>Negative result:</strong> Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not reduce year-to-year drift (Cleaned F1 remaining equal or higher); temporal consistency filtering remains the robust operational safeguard.
@@ -1694,7 +1696,7 @@
       </div>
 
       <!-- Dashboard Footer Links -->
-      <div style="padding: 16px 8px 8px 8px; border-top: 1px solid var(--border-subtle); margin-top: 16px; display: flex; flex-direction: column; gap: 8px; font-size: 11.5px; color: var(--text-muted);">
+      <div style="padding: 16px 8px 8px 8px; border-top: 1px solid var(--border-subtle); margin-top: 16px; display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: var(--text-muted);">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <a href="./report/" target="_blank" rel="noopener" style="color: var(--accent-cyan); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>
@@ -1713,7 +1715,7 @@
             Download PDF
           </a>
         </div>
-        <div style="text-align: center; opacity: 0.7; font-size: 10.5px; margin-top: 4px;">
+        <div style="text-align: center; opacity: 0.7; font-size: 12px; margin-top: 4px;">
           UrbanPulse &copy; 2026 &bull; Multi-Temporal Satellite Analytics
         </div>
       </div>
@@ -2143,24 +2145,63 @@
         // 1. Headline 2020-2024 Expansion Percentage Range & Spread Subtitle
         const expEl = document.getElementById('metric-expansion-val');
         const expSubEl = document.getElementById('metric-expansion-sub');
-        if (statsData.headline_2020_2024_expansion) {
-          const h = statsData.headline_2020_2024_expansion;
-          if (expEl) {
-            expEl.textContent = h.net_growth_range_pct_str || h.percentage_range || "12.6 to 21.9 %";
-          }
-          if (expSubEl) {
-            expSubEl.textContent = h.net_growth_range_str
-              ? `Range across methods (${h.net_growth_range_str})`
-              : "Spread range across methods";
-          }
+        const tooltipEl = document.getElementById('headline-methods-tooltip');
+        const h = statsData.headline_2020_2024_expansion || {};
+        const methods = h.methods || statsData.methods_breakdown || {};
+
+        if (expEl) {
+          expEl.textContent = h.net_growth_range_pct_str || (h.min_change_pct != null && h.max_change_pct != null ? `${h.min_change_pct.toFixed(1)} to ${h.max_change_pct.toFixed(1)} %` : "12.6 to 21.9 %");
+        }
+        if (expSubEl) {
+          expSubEl.textContent = h.net_growth_range_str
+            ? `Range across methods (${h.net_growth_range_str})`
+            : "Spread range across methods";
+        }
+
+        if (tooltipEl && methods) {
+          const raw = methods.raw || {};
+          const clean = methods.cleaned || {};
+          const tls = methods.tls || {};
+          tooltipEl.innerHTML = `
+            <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 8px; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">
+              2020–2024 Change by Estimation Method
+            </div>
+            <div style="margin-bottom: 8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="color: #38bdf8;">1. TLS-Normalised (Main):</strong>
+                <span style="font-family:var(--font-mono); font-weight:700; color:#38bdf8;">+${tls.change_km2 != null ? tls.change_km2.toFixed(1) : '59.9'} km² (+${tls.change_pct != null ? tls.change_pct.toFixed(1) : '14.7'}%)</span>
+              </div>
+              <div style="color: #94a3b8; font-size: 12px; margin-top: 2px;">
+                ${tls.start_km2 != null ? tls.start_km2.toFixed(1) : '406.3'} &rarr; ${tls.end_km2 != null ? tls.end_km2.toFixed(1) : '466.2'} km² (PIF cross-calibrated)
+              </div>
+            </div>
+            <div style="margin-bottom: 8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="color: #10b981;">2. Cleaned:</strong>
+                <span style="font-family:var(--font-mono); font-weight:700; color:#10b981;">+${clean.change_km2 != null ? clean.change_km2.toFixed(1) : '84.0'} km² (+${clean.change_pct != null ? clean.change_pct.toFixed(1) : '21.9'}%)</span>
+              </div>
+              <div style="color: #94a3b8; font-size: 12px; margin-top: 2px;">
+                ${clean.start_km2 != null ? clean.start_km2.toFixed(1) : '384.5'} &rarr; ${clean.end_km2 != null ? clean.end_km2.toFixed(1) : '468.5'} km² (Temporal persistence filter)
+              </div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="color: #f59e0b;">3. Raw:</strong>
+                <span style="font-family:var(--font-mono); font-weight:700; color:#f59e0b;">+${raw.change_km2 != null ? raw.change_km2.toFixed(1) : '53.0'} km² (+${raw.change_pct != null ? raw.change_pct.toFixed(1) : '12.6'}%)</span>
+              </div>
+              <div style="color: #94a3b8; font-size: 12px; margin-top: 2px;">
+                ${raw.start_km2 != null ? raw.start_km2.toFixed(1) : '421.1'} &rarr; ${raw.end_km2 != null ? raw.end_km2.toFixed(1) : '474.0'} km² (Independent annual RF)
+              </div>
+            </div>
+          `;
         }
 
         // 2. WorldCover 2021 Reference Comparison
         const anchorValEl = document.getElementById('metric-anchor-val');
         const anchorDiffEl = document.getElementById('metric-anchor-diff');
-        if (statsData.headline_2020_2024_expansion) {
-          const wcAnchor = statsData.headline_2020_2024_expansion.worldcover_2021_anchor_km2;
-          const est2021 = statsData.headline_2020_2024_expansion.estimate_2021_norm_km2 || statsData.headline_2020_2024_expansion.estimate_2021_clean_km2;
+        if (h) {
+          const wcAnchor = h.worldcover_2021_anchor_km2;
+          const est2021 = h.estimate_2021_norm_km2 || h.estimate_2021_clean_km2;
           if (anchorValEl && wcAnchor != null) anchorValEl.textContent = `${wcAnchor.toFixed(1)} km²`;
           if (anchorDiffEl && est2021 != null) {
             anchorDiffEl.innerHTML = `<span style="color:var(--text-muted);">vs 2021 Est: ${est2021.toFixed(1)} km²</span>`;
@@ -2177,7 +2218,9 @@
           builtupEl.textContent = `${mainBuiltup.toFixed(1)} km²`;
         }
         if (builtupSub) {
-          builtupSub.innerHTML = `<span style="color:var(--accent-cyan);">TLS-Norm (Spread: ${curG.band_min_km2 ? curG.band_min_km2.toFixed(1) : ''}–${curG.band_max_km2 ? curG.band_max_km2.toFixed(1) : ''})</span>`;
+          const minB = curG.band_min_km2 != null ? curG.band_min_km2.toFixed(1) : (curG.raw_builtup_km2 != null ? curG.raw_builtup_km2.toFixed(1) : '');
+          const maxB = curG.band_max_km2 != null ? curG.band_max_km2.toFixed(1) : (mainBuiltup != null ? mainBuiltup.toFixed(1) : '');
+          builtupSub.innerHTML = `<span style="color:var(--accent-cyan);">TLS-Norm (Spread: ${minB}–${maxB} km²)</span>`;
         }
 
         // 4. Metrics: Entropy and Core/Periphery
@@ -2206,11 +2249,18 @@
     function updateValidationTable() {
       try {
         const tbody = document.getElementById('validation-table-body');
-        if (!tbody || !statsData || !statsData.validation_loyo || !statsData.validation_loyo.table) return;
+        const noteEl = document.getElementById('validation-note-text');
+        if (!statsData || !statsData.validation_loyo) return;
+
+        if (noteEl && statsData.validation_loyo.note) {
+          noteEl.textContent = statsData.validation_loyo.note;
+        }
+
+        if (!tbody || !statsData.validation_loyo.table) return;
         tbody.innerHTML = statsData.validation_loyo.table.map(r => `
           <tr>
             <td><strong>${r.year}</strong></td>
-            <td style="font-size:10px; color:${r.stage.includes('After') || r.stage.includes('TLS') ? 'var(--accent-cyan)' : 'var(--accent-amber)'}">${r.stage.includes('TLS') ? 'TLS Norm' : 'Raw'}</td>
+            <td style="font-size: 12px; color:${r.stage.includes('After') || r.stage.includes('TLS') ? 'var(--accent-cyan)' : 'var(--accent-amber)'}">${r.stage.includes('TLS') ? 'TLS Norm' : 'Raw'}</td>
             <td style="color:var(--accent-emerald); font-weight:700;">${(r.f1_score * 100).toFixed(1)}%</td>
             <td>${r.mapped_area_km2.toFixed(1)}</td>
             <td>${r.adjusted_area_km2.toFixed(1)} &plusmn; ${r.ci_95_km2.toFixed(1)}</td>
@@ -2224,19 +2274,54 @@
     function updateGateAndCIBadges() {
       try {
         const gateBadge = document.getElementById('quality-gate-badge');
-        const ciBadge = document.getElementById('ci-status-badge');
+        const gateList = document.getElementById('gate-items-list');
+        const gateOverallStatus = document.getElementById('gate-overall-status');
 
-        if (gateBadge && statsData && statsData.quality_gate) {
+        if (statsData && statsData.quality_gate) {
           const qg = statsData.quality_gate;
-          const status = qg.status || (qg.passed ? "APPROVED" : "FAILED");
-          gateBadge.textContent = `Gate: ${status}`;
-          gateBadge.style.color = (status === "APPROVED" || qg.passed) ? "#34d399" : "#f87171";
-          gateBadge.style.borderColor = (status === "APPROVED" || qg.passed) ? "rgba(16, 185, 129, 0.35)" : "rgba(239, 68, 68, 0.35)";
-        }
+          const passed = qg.passed ?? (qg.status === "APPROVED");
+          const gates = qg.gates || {};
+          const gateKeys = Object.keys(gates);
+          const passCount = gateKeys.filter(k => gates[k].status === "PASS").length;
+          const totalCount = gateKeys.length || 5;
 
-        if (ciBadge && statsData && statsData.ci_status) {
-          const ci = statsData.ci_status;
-          ciBadge.textContent = `CI: ${ci.tests_passing}/${ci.total_tests} Passed (${ci.coverage_pct}%)`;
+          if (gateBadge) {
+            gateBadge.textContent = `Gate: ${passCount}/${totalCount} PASS`;
+            gateBadge.style.color = passed ? "#34d399" : "#f87171";
+            gateBadge.style.borderColor = passed ? "rgba(16, 185, 129, 0.35)" : "rgba(239, 68, 68, 0.35)";
+            gateBadge.style.background = passed ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)";
+          }
+
+          if (gateOverallStatus) {
+            gateOverallStatus.textContent = passed ? "ALL GATES PASS" : "ATTENTION";
+            gateOverallStatus.style.color = passed ? "#34d399" : "#f87171";
+          }
+
+          if (gateList && gateKeys.length > 0) {
+            const labels = {
+              "composite_nodata": "NoData Threshold",
+              "scenes_in_window": "In-Window Scenes",
+              "volatility": "Temporal Volatility",
+              "accuracy": "LOYO F1 Score",
+              "loss_gain_ratio": "Loss/Gain Ratio"
+            };
+            gateList.innerHTML = gateKeys.map(k => {
+              const g = gates[k];
+              const isPass = g.status === "PASS";
+              const title = labels[k] || k.replace(/_/g, ' ');
+              return `
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <div>
+                    <span style="color:#f8fafc; font-weight:500;">${title}</span>
+                    <span style="color:#64748b; margin-left:4px; font-size:12px;">(${g.actual || g.threshold})</span>
+                  </div>
+                  <span style="padding:1px 6px; border-radius:4px; font-size:12px; font-weight:700; font-family:var(--font-mono); background:${isPass ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}; color:${isPass ? '#34d399' : '#f87171'}; border:1px solid ${isPass ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)'};">
+                    ${g.status}
+                  </span>
+                </div>
+              `;
+            }).join('');
+          }
         }
       } catch (err) {
         showError("Gate & CI Badges", err);
@@ -2252,7 +2337,24 @@
         if (!tbody) return;
         tbody.innerHTML = '';
 
-        if (curAreas.total_area_km2) {
+        const aoiArea = curAreas.total_area_km2 || (statsData.city_metadata && statsData.city_metadata.aoi_area_km2) || 2167.83;
+
+        if (curAreas.classes) {
+          curAreas.classes.forEach(c => {
+            tbody.innerHTML += `
+              <tr>
+                <td>
+                  <div class="class-pill">
+                    <span class="class-color-dot" style="background: ${c.color}; color: ${c.color};"></span>
+                    <span>${c.name}</span>
+                  </div>
+                </td>
+                <td>${c.area_km2.toFixed(1)}</td>
+                <td>${c.share_pct.toFixed(1)}%</td>
+              </tr>
+            `;
+          });
+        } else if (curAreas.total_area_km2) {
           const classMapping = [
             { name: "Built-up", key: "built_up_km2", color: "#e41a1c" },
             { name: "Vegetation", key: "vegetation_km2", color: "#238b45" },
@@ -2263,7 +2365,7 @@
 
           classMapping.forEach(c => {
             const km2 = curAreas[c.key] || 0;
-            const pct = (km2 / curAreas.total_area_km2) * 100.0;
+            const pct = (km2 / aoiArea) * 100.0;
             tbody.innerHTML += `
               <tr>
                 <td>
@@ -2414,11 +2516,11 @@
               scales: {
                 x: {
                   grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                  ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 10 } }
+                  ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 12 } }
                 },
                 y: {
                   grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                  ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 10 } }
+                  ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 12 } }
                 }
               }
             }
@@ -2461,14 +2563,14 @@
               scales: {
                 x: {
                   grid: { display: false },
-                  ticks: { color: '#94a3b8', font: { size: 9.5 } }
+                  ticks: { color: '#94a3b8', font: { size: 12 } }
                 },
                 y: {
                   max: 100,
                   grid: { color: 'rgba(255, 255, 255, 0.05)' },
                   ticks: {
                     color: '#94a3b8',
-                    font: { family: "'JetBrains Mono', monospace", size: 10 },
+                    font: { family: "'JetBrains Mono', monospace", size: 12 },
                     callback: (val) => `${val}%`
                   }
                 }

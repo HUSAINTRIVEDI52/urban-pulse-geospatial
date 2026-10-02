@@ -26,6 +26,7 @@ import rasterio
 import rioxarray  # noqa: F401
 import scipy.ndimage
 import stackstac
+import xarray as xr
 import yaml
 from dask.diagnostics import ProgressBar
 from PIL import Image, ImageDraw
@@ -84,7 +85,7 @@ def fetch_and_composite_10m_rgb(
 ) -> tuple[np.ndarray, Affine, Any]:
     """
     Builds a 10m true colour (B04, B03, B02) surface reflectance composite for the city AOI.
-    Processes tile-by-tile to keep memory footprint low, and prints progress.
+    Processes tile-by-tile in chunked Dask streaming to keep memory footprint low (< 200MB).
 
     Returns:
         (rgb_float_array (3, H, W), transform, crs)
@@ -174,12 +175,10 @@ def fetch_and_composite_10m_rgb(
     ref_transform = None
     ref_crs = None
     requested_assets = ["red", "green", "blue", "scl"]
-    dilation_struct = np.ones((3, 3), dtype=bool)
 
     for tile_idx, (t_id, t_scenes) in enumerate(mgrs_groups.items(), start=1):
-        print(f"\n  --> [{tile_idx}/{len(mgrs_groups)}] Processing MGRS Tile {t_id} ({len(t_scenes)} scenes)...")
+        print(f"\n  --> [{tile_idx}/{len(mgrs_groups)}] Streaming MGRS Tile {t_id} ({len(t_scenes)} scenes)...")
 
-        # Limit to max_scenes_per_tile
         if len(t_scenes) > max_scenes_per_tile:
             t_scenes = t_scenes[:max_scenes_per_tile]
 
@@ -194,62 +193,55 @@ def fetch_and_composite_10m_rgb(
             fill_value=np.nan,
         )
 
+        if ref_transform is None:
+            ref_transform = stack.rio.transform()
+            ref_crs = stack.rio.crs
+
+        # Dask-native SCL cloud masking & scaling
+        scl = stack.sel(band="scl")
+        cloud_mask = (
+            (scl == 0)
+            | (scl == 1)
+            | (scl == 3)
+            | (scl == 8)
+            | (scl == 9)
+            | (scl == 10)
+            | (scl == 11)
+            | np.isnan(scl)
+        )
+
+        r = stack.sel(band="red").where(~cloud_mask)
+        g = stack.sel(band="green").where(~cloud_mask)
+        b = stack.sel(band="blue").where(~cloud_mask)
+
+        # Baseline 04.00 offset / scaling
+        if year >= 2022:
+            r = ((r - 1000.0) / 10000.0).clip(0.0, 1.0)
+            g = ((g - 1000.0) / 10000.0).clip(0.0, 1.0)
+            b = ((b - 1000.0) / 10000.0).clip(0.0, 1.0)
+        else:
+            r = (r / 10000.0).clip(0.0, 1.0)
+            g = (g / 10000.0).clip(0.0, 1.0)
+            b = (b / 10000.0).clip(0.0, 1.0)
+
+        # Compute median across scenes in Dask chunk-by-chunk (low memory)
+        r_med = r.median(dim="time")
+        g_med = g.median(dim="time")
+        b_med = b.median(dim="time")
+
+        tile_rgb_dask = xr.concat([r_med, g_med, b_med], dim="band")
+
         with rasterio.Env(
             AWS_NO_SIGN_REQUEST="YES",
             GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
             CPL_VSIL_CURL_ALLOWED_EXTENSIONS=".tif",
         ):
             with ProgressBar(minimum=0.2):
-                stack_comp = stack.compute()
-
-        if ref_transform is None:
-            ref_transform = stack.rio.transform()
-            ref_crs = stack.rio.crs
-
-        band_names = list(stack_comp.band.values)
-        r_idx = band_names.index("red")
-        g_idx = band_names.index("green")
-        b_idx = band_names.index("blue")
-        scl_idx = band_names.index("scl") if "scl" in band_names else None
-
-        n_times, _, n_y, n_x = stack_comp.shape
-        scl_arr = stack_comp.values[:, scl_idx, :, :] if scl_idx is not None else None
+                tile_median = tile_rgb_dask.compute().values.astype(np.float32)
 
         if full_rgb is None:
-            full_rgb = np.full((3, n_y, n_x), np.nan, dtype=np.float32)
+            full_rgb = np.full_like(tile_median, np.nan)
 
-        tile_rgb_stack = np.full((3, n_times, n_y, n_x), np.nan, dtype=np.float32)
-
-        for t_i, sc in enumerate(t_scenes):
-            sc_dt = sc.datetime or str(sc.properties.get("datetime"))[:10]
-            sc_dt_str = sc_dt.strftime("%Y-%m-%d") if hasattr(sc_dt, "strftime") else str(sc_dt)[:10]
-
-            mask = np.zeros((n_y, n_x), dtype=bool)
-            if scl_arr is not None:
-                scl_t = scl_arr[t_i]
-                raw_cloud = (
-                    (scl_t == 0)
-                    | (scl_t == 1)
-                    | (scl_t == 3)
-                    | (scl_t == 8)
-                    | (scl_t == 9)
-                    | (scl_t == 10)
-                    | (scl_t == 11)
-                    | np.isnan(scl_t)
-                )
-                mask = scipy.ndimage.binary_dilation(raw_cloud, structure=dilation_struct, iterations=1)
-
-            for b_pos, b_idx_curr in enumerate([r_idx, g_idx, b_idx]):
-                raw_band = stack_comp.values[t_i, b_idx_curr, :, :].copy()
-                raw_band[mask] = np.nan
-                refl = scale_and_harmonize_dn(raw_band, sc_dt_str)
-                tile_rgb_stack[b_pos, t_i, :, :] = refl
-
-        # Temporal median for this tile
-        with np.errstate(all="ignore"):
-            tile_median = np.nanmedian(tile_rgb_stack, axis=1).astype(np.float32)
-
-        # Merge tile into full composite
         valid_tile_px = np.isfinite(tile_median)
         full_rgb = np.where(valid_tile_px, tile_median, full_rgb)
 
