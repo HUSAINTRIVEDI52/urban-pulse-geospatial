@@ -1,0 +1,2422 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>UrbanPulse Change Validation Sample - Pune</name>
+    <description>Blind validation sample for visual accuracy evaluation of urban change.</description>
+    <Style id="blind_sample_style">
+      <IconStyle>
+        <color>ffffaa00</color>
+        <scale>1.1</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href>
+        </Icon>
+      </IconStyle>
+      <LabelStyle>
+        <scale>0.8</scale>
+      </LabelStyle>
+    </Style>
+    <Folder>
+      <name>Validation Sample Points (N=300)</name>
+      <Placemark>
+        <name>Sample #1</name>
+        <description><![CDATA[<b>ID:</b> 1<br><b>Coordinates:</b> 18.337534, 73.726748<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.726748,18.337534,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #2</name>
+        <description><![CDATA[<b>ID:</b> 2<br><b>Coordinates:</b> 18.519344, 73.673690<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.673690,18.519344,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #3</name>
+        <description><![CDATA[<b>ID:</b> 3<br><b>Coordinates:</b> 18.709793, 73.861116<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.861116,18.709793,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #4</name>
+        <description><![CDATA[<b>ID:</b> 4<br><b>Coordinates:</b> 18.540258, 73.986735<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.986735,18.540258,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #5</name>
+        <description><![CDATA[<b>ID:</b> 5<br><b>Coordinates:</b> 18.348546, 73.752217<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.752217,18.348546,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #6</name>
+        <description><![CDATA[<b>ID:</b> 6<br><b>Coordinates:</b> 18.340312, 73.657462<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.657462,18.340312,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #7</name>
+        <description><![CDATA[<b>ID:</b> 7<br><b>Coordinates:</b> 18.681666, 73.704289<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.704289,18.681666,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #8</name>
+        <description><![CDATA[<b>ID:</b> 8<br><b>Coordinates:</b> 18.640766, 73.833707<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.833707,18.640766,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #9</name>
+        <description><![CDATA[<b>ID:</b> 9<br><b>Coordinates:</b> 18.567444, 74.000788<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.000788,18.567444,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #10</name>
+        <description><![CDATA[<b>ID:</b> 10<br><b>Coordinates:</b> 18.416350, 73.842613<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.842613,18.416350,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #11</name>
+        <description><![CDATA[<b>ID:</b> 11<br><b>Coordinates:</b> 18.699207, 73.904429<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.904429,18.699207,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #12</name>
+        <description><![CDATA[<b>ID:</b> 12<br><b>Coordinates:</b> 18.494807, 74.004620<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.004620,18.494807,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #13</name>
+        <description><![CDATA[<b>ID:</b> 13<br><b>Coordinates:</b> 18.537969, 74.068606<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.068606,18.537969,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #14</name>
+        <description><![CDATA[<b>ID:</b> 14<br><b>Coordinates:</b> 18.437212, 73.982227<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.982227,18.437212,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #15</name>
+        <description><![CDATA[<b>ID:</b> 15<br><b>Coordinates:</b> 18.509497, 74.014197<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.014197,18.509497,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #16</name>
+        <description><![CDATA[<b>ID:</b> 16<br><b>Coordinates:</b> 18.349855, 73.971383<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.971383,18.349855,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #17</name>
+        <description><![CDATA[<b>ID:</b> 17<br><b>Coordinates:</b> 18.658808, 73.858044<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.858044,18.658808,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #18</name>
+        <description><![CDATA[<b>ID:</b> 18<br><b>Coordinates:</b> 18.713914, 73.664215<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.664215,18.713914,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #19</name>
+        <description><![CDATA[<b>ID:</b> 19<br><b>Coordinates:</b> 18.591558, 73.769222<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.769222,18.591558,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #20</name>
+        <description><![CDATA[<b>ID:</b> 20<br><b>Coordinates:</b> 18.445348, 73.982747<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.982747,18.445348,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #21</name>
+        <description><![CDATA[<b>ID:</b> 21<br><b>Coordinates:</b> 18.450457, 73.925902<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.925902,18.450457,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #22</name>
+        <description><![CDATA[<b>ID:</b> 22<br><b>Coordinates:</b> 18.622300, 73.828715<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.828715,18.622300,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #23</name>
+        <description><![CDATA[<b>ID:</b> 23<br><b>Coordinates:</b> 18.602303, 73.674754<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.674754,18.602303,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #24</name>
+        <description><![CDATA[<b>ID:</b> 24<br><b>Coordinates:</b> 18.628122, 73.991334<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.991334,18.628122,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #25</name>
+        <description><![CDATA[<b>ID:</b> 25<br><b>Coordinates:</b> 18.352302, 74.024178<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.024178,18.352302,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #26</name>
+        <description><![CDATA[<b>ID:</b> 26<br><b>Coordinates:</b> 18.694032, 73.689403<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.689403,18.694032,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #27</name>
+        <description><![CDATA[<b>ID:</b> 27<br><b>Coordinates:</b> 18.428054, 73.895933<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.895933,18.428054,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #28</name>
+        <description><![CDATA[<b>ID:</b> 28<br><b>Coordinates:</b> 18.527017, 74.047065<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.047065,18.527017,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #29</name>
+        <description><![CDATA[<b>ID:</b> 29<br><b>Coordinates:</b> 18.703741, 73.938539<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.938539,18.703741,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #30</name>
+        <description><![CDATA[<b>ID:</b> 30<br><b>Coordinates:</b> 18.403865, 74.034112<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.034112,18.403865,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #31</name>
+        <description><![CDATA[<b>ID:</b> 31<br><b>Coordinates:</b> 18.494614, 73.785828<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.785828,18.494614,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #32</name>
+        <description><![CDATA[<b>ID:</b> 32<br><b>Coordinates:</b> 18.534815, 73.982788<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.982788,18.534815,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #33</name>
+        <description><![CDATA[<b>ID:</b> 33<br><b>Coordinates:</b> 18.566488, 73.749505<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.749505,18.566488,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #34</name>
+        <description><![CDATA[<b>ID:</b> 34<br><b>Coordinates:</b> 18.623941, 74.020933<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.020933,18.623941,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #35</name>
+        <description><![CDATA[<b>ID:</b> 35<br><b>Coordinates:</b> 18.699067, 73.975552<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.975552,18.699067,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #36</name>
+        <description><![CDATA[<b>ID:</b> 36<br><b>Coordinates:</b> 18.464087, 73.846270<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.846270,18.464087,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #37</name>
+        <description><![CDATA[<b>ID:</b> 37<br><b>Coordinates:</b> 18.560567, 74.033803<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.033803,18.560567,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #38</name>
+        <description><![CDATA[<b>ID:</b> 38<br><b>Coordinates:</b> 18.552370, 74.021342<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.021342,18.552370,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #39</name>
+        <description><![CDATA[<b>ID:</b> 39<br><b>Coordinates:</b> 18.653424, 73.864337<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.864337,18.653424,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #40</name>
+        <description><![CDATA[<b>ID:</b> 40<br><b>Coordinates:</b> 18.594481, 73.986983<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.986983,18.594481,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #41</name>
+        <description><![CDATA[<b>ID:</b> 41<br><b>Coordinates:</b> 18.591593, 73.954589<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.954589,18.591593,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #42</name>
+        <description><![CDATA[<b>ID:</b> 42<br><b>Coordinates:</b> 18.559401, 74.017891<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.017891,18.559401,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #43</name>
+        <description><![CDATA[<b>ID:</b> 43<br><b>Coordinates:</b> 18.570900, 73.760843<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.760843,18.570900,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #44</name>
+        <description><![CDATA[<b>ID:</b> 44<br><b>Coordinates:</b> 18.711923, 73.854843<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.854843,18.711923,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #45</name>
+        <description><![CDATA[<b>ID:</b> 45<br><b>Coordinates:</b> 18.472357, 73.963837<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.963837,18.472357,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #46</name>
+        <description><![CDATA[<b>ID:</b> 46<br><b>Coordinates:</b> 18.576509, 73.972306<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.972306,18.576509,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #47</name>
+        <description><![CDATA[<b>ID:</b> 47<br><b>Coordinates:</b> 18.588249, 74.039333<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.039333,18.588249,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #48</name>
+        <description><![CDATA[<b>ID:</b> 48<br><b>Coordinates:</b> 18.327464, 73.762020<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.762020,18.327464,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #49</name>
+        <description><![CDATA[<b>ID:</b> 49<br><b>Coordinates:</b> 18.629859, 73.823545<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.823545,18.629859,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #50</name>
+        <description><![CDATA[<b>ID:</b> 50<br><b>Coordinates:</b> 18.335545, 73.754014<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.754014,18.335545,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #51</name>
+        <description><![CDATA[<b>ID:</b> 51<br><b>Coordinates:</b> 18.658413, 73.882506<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.882506,18.658413,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #52</name>
+        <description><![CDATA[<b>ID:</b> 52<br><b>Coordinates:</b> 18.497730, 73.943793<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.943793,18.497730,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #53</name>
+        <description><![CDATA[<b>ID:</b> 53<br><b>Coordinates:</b> 18.672592, 73.992778<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.992778,18.672592,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #54</name>
+        <description><![CDATA[<b>ID:</b> 54<br><b>Coordinates:</b> 18.630971, 73.918517<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.918517,18.630971,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #55</name>
+        <description><![CDATA[<b>ID:</b> 55<br><b>Coordinates:</b> 18.441090, 73.810065<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.810065,18.441090,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #56</name>
+        <description><![CDATA[<b>ID:</b> 56<br><b>Coordinates:</b> 18.722428, 73.800713<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.800713,18.722428,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #57</name>
+        <description><![CDATA[<b>ID:</b> 57<br><b>Coordinates:</b> 18.430491, 73.943068<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.943068,18.430491,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #58</name>
+        <description><![CDATA[<b>ID:</b> 58<br><b>Coordinates:</b> 18.612465, 74.003938<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.003938,18.612465,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #59</name>
+        <description><![CDATA[<b>ID:</b> 59<br><b>Coordinates:</b> 18.374172, 73.774180<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.774180,18.374172,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #60</name>
+        <description><![CDATA[<b>ID:</b> 60<br><b>Coordinates:</b> 18.710620, 73.819573<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.819573,18.710620,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #61</name>
+        <description><![CDATA[<b>ID:</b> 61<br><b>Coordinates:</b> 18.365752, 73.814557<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.814557,18.365752,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #62</name>
+        <description><![CDATA[<b>ID:</b> 62<br><b>Coordinates:</b> 18.563249, 74.028102<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.028102,18.563249,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #63</name>
+        <description><![CDATA[<b>ID:</b> 63<br><b>Coordinates:</b> 18.620384, 73.701911<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.701911,18.620384,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #64</name>
+        <description><![CDATA[<b>ID:</b> 64<br><b>Coordinates:</b> 18.423395, 73.841997<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.841997,18.423395,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #65</name>
+        <description><![CDATA[<b>ID:</b> 65<br><b>Coordinates:</b> 18.320219, 73.731984<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.731984,18.320219,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #66</name>
+        <description><![CDATA[<b>ID:</b> 66<br><b>Coordinates:</b> 18.643599, 73.853595<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.853595,18.643599,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #67</name>
+        <description><![CDATA[<b>ID:</b> 67<br><b>Coordinates:</b> 18.662914, 73.910350<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.910350,18.662914,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #68</name>
+        <description><![CDATA[<b>ID:</b> 68<br><b>Coordinates:</b> 18.510438, 73.801630<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.801630,18.510438,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #69</name>
+        <description><![CDATA[<b>ID:</b> 69<br><b>Coordinates:</b> 18.432813, 73.970891<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.970891,18.432813,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #70</name>
+        <description><![CDATA[<b>ID:</b> 70<br><b>Coordinates:</b> 18.542992, 73.644518<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.644518,18.542992,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #71</name>
+        <description><![CDATA[<b>ID:</b> 71<br><b>Coordinates:</b> 18.661251, 73.731747<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.731747,18.661251,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #72</name>
+        <description><![CDATA[<b>ID:</b> 72<br><b>Coordinates:</b> 18.682228, 73.788481<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.788481,18.682228,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #73</name>
+        <description><![CDATA[<b>ID:</b> 73<br><b>Coordinates:</b> 18.409457, 73.780747<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.780747,18.409457,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #74</name>
+        <description><![CDATA[<b>ID:</b> 74<br><b>Coordinates:</b> 18.389651, 73.657648<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.657648,18.389651,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #75</name>
+        <description><![CDATA[<b>ID:</b> 75<br><b>Coordinates:</b> 18.666571, 73.798831<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.798831,18.666571,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #76</name>
+        <description><![CDATA[<b>ID:</b> 76<br><b>Coordinates:</b> 18.561344, 73.792179<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.792179,18.561344,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #77</name>
+        <description><![CDATA[<b>ID:</b> 77<br><b>Coordinates:</b> 18.444760, 73.974229<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.974229,18.444760,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #78</name>
+        <description><![CDATA[<b>ID:</b> 78<br><b>Coordinates:</b> 18.518578, 73.802710<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.802710,18.518578,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #79</name>
+        <description><![CDATA[<b>ID:</b> 79<br><b>Coordinates:</b> 18.681249, 73.804986<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.804986,18.681249,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #80</name>
+        <description><![CDATA[<b>ID:</b> 80<br><b>Coordinates:</b> 18.606868, 73.876588<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.876588,18.606868,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #81</name>
+        <description><![CDATA[<b>ID:</b> 81<br><b>Coordinates:</b> 18.349693, 73.941857<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.941857,18.349693,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #82</name>
+        <description><![CDATA[<b>ID:</b> 82<br><b>Coordinates:</b> 18.334865, 73.733012<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.733012,18.334865,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #83</name>
+        <description><![CDATA[<b>ID:</b> 83<br><b>Coordinates:</b> 18.573411, 74.001322<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.001322,18.573411,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #84</name>
+        <description><![CDATA[<b>ID:</b> 84<br><b>Coordinates:</b> 18.638910, 73.797319<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.797319,18.638910,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #85</name>
+        <description><![CDATA[<b>ID:</b> 85<br><b>Coordinates:</b> 18.659390, 73.958156<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.958156,18.659390,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #86</name>
+        <description><![CDATA[<b>ID:</b> 86<br><b>Coordinates:</b> 18.685525, 73.795284<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.795284,18.685525,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #87</name>
+        <description><![CDATA[<b>ID:</b> 87<br><b>Coordinates:</b> 18.619847, 73.870816<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.870816,18.619847,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #88</name>
+        <description><![CDATA[<b>ID:</b> 88<br><b>Coordinates:</b> 18.485500, 73.891019<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.891019,18.485500,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #89</name>
+        <description><![CDATA[<b>ID:</b> 89<br><b>Coordinates:</b> 18.543977, 73.972501<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.972501,18.543977,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #90</name>
+        <description><![CDATA[<b>ID:</b> 90<br><b>Coordinates:</b> 18.602614, 73.986935<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.986935,18.602614,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #91</name>
+        <description><![CDATA[<b>ID:</b> 91<br><b>Coordinates:</b> 18.523504, 73.648650<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.648650,18.523504,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #92</name>
+        <description><![CDATA[<b>ID:</b> 92<br><b>Coordinates:</b> 18.538864, 73.930467<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.930467,18.538864,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #93</name>
+        <description><![CDATA[<b>ID:</b> 93<br><b>Coordinates:</b> 18.437242, 73.801570<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.801570,18.437242,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #94</name>
+        <description><![CDATA[<b>ID:</b> 94<br><b>Coordinates:</b> 18.407706, 74.043179<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.043179,18.407706,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #95</name>
+        <description><![CDATA[<b>ID:</b> 95<br><b>Coordinates:</b> 18.540228, 73.981050<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.981050,18.540228,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #96</name>
+        <description><![CDATA[<b>ID:</b> 96<br><b>Coordinates:</b> 18.722281, 73.777953<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.777953,18.722281,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #97</name>
+        <description><![CDATA[<b>ID:</b> 97<br><b>Coordinates:</b> 18.474706, 73.997349<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.997349,18.474706,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #98</name>
+        <description><![CDATA[<b>ID:</b> 98<br><b>Coordinates:</b> 18.606333, 73.790156<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.790156,18.606333,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #99</name>
+        <description><![CDATA[<b>ID:</b> 99<br><b>Coordinates:</b> 18.472664, 73.921786<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.921786,18.472664,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #100</name>
+        <description><![CDATA[<b>ID:</b> 100<br><b>Coordinates:</b> 18.439639, 73.930514<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.930514,18.439639,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #101</name>
+        <description><![CDATA[<b>ID:</b> 101<br><b>Coordinates:</b> 18.428678, 73.656209<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.656209,18.428678,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #102</name>
+        <description><![CDATA[<b>ID:</b> 102<br><b>Coordinates:</b> 18.533026, 73.859450<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.859450,18.533026,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #103</name>
+        <description><![CDATA[<b>ID:</b> 103<br><b>Coordinates:</b> 18.613511, 73.727552<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.727552,18.613511,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #104</name>
+        <description><![CDATA[<b>ID:</b> 104<br><b>Coordinates:</b> 18.455813, 73.659975<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.659975,18.455813,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #105</name>
+        <description><![CDATA[<b>ID:</b> 105<br><b>Coordinates:</b> 18.630945, 74.012361<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.012361,18.630945,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #106</name>
+        <description><![CDATA[<b>ID:</b> 106<br><b>Coordinates:</b> 18.485676, 73.745546<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.745546,18.485676,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #107</name>
+        <description><![CDATA[<b>ID:</b> 107<br><b>Coordinates:</b> 18.604084, 73.777662<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.777662,18.604084,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #108</name>
+        <description><![CDATA[<b>ID:</b> 108<br><b>Coordinates:</b> 18.453340, 73.775324<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.775324,18.453340,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #109</name>
+        <description><![CDATA[<b>ID:</b> 109<br><b>Coordinates:</b> 18.438760, 73.784517<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.784517,18.438760,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #110</name>
+        <description><![CDATA[<b>ID:</b> 110<br><b>Coordinates:</b> 18.630936, 73.738797<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.738797,18.630936,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #111</name>
+        <description><![CDATA[<b>ID:</b> 111<br><b>Coordinates:</b> 18.583650, 73.989322<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.989322,18.583650,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #112</name>
+        <description><![CDATA[<b>ID:</b> 112<br><b>Coordinates:</b> 18.445145, 73.765724<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.765724,18.445145,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #113</name>
+        <description><![CDATA[<b>ID:</b> 113<br><b>Coordinates:</b> 18.567654, 74.041154<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.041154,18.567654,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #114</name>
+        <description><![CDATA[<b>ID:</b> 114<br><b>Coordinates:</b> 18.565610, 74.066182<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.066182,18.565610,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #115</name>
+        <description><![CDATA[<b>ID:</b> 115<br><b>Coordinates:</b> 18.649862, 74.000876<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.000876,18.649862,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #116</name>
+        <description><![CDATA[<b>ID:</b> 116<br><b>Coordinates:</b> 18.576571, 73.983678<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.983678,18.576571,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #117</name>
+        <description><![CDATA[<b>ID:</b> 117<br><b>Coordinates:</b> 18.467993, 73.777493<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.777493,18.467993,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #118</name>
+        <description><![CDATA[<b>ID:</b> 118<br><b>Coordinates:</b> 18.410883, 73.835265<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.835265,18.410883,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #119</name>
+        <description><![CDATA[<b>ID:</b> 119<br><b>Coordinates:</b> 18.424894, 74.011272<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.011272,18.424894,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #120</name>
+        <description><![CDATA[<b>ID:</b> 120<br><b>Coordinates:</b> 18.649834, 73.995756<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.995756,18.649834,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #121</name>
+        <description><![CDATA[<b>ID:</b> 121<br><b>Coordinates:</b> 18.657615, 73.840418<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.840418,18.657615,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #122</name>
+        <description><![CDATA[<b>ID:</b> 122<br><b>Coordinates:</b> 18.371741, 73.818492<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.818492,18.371741,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #123</name>
+        <description><![CDATA[<b>ID:</b> 123<br><b>Coordinates:</b> 18.683904, 73.979057<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.979057,18.683904,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #124</name>
+        <description><![CDATA[<b>ID:</b> 124<br><b>Coordinates:</b> 18.337445, 73.796582<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.796582,18.337445,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #125</name>
+        <description><![CDATA[<b>ID:</b> 125<br><b>Coordinates:</b> 18.596673, 73.723129<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.723129,18.596673,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #126</name>
+        <description><![CDATA[<b>ID:</b> 126<br><b>Coordinates:</b> 18.526045, 73.783333<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.783333,18.526045,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #127</name>
+        <description><![CDATA[<b>ID:</b> 127<br><b>Coordinates:</b> 18.661251, 73.904104<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.904104,18.661251,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #128</name>
+        <description><![CDATA[<b>ID:</b> 128<br><b>Coordinates:</b> 18.447223, 73.837293<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.837293,18.447223,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #129</name>
+        <description><![CDATA[<b>ID:</b> 129<br><b>Coordinates:</b> 18.427446, 73.884575<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.884575,18.427446,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #130</name>
+        <description><![CDATA[<b>ID:</b> 130<br><b>Coordinates:</b> 18.542292, 74.065740<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.065740,18.542292,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #131</name>
+        <description><![CDATA[<b>ID:</b> 131<br><b>Coordinates:</b> 18.504417, 73.792579<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.792579,18.504417,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #132</name>
+        <description><![CDATA[<b>ID:</b> 132<br><b>Coordinates:</b> 18.444368, 73.814019<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.814019,18.444368,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #133</name>
+        <description><![CDATA[<b>ID:</b> 133<br><b>Coordinates:</b> 18.356428, 73.886736<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.886736,18.356428,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #134</name>
+        <description><![CDATA[<b>ID:</b> 134<br><b>Coordinates:</b> 18.477526, 73.827429<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.827429,18.477526,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #135</name>
+        <description><![CDATA[<b>ID:</b> 135<br><b>Coordinates:</b> 18.598616, 73.856740<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.856740,18.598616,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #136</name>
+        <description><![CDATA[<b>ID:</b> 136<br><b>Coordinates:</b> 18.416208, 73.910209<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.910209,18.416208,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #137</name>
+        <description><![CDATA[<b>ID:</b> 137<br><b>Coordinates:</b> 18.397009, 73.784242<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.784242,18.397009,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #138</name>
+        <description><![CDATA[<b>ID:</b> 138<br><b>Coordinates:</b> 18.375945, 73.983155<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.983155,18.375945,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #139</name>
+        <description><![CDATA[<b>ID:</b> 139<br><b>Coordinates:</b> 18.494886, 73.744342<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.744342,18.494886,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #140</name>
+        <description><![CDATA[<b>ID:</b> 140<br><b>Coordinates:</b> 18.485927, 73.966597<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.966597,18.485927,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #141</name>
+        <description><![CDATA[<b>ID:</b> 141<br><b>Coordinates:</b> 18.453742, 73.931563<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.931563,18.453742,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #142</name>
+        <description><![CDATA[<b>ID:</b> 142<br><b>Coordinates:</b> 18.455083, 73.793492<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.793492,18.455083,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #143</name>
+        <description><![CDATA[<b>ID:</b> 143<br><b>Coordinates:</b> 18.640954, 73.777967<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.777967,18.640954,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #144</name>
+        <description><![CDATA[<b>ID:</b> 144<br><b>Coordinates:</b> 18.477240, 73.964376<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.964376,18.477240,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #145</name>
+        <description><![CDATA[<b>ID:</b> 145<br><b>Coordinates:</b> 18.475777, 73.724595<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.724595,18.475777,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #146</name>
+        <description><![CDATA[<b>ID:</b> 146<br><b>Coordinates:</b> 18.616332, 73.744023<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.744023,18.616332,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #147</name>
+        <description><![CDATA[<b>ID:</b> 147<br><b>Coordinates:</b> 18.626173, 73.676844<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.676844,18.626173,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #148</name>
+        <description><![CDATA[<b>ID:</b> 148<br><b>Coordinates:</b> 18.348198, 73.870322<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.870322,18.348198,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #149</name>
+        <description><![CDATA[<b>ID:</b> 149<br><b>Coordinates:</b> 18.441053, 73.990727<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.990727,18.441053,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #150</name>
+        <description><![CDATA[<b>ID:</b> 150<br><b>Coordinates:</b> 18.709696, 73.760405<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.760405,18.709696,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #151</name>
+        <description><![CDATA[<b>ID:</b> 151<br><b>Coordinates:</b> 18.676884, 73.888643<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.888643,18.676884,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #152</name>
+        <description><![CDATA[<b>ID:</b> 152<br><b>Coordinates:</b> 18.478690, 73.932545<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.932545,18.478690,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #153</name>
+        <description><![CDATA[<b>ID:</b> 153<br><b>Coordinates:</b> 18.712370, 73.930519<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.930519,18.712370,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #154</name>
+        <description><![CDATA[<b>ID:</b> 154<br><b>Coordinates:</b> 18.331700, 73.831822<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.831822,18.331700,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #155</name>
+        <description><![CDATA[<b>ID:</b> 155<br><b>Coordinates:</b> 18.502388, 73.814757<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.814757,18.502388,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #156</name>
+        <description><![CDATA[<b>ID:</b> 156<br><b>Coordinates:</b> 18.468928, 74.033181<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.033181,18.468928,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #157</name>
+        <description><![CDATA[<b>ID:</b> 157<br><b>Coordinates:</b> 18.621845, 73.934499<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.934499,18.621845,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #158</name>
+        <description><![CDATA[<b>ID:</b> 158<br><b>Coordinates:</b> 18.505377, 73.773250<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.773250,18.505377,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #159</name>
+        <description><![CDATA[<b>ID:</b> 159<br><b>Coordinates:</b> 18.360757, 73.982108<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.982108,18.360757,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #160</name>
+        <description><![CDATA[<b>ID:</b> 160<br><b>Coordinates:</b> 18.674613, 73.871591<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.871591,18.674613,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #161</name>
+        <description><![CDATA[<b>ID:</b> 161<br><b>Coordinates:</b> 18.491855, 74.063741<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.063741,18.491855,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #162</name>
+        <description><![CDATA[<b>ID:</b> 162<br><b>Coordinates:</b> 18.396801, 74.031312<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.031312,18.396801,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #163</name>
+        <description><![CDATA[<b>ID:</b> 163<br><b>Coordinates:</b> 18.459661, 74.023573<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.023573,18.459661,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #164</name>
+        <description><![CDATA[<b>ID:</b> 164<br><b>Coordinates:</b> 18.691616, 73.815154<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.815154,18.691616,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #165</name>
+        <description><![CDATA[<b>ID:</b> 165<br><b>Coordinates:</b> 18.705471, 73.777505<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.777505,18.705471,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #166</name>
+        <description><![CDATA[<b>ID:</b> 166<br><b>Coordinates:</b> 18.564791, 73.913249<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.913249,18.564791,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #167</name>
+        <description><![CDATA[<b>ID:</b> 167<br><b>Coordinates:</b> 18.492618, 73.902908<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.902908,18.492618,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #168</name>
+        <description><![CDATA[<b>ID:</b> 168<br><b>Coordinates:</b> 18.658637, 73.667492<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.667492,18.658637,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #169</name>
+        <description><![CDATA[<b>ID:</b> 169<br><b>Coordinates:</b> 18.716019, 74.002195<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.002195,18.716019,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #170</name>
+        <description><![CDATA[<b>ID:</b> 170<br><b>Coordinates:</b> 18.703238, 73.853194<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.853194,18.703238,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #171</name>
+        <description><![CDATA[<b>ID:</b> 171<br><b>Coordinates:</b> 18.658139, 73.752816<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.752816,18.658139,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #172</name>
+        <description><![CDATA[<b>ID:</b> 172<br><b>Coordinates:</b> 18.341714, 73.703439<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.703439,18.341714,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #173</name>
+        <description><![CDATA[<b>ID:</b> 173<br><b>Coordinates:</b> 18.695101, 73.944851<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.944851,18.695101,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #174</name>
+        <description><![CDATA[<b>ID:</b> 174<br><b>Coordinates:</b> 18.519150, 73.724273<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.724273,18.519150,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #175</name>
+        <description><![CDATA[<b>ID:</b> 175<br><b>Coordinates:</b> 18.463989, 74.021844<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.021844,18.463989,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #176</name>
+        <description><![CDATA[<b>ID:</b> 176<br><b>Coordinates:</b> 18.335650, 73.857345<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.857345,18.335650,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #177</name>
+        <description><![CDATA[<b>ID:</b> 177<br><b>Coordinates:</b> 18.560428, 73.908729<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.908729,18.560428,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #178</name>
+        <description><![CDATA[<b>ID:</b> 178<br><b>Coordinates:</b> 18.629694, 73.715489<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.715489,18.629694,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #179</name>
+        <description><![CDATA[<b>ID:</b> 179<br><b>Coordinates:</b> 18.479117, 73.821736<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.821736,18.479117,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #180</name>
+        <description><![CDATA[<b>ID:</b> 180<br><b>Coordinates:</b> 18.521077, 73.769728<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.769728,18.521077,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #181</name>
+        <description><![CDATA[<b>ID:</b> 181<br><b>Coordinates:</b> 18.422752, 73.825528<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.825528,18.422752,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #182</name>
+        <description><![CDATA[<b>ID:</b> 182<br><b>Coordinates:</b> 18.628309, 73.751328<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.751328,18.628309,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #183</name>
+        <description><![CDATA[<b>ID:</b> 183<br><b>Coordinates:</b> 18.428195, 73.828900<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.828900,18.428195,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #184</name>
+        <description><![CDATA[<b>ID:</b> 184<br><b>Coordinates:</b> 18.485757, 73.935911<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.935911,18.485757,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #185</name>
+        <description><![CDATA[<b>ID:</b> 185<br><b>Coordinates:</b> 18.572346, 73.817117<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.817117,18.572346,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #186</name>
+        <description><![CDATA[<b>ID:</b> 186<br><b>Coordinates:</b> 18.430332, 73.823773<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.823773,18.430332,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #187</name>
+        <description><![CDATA[<b>ID:</b> 187<br><b>Coordinates:</b> 18.464454, 73.817859<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.817859,18.464454,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #188</name>
+        <description><![CDATA[<b>ID:</b> 188<br><b>Coordinates:</b> 18.687617, 73.702537<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.702537,18.687617,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #189</name>
+        <description><![CDATA[<b>ID:</b> 189<br><b>Coordinates:</b> 18.644380, 73.893405<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.893405,18.644380,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #190</name>
+        <description><![CDATA[<b>ID:</b> 190<br><b>Coordinates:</b> 18.663928, 73.898398<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.898398,18.663928,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #191</name>
+        <description><![CDATA[<b>ID:</b> 191<br><b>Coordinates:</b> 18.480778, 73.918326<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.918326,18.480778,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #192</name>
+        <description><![CDATA[<b>ID:</b> 192<br><b>Coordinates:</b> 18.446471, 73.642437<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.642437,18.446471,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #193</name>
+        <description><![CDATA[<b>ID:</b> 193<br><b>Coordinates:</b> 18.699858, 73.923201<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.923201,18.699858,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #194</name>
+        <description><![CDATA[<b>ID:</b> 194<br><b>Coordinates:</b> 18.529380, 73.884484<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.884484,18.529380,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #195</name>
+        <description><![CDATA[<b>ID:</b> 195<br><b>Coordinates:</b> 18.710888, 73.956134<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.956134,18.710888,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #196</name>
+        <description><![CDATA[<b>ID:</b> 196<br><b>Coordinates:</b> 18.683827, 73.870961<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.870961,18.683827,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #197</name>
+        <description><![CDATA[<b>ID:</b> 197<br><b>Coordinates:</b> 18.647566, 73.794415<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.794415,18.647566,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #198</name>
+        <description><![CDATA[<b>ID:</b> 198<br><b>Coordinates:</b> 18.454358, 73.851449<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.851449,18.454358,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #199</name>
+        <description><![CDATA[<b>ID:</b> 199<br><b>Coordinates:</b> 18.624968, 73.911730<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.911730,18.624968,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #200</name>
+        <description><![CDATA[<b>ID:</b> 200<br><b>Coordinates:</b> 18.695130, 74.051818<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.051818,18.695130,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #201</name>
+        <description><![CDATA[<b>ID:</b> 201<br><b>Coordinates:</b> 18.701502, 73.672277<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.672277,18.701502,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #202</name>
+        <description><![CDATA[<b>ID:</b> 202<br><b>Coordinates:</b> 18.679382, 73.853355<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.853355,18.679382,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #203</name>
+        <description><![CDATA[<b>ID:</b> 203<br><b>Coordinates:</b> 18.571845, 73.739801<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.739801,18.571845,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #204</name>
+        <description><![CDATA[<b>ID:</b> 204<br><b>Coordinates:</b> 18.430724, 73.985674<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.985674,18.430724,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #205</name>
+        <description><![CDATA[<b>ID:</b> 205<br><b>Coordinates:</b> 18.355009, 73.665865<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.665865,18.355009,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #206</name>
+        <description><![CDATA[<b>ID:</b> 206<br><b>Coordinates:</b> 18.604823, 73.994315<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.994315,18.604823,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #207</name>
+        <description><![CDATA[<b>ID:</b> 207<br><b>Coordinates:</b> 18.619395, 73.981717<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.981717,18.619395,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #208</name>
+        <description><![CDATA[<b>ID:</b> 208<br><b>Coordinates:</b> 18.639775, 73.683564<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.683564,18.639775,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #209</name>
+        <description><![CDATA[<b>ID:</b> 209<br><b>Coordinates:</b> 18.551540, 73.967339<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.967339,18.551540,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #210</name>
+        <description><![CDATA[<b>ID:</b> 210<br><b>Coordinates:</b> 18.525101, 73.991371<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.991371,18.525101,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #211</name>
+        <description><![CDATA[<b>ID:</b> 211<br><b>Coordinates:</b> 18.577849, 73.830156<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.830156,18.577849,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #212</name>
+        <description><![CDATA[<b>ID:</b> 212<br><b>Coordinates:</b> 18.573650, 73.945601<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.945601,18.573650,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #213</name>
+        <description><![CDATA[<b>ID:</b> 213<br><b>Coordinates:</b> 18.661942, 73.838682<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.838682,18.661942,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #214</name>
+        <description><![CDATA[<b>ID:</b> 214<br><b>Coordinates:</b> 18.473325, 73.942806<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.942806,18.473325,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #215</name>
+        <description><![CDATA[<b>ID:</b> 215<br><b>Coordinates:</b> 18.637945, 74.003220<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.003220,18.637945,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #216</name>
+        <description><![CDATA[<b>ID:</b> 216<br><b>Coordinates:</b> 18.492302, 73.763682<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.763682,18.492302,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #217</name>
+        <description><![CDATA[<b>ID:</b> 217<br><b>Coordinates:</b> 18.558475, 73.767754<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.767754,18.558475,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #218</name>
+        <description><![CDATA[<b>ID:</b> 218<br><b>Coordinates:</b> 18.417220, 73.807957<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.807957,18.417220,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #219</name>
+        <description><![CDATA[<b>ID:</b> 219<br><b>Coordinates:</b> 18.699173, 73.898739<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.898739,18.699173,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #220</name>
+        <description><![CDATA[<b>ID:</b> 220<br><b>Coordinates:</b> 18.554698, 74.052597<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.052597,18.554698,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #221</name>
+        <description><![CDATA[<b>ID:</b> 221<br><b>Coordinates:</b> 18.560529, 73.926352<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.926352,18.560529,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #222</name>
+        <description><![CDATA[<b>ID:</b> 222<br><b>Coordinates:</b> 18.723681, 73.665276<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.665276,18.723681,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #223</name>
+        <description><![CDATA[<b>ID:</b> 223<br><b>Coordinates:</b> 18.417036, 73.961328<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.961328,18.417036,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #224</name>
+        <description><![CDATA[<b>ID:</b> 224<br><b>Coordinates:</b> 18.554999, 73.907626<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.907626,18.554999,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #225</name>
+        <description><![CDATA[<b>ID:</b> 225<br><b>Coordinates:</b> 18.720967, 73.826899<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.826899,18.720967,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #226</name>
+        <description><![CDATA[<b>ID:</b> 226<br><b>Coordinates:</b> 18.485807, 73.765434<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.765434,18.485807,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #227</name>
+        <description><![CDATA[<b>ID:</b> 227<br><b>Coordinates:</b> 18.546963, 73.748510<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.748510,18.546963,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #228</name>
+        <description><![CDATA[<b>ID:</b> 228<br><b>Coordinates:</b> 18.601642, 74.007981<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.007981,18.601642,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #229</name>
+        <description><![CDATA[<b>ID:</b> 229<br><b>Coordinates:</b> 18.418777, 73.982336<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.982336,18.418777,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #230</name>
+        <description><![CDATA[<b>ID:</b> 230<br><b>Coordinates:</b> 18.564230, 74.008198<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.008198,18.564230,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #231</name>
+        <description><![CDATA[<b>ID:</b> 231<br><b>Coordinates:</b> 18.712127, 73.800786<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.800786,18.712127,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #232</name>
+        <description><![CDATA[<b>ID:</b> 232<br><b>Coordinates:</b> 18.360859, 74.001415<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.001415,18.360859,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #233</name>
+        <description><![CDATA[<b>ID:</b> 233<br><b>Coordinates:</b> 18.705730, 73.817900<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.817900,18.705730,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #234</name>
+        <description><![CDATA[<b>ID:</b> 234<br><b>Coordinates:</b> 18.625454, 73.999312<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.999312,18.625454,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #235</name>
+        <description><![CDATA[<b>ID:</b> 235<br><b>Coordinates:</b> 18.603958, 74.036402<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.036402,18.603958,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #236</name>
+        <description><![CDATA[<b>ID:</b> 236<br><b>Coordinates:</b> 18.534318, 73.722456<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.722456,18.534318,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #237</name>
+        <description><![CDATA[<b>ID:</b> 237<br><b>Coordinates:</b> 18.587591, 73.743096<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.743096,18.587591,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #238</name>
+        <description><![CDATA[<b>ID:</b> 238<br><b>Coordinates:</b> 18.535692, 74.047017<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.047017,18.535692,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #239</name>
+        <description><![CDATA[<b>ID:</b> 239<br><b>Coordinates:</b> 18.618399, 73.998216<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.998216,18.618399,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #240</name>
+        <description><![CDATA[<b>ID:</b> 240<br><b>Coordinates:</b> 18.367303, 73.989453<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.989453,18.367303,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #241</name>
+        <description><![CDATA[<b>ID:</b> 241<br><b>Coordinates:</b> 18.573876, 73.719319<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.719319,18.573876,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #242</name>
+        <description><![CDATA[<b>ID:</b> 242<br><b>Coordinates:</b> 18.616305, 73.823638<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.823638,18.616305,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #243</name>
+        <description><![CDATA[<b>ID:</b> 243<br><b>Coordinates:</b> 18.583167, 73.902898<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.902898,18.583167,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #244</name>
+        <description><![CDATA[<b>ID:</b> 244<br><b>Coordinates:</b> 18.580440, 73.727798<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.727798,18.580440,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #245</name>
+        <description><![CDATA[<b>ID:</b> 245<br><b>Coordinates:</b> 18.544237, 74.021388<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.021388,18.544237,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #246</name>
+        <description><![CDATA[<b>ID:</b> 246<br><b>Coordinates:</b> 18.472278, 73.855875<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.855875,18.472278,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #247</name>
+        <description><![CDATA[<b>ID:</b> 247<br><b>Coordinates:</b> 18.493916, 73.940407<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.940407,18.493916,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #248</name>
+        <description><![CDATA[<b>ID:</b> 248<br><b>Coordinates:</b> 18.474051, 73.709834<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.709834,18.474051,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #249</name>
+        <description><![CDATA[<b>ID:</b> 249<br><b>Coordinates:</b> 18.617625, 73.955567<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.955567,18.617625,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #250</name>
+        <description><![CDATA[<b>ID:</b> 250<br><b>Coordinates:</b> 18.701709, 73.782652<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.782652,18.701709,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #251</name>
+        <description><![CDATA[<b>ID:</b> 251<br><b>Coordinates:</b> 18.459398, 73.878119<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.878119,18.459398,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #252</name>
+        <description><![CDATA[<b>ID:</b> 252<br><b>Coordinates:</b> 18.510806, 73.955080<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.955080,18.510806,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #253</name>
+        <description><![CDATA[<b>ID:</b> 253<br><b>Coordinates:</b> 18.350698, 74.028730<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.028730,18.350698,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #254</name>
+        <description><![CDATA[<b>ID:</b> 254<br><b>Coordinates:</b> 18.690056, 73.915866<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.915866,18.690056,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #255</name>
+        <description><![CDATA[<b>ID:</b> 255<br><b>Coordinates:</b> 18.630738, 73.791121<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.791121,18.630738,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #256</name>
+        <description><![CDATA[<b>ID:</b> 256<br><b>Coordinates:</b> 18.623664, 73.787190<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.787190,18.623664,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #257</name>
+        <description><![CDATA[<b>ID:</b> 257<br><b>Coordinates:</b> 18.556980, 73.970718<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.970718,18.556980,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #258</name>
+        <description><![CDATA[<b>ID:</b> 258<br><b>Coordinates:</b> 18.574995, 73.724427<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.724427,18.574995,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #259</name>
+        <description><![CDATA[<b>ID:</b> 259<br><b>Coordinates:</b> 18.517724, 74.032338<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.032338,18.517724,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #260</name>
+        <description><![CDATA[<b>ID:</b> 260<br><b>Coordinates:</b> 18.558298, 73.915564<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.915564,18.558298,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #261</name>
+        <description><![CDATA[<b>ID:</b> 261<br><b>Coordinates:</b> 18.462702, 73.797985<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.797985,18.462702,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #262</name>
+        <description><![CDATA[<b>ID:</b> 262<br><b>Coordinates:</b> 18.520618, 73.869763<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.869763,18.520618,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #263</name>
+        <description><![CDATA[<b>ID:</b> 263<br><b>Coordinates:</b> 18.640981, 73.701185<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.701185,18.640981,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #264</name>
+        <description><![CDATA[<b>ID:</b> 264<br><b>Coordinates:</b> 18.561287, 73.965007<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.965007,18.561287,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #265</name>
+        <description><![CDATA[<b>ID:</b> 265<br><b>Coordinates:</b> 18.455768, 73.816214<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.816214,18.455768,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #266</name>
+        <description><![CDATA[<b>ID:</b> 266<br><b>Coordinates:</b> 18.357418, 73.700483<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.700483,18.357418,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #267</name>
+        <description><![CDATA[<b>ID:</b> 267<br><b>Coordinates:</b> 18.495871, 73.813097<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.813097,18.495871,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #268</name>
+        <description><![CDATA[<b>ID:</b> 268<br><b>Coordinates:</b> 18.578119, 73.874502<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.874502,18.578119,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #269</name>
+        <description><![CDATA[<b>ID:</b> 269<br><b>Coordinates:</b> 18.463865, 73.997980<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.997980,18.463865,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #270</name>
+        <description><![CDATA[<b>ID:</b> 270<br><b>Coordinates:</b> 18.331860, 73.771073<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.771073,18.331860,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #271</name>
+        <description><![CDATA[<b>ID:</b> 271<br><b>Coordinates:</b> 18.618964, 73.904944<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.904944,18.618964,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #272</name>
+        <description><![CDATA[<b>ID:</b> 272<br><b>Coordinates:</b> 18.581622, 74.016058<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.016058,18.581622,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #273</name>
+        <description><![CDATA[<b>ID:</b> 273<br><b>Coordinates:</b> 18.443595, 73.959464<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.959464,18.443595,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #274</name>
+        <description><![CDATA[<b>ID:</b> 274<br><b>Coordinates:</b> 18.417187, 73.892026<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.892026,18.417187,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #275</name>
+        <description><![CDATA[<b>ID:</b> 275<br><b>Coordinates:</b> 18.471044, 73.831450<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.831450,18.471044,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #276</name>
+        <description><![CDATA[<b>ID:</b> 276<br><b>Coordinates:</b> 18.340309, 74.011754<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.011754,18.340309,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #277</name>
+        <description><![CDATA[<b>ID:</b> 277<br><b>Coordinates:</b> 18.687786, 73.649628<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.649628,18.687786,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #278</name>
+        <description><![CDATA[<b>ID:</b> 278<br><b>Coordinates:</b> 18.664356, 73.879054<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.879054,18.664356,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #279</name>
+        <description><![CDATA[<b>ID:</b> 279<br><b>Coordinates:</b> 18.709774, 73.772353<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.772353,18.709774,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #280</name>
+        <description><![CDATA[<b>ID:</b> 280<br><b>Coordinates:</b> 18.699292, 73.828755<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.828755,18.699292,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #281</name>
+        <description><![CDATA[<b>ID:</b> 281<br><b>Coordinates:</b> 18.629825, 74.005543<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.005543,18.629825,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #282</name>
+        <description><![CDATA[<b>ID:</b> 282<br><b>Coordinates:</b> 18.669762, 73.707792<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.707792,18.669762,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #283</name>
+        <description><![CDATA[<b>ID:</b> 283<br><b>Coordinates:</b> 18.346288, 74.014559<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.014559,18.346288,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #284</name>
+        <description><![CDATA[<b>ID:</b> 284<br><b>Coordinates:</b> 18.424868, 73.816993<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.816993,18.424868,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #285</name>
+        <description><![CDATA[<b>ID:</b> 285<br><b>Coordinates:</b> 18.556589, 73.728543<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.728543,18.556589,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #286</name>
+        <description><![CDATA[<b>ID:</b> 286<br><b>Coordinates:</b> 18.518781, 73.835105<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.835105,18.518781,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #287</name>
+        <description><![CDATA[<b>ID:</b> 287<br><b>Coordinates:</b> 18.522200, 73.862364<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.862364,18.522200,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #288</name>
+        <description><![CDATA[<b>ID:</b> 288<br><b>Coordinates:</b> 18.525237, 73.827104<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.827104,18.525237,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #289</name>
+        <description><![CDATA[<b>ID:</b> 289<br><b>Coordinates:</b> 18.408702, 73.668292<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.668292,18.408702,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #290</name>
+        <description><![CDATA[<b>ID:</b> 290<br><b>Coordinates:</b> 18.527680, 73.966914<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.966914,18.527680,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #291</name>
+        <description><![CDATA[<b>ID:</b> 291<br><b>Coordinates:</b> 18.694907, 73.659812<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.659812,18.694907,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #292</name>
+        <description><![CDATA[<b>ID:</b> 292<br><b>Coordinates:</b> 18.488329, 73.658018<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.658018,18.488329,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #293</name>
+        <description><![CDATA[<b>ID:</b> 293<br><b>Coordinates:</b> 18.595548, 73.799330<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.799330,18.595548,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #294</name>
+        <description><![CDATA[<b>ID:</b> 294<br><b>Coordinates:</b> 18.665520, 73.803958<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.803958,18.665520,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #295</name>
+        <description><![CDATA[<b>ID:</b> 295<br><b>Coordinates:</b> 18.632595, 74.016902<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>74.016902,18.632595,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #296</name>
+        <description><![CDATA[<b>ID:</b> 296<br><b>Coordinates:</b> 18.639526, 73.726221<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.726221,18.639526,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #297</name>
+        <description><![CDATA[<b>ID:</b> 297<br><b>Coordinates:</b> 18.714624, 73.767766<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.767766,18.714624,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #298</name>
+        <description><![CDATA[<b>ID:</b> 298<br><b>Coordinates:</b> 18.459773, 73.850276<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.850276,18.459773,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #299</name>
+        <description><![CDATA[<b>ID:</b> 299<br><b>Coordinates:</b> 18.462659, 73.791167<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.791167,18.462659,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Sample #300</name>
+        <description><![CDATA[<b>ID:</b> 300<br><b>Coordinates:</b> 18.451582, 73.840672<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>
+        <styleUrl>#blind_sample_style</styleUrl>
+        <Point>
+          <coordinates>73.840672,18.451582,0</coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+  </Document>
+</kml>

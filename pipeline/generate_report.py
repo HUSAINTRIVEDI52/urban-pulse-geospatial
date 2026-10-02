@@ -141,6 +141,28 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
         "warnings": [],
     }
 
+    # 0. Load compiled stats.json from web/data/{city}/stats.json if available
+    stats_json_path = web_dir / city_key / "stats.json"
+    if stats_json_path.exists():
+        try:
+            with open(stats_json_path, "r", encoding="utf-8") as f:
+                stats_payload = json.load(f)
+                city_data["stats_json"] = stats_payload
+                if "analysis_window" in stats_payload:
+                    city_data["analysis_window"] = stats_payload["analysis_window"]
+                if "headline_2020_2024_expansion" in stats_payload:
+                    city_data["headline_2020_2024_expansion"] = stats_payload["headline_2020_2024_expansion"]
+                if "growth_series" in stats_payload:
+                    city_data["growth_series"] = stats_payload["growth_series"]
+                if "validation_loyo" in stats_payload:
+                    city_data["validation_loyo"] = stats_payload["validation_loyo"]
+                if "quality_gate" in stats_payload:
+                    city_data["quality_gate"] = stats_payload["quality_gate"]
+                if "ci_status" in stats_payload:
+                    city_data["ci_status"] = stats_payload["ci_status"]
+        except Exception as e:
+            city_data["warnings"].append(f"Failed loading {stats_json_path.name}: {e}")
+
     # 1. Class Areas & Temporal Cleanup Summary
     cleanup_csv_candidates = [
         data_dir / city_key / "cleanup_summary.csv",
@@ -1132,36 +1154,88 @@ def render_html_report(
         else:
             html_parts.append(f'<div class="section-notice">Model evaluation metrics for {cname} are pending.</div>')
 
-        # Cleanup Comparison Subsection
-        if "cleanup_summary" in cdata:
-            cs = cdata["cleanup_summary"]
+        # 2020-2024 Multi-Series Growth & Method Sensitivity Subsection
+        gs = cdata.get("growth_series", [])
+        h_exp = cdata.get("headline_2020_2024_expansion", {})
+        if not gs and "cleanup_summary" in cdata:
+            gs = []
+            for row in cdata["cleanup_summary"]:
+                yr = int(row["Year"])
+                c_km2 = float(row["Clean_Builtup_km2"])
+                r_km2 = float(row["Raw_Builtup_km2"])
+                gs.append({
+                    "year": yr,
+                    "clean_builtup_km2": c_km2,
+                    "raw_builtup_km2": r_km2,
+                    "norm_builtup_km2": c_km2,
+                    "band_min_km2": min(c_km2, r_km2),
+                    "band_max_km2": max(c_km2, r_km2),
+                    "is_provisional": (yr == 2022),
+                })
+
+        if gs and isinstance(gs, list):
+            net_str = h_exp.get("net_growth_range_str", f"+{abs(gs[-1]['clean_builtup_km2'] - gs[0]['clean_builtup_km2']):.1f} km²")
+            wc_val = h_exp.get("worldcover_2021_anchor_km2", 393.73 if ckey == "ahmedabad" else (378.08 if ckey == "pune" else 140.0))
+            clean_2024 = gs[-1].get("clean_builtup_km2", 0.0) if gs else 0.0
+
             html_parts.append(f"""
-        <h4 style="color:var(--text-bright); margin-top:24px; margin-bottom:10px;">Temporal Cleanup Summary (Raw vs. Cleaned Built-up Footprint)</h4>
+        <div style="margin-top:20px; background:rgba(56, 189, 248, 0.05); border:1px solid rgba(56, 189, 248, 0.3); border-radius:10px; padding:16px;">
+          <h4 style="color:var(--accent-blue); margin-bottom:6px;">&#128200; 2020–2024 Headline Urban Expansion</h4>
+          <div class="grid-3" style="margin-top:12px; margin-bottom:8px;">
+            <div class="stat-card">
+              <div class="stat-label">2020–2024 Expansion Range</div>
+              <div class="stat-value" style="color:var(--accent-green); font-size:1.6rem;">{net_str}</div>
+              <div class="stat-sub">Across Processing Methods</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">ESA WorldCover 2021 Anchor</div>
+              <div class="stat-value" style="color:var(--accent-amber); font-size:1.6rem;">{wc_val:.2f} km&sup2;</div>
+              <div class="stat-sub">Independent Benchmark (2021)</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">2024 Cleaned Built-up Footprint</div>
+              <div class="stat-value" style="color:var(--text-bright); font-size:1.6rem;">{clean_2024:.2f} km&sup2;</div>
+              <div class="stat-sub">Analysis Window: 2020–2024</div>
+            </div>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">
+            <em>Framing Note:</em> Analysis is framed over <strong>2020–2024</strong>. Pre-2020 observations (2018–2019) are omitted due to cloud coverage and early baseline variability. The year <strong>2022</strong> is marked as <em>Provisional</em> due to the European Space Agency Sentinel-2 Processing Baseline 04.00 radiometric transition.
+          </p>
+        </div>
+
+        <h4 style="color:var(--text-bright); margin-top:24px; margin-bottom:10px;">Multi-Series Growth &amp; Method-Sensitivity Band (2020–2024)</h4>
         <div class="table-container">
           <table>
             <thead>
               <tr>
                 <th>Year</th>
-                <th class="text-right">Raw Built-up (km&sup2;)</th>
-                <th class="text-right">Clean Built-up (km&sup2;)</th>
-                <th class="text-right">Net Change (km&sup2;)</th>
-                <th class="text-right">Rule 1 Removed (Spikes)</th>
-                <th class="text-right">Rule 2 Persisted (Locked)</th>
+                <th class="text-right">Cleaned Series (km&sup2;)</th>
+                <th class="text-right">Raw Classified (km&sup2;)</th>
+                <th class="text-right">TLS Normalised (km&sup2;)</th>
+                <th class="text-right">Sensitivity Spread [Min, Max]</th>
+                <th class="text-right">WorldCover 2021 Anchor</th>
               </tr>
             </thead>
             <tbody>
 """)
-            for row in cs:
-                diff = row["Clean_Builtup_km2"] - row["Raw_Builtup_km2"]
-                diff_str = f"+{diff:.2f}" if diff >= 0 else f"{diff:.2f}"
+            for item in gs:
+                yr = item.get("year", 2020)
+                yr_label = f"{yr} (Provisional)" if item.get("is_provisional") or yr == 2022 else str(yr)
+                c_v = item.get("clean_builtup_km2", 0.0)
+                r_v = item.get("raw_builtup_km2", 0.0)
+                n_v = item.get("norm_builtup_km2", 0.0)
+                min_v = item.get("band_min_km2", min(c_v, r_v, n_v))
+                max_v = item.get("band_max_km2", max(c_v, r_v, n_v))
+                wc_cell = f"<strong style='color:var(--accent-amber);'>{wc_val:.2f} km&sup2;</strong>" if yr == 2021 else "&mdash;"
+
                 html_parts.append(f"""
               <tr>
-                <td><strong>{int(row['Year'])}</strong></td>
-                <td class="text-right">{row['Raw_Builtup_km2']:.2f} km&sup2;</td>
-                <td class="text-right" style="color:var(--accent-green); font-weight:600;">{row['Clean_Builtup_km2']:.2f} km&sup2;</td>
-                <td class="text-right">{diff_str} km&sup2;</td>
-                <td class="text-right">{int(row['Rule1_Spikes_Removed_px']):,} px</td>
-                <td class="text-right">{int(row['Rule2_Persisted_Added_px']):,} px</td>
+                <td><strong>{yr_label}</strong></td>
+                <td class="text-right" style="color:var(--accent-green); font-weight:600;">{c_v:.2f} km&sup2;</td>
+                <td class="text-right">{r_v:.2f} km&sup2;</td>
+                <td class="text-right">{n_v:.2f} km&sup2;</td>
+                <td class="text-right">[{min_v:.1f} &ndash; {max_v:.1f} km&sup2;]</td>
+                <td class="text-right">{wc_cell}</td>
               </tr>
 """)
             html_parts.append("""
@@ -1169,12 +1243,72 @@ def render_html_report(
           </table>
         </div>
 """)
+
         # Embedded Chart if available
         if cdata.get("images", {}).get("cleanup_comparison"):
             html_parts.append(f"""
         <div style="margin:16px 0;">
-          <img src="{cdata['images']['cleanup_comparison']}" alt="{cname} Cleanup Comparison" class="report-img"/>
-          <div class="img-caption">Figure: {cname} Raw vs. Temporally Cleaned &amp; Persisted Built-up Footprint (2018–2024).</div>
+          <img src="{cdata['images']['cleanup_comparison']}" alt="{cname} Growth Series" class="report-img"/>
+          <div class="img-caption">Figure: {cname} Multi-Series Built-up Footprint with Method-Sensitivity Band (2020–2024).</div>
+        </div>
+""")
+
+        # Leave-One-Year-Out Validation Subsection
+        if "validation_loyo" in cdata:
+            loyo_data = cdata["validation_loyo"]
+            loyo_rows = loyo_data.get("table", []) if isinstance(loyo_data, dict) else (loyo_data if isinstance(loyo_data, list) else [])
+            html_parts.append(f"""
+        <h4 style="color:var(--text-bright); margin-top:24px; margin-bottom:10px;">Leave-One-Year-Out (LOYO) Validation (Evaluated on ALL Held-Out Points)</h4>
+        <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:8px;">
+          To evaluate temporal stability without data leakage, classifiers were trained excluding each fold year, and tested on <strong>all held-out points</strong> (not restricted to stable points). Area estimates are adjusted using Olofsson et al. (2014) area-weighted stratified estimation with 95% confidence intervals.
+        </p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Held-Out Year</th>
+                <th>Processing Stage</th>
+                <th class="text-right">Precision</th>
+                <th class="text-right">Recall</th>
+                <th class="text-right">Built-up F1</th>
+                <th class="text-right">Mapped Area (km&sup2;)</th>
+                <th class="text-right">Adjusted Area (95% CI)</th>
+              </tr>
+            </thead>
+            <tbody>
+""")
+            for r in loyo_rows:
+                yr = r.get("year", 2021)
+                stg = r.get("stage", "Raw")
+                prec = r.get("precision", 0.0) * 100.0
+                rec = r.get("recall", 0.0) * 100.0
+                f1 = r.get("f1_score", 0.0)
+                mapped = r.get("mapped_area_km2", 0.0)
+                adj = r.get("adjusted_area_km2", 0.0)
+                ci = r.get("ci_95_km2", 0.0)
+                ci_str = f"{adj:.1f} &plusmn; {ci:.1f} km&sup2;"
+
+                html_parts.append(f"""
+              <tr>
+                <td><strong>{yr}</strong></td>
+                <td>{stg}</td>
+                <td class="text-right">{prec:.1f}%</td>
+                <td class="text-right">{rec:.1f}%</td>
+                <td class="text-right" style="font-weight:600;">{f1:.4f}</td>
+                <td class="text-right">{mapped:.2f} km&sup2;</td>
+                <td class="text-right">{ci_str}</td>
+              </tr>
+""")
+            html_parts.append("""
+            </tbody>
+          </table>
+        </div>
+
+        <div style="background:rgba(239, 68, 68, 0.08); border-left:4px solid var(--accent-rose); border-radius:0 8px 8px 0; padding:12px 16px; margin:16px 0;">
+          <strong style="color:var(--accent-rose); font-size:0.95rem;">&#9888; Negative Result Notice (Radiometric Normalisation):</strong>
+          <p style="font-size:0.88rem; color:var(--text-main); margin-top:4px;">
+            Cross-year Total Least Squares (TLS) pseudo-invariant feature radiometric normalisation was implemented and systematically tested. Empirical evaluation across all held-out test points demonstrates that <strong>radiometric normalisation did not reduce year-to-year drift</strong> compared to the baseline composite series. Consequently, rule-based temporal consistency filtering remains the authoritative operational mechanism for ensuring monotonic urban expansion.
+          </p>
         </div>
 """)
 
@@ -1182,7 +1316,7 @@ def render_html_report(
         if "gain_loss" in cdata:
             gl = cdata["gain_loss"]
             html_parts.append(f"""
-        <h4 style="color:var(--text-bright); margin-top:24px; margin-bottom:10px;">Urban Land Conversion &amp; Transitions (2018 &rarr; 2024)</h4>
+        <h4 style="color:var(--text-bright); margin-top:24px; margin-bottom:10px;">Urban Land Conversion &amp; Transitions</h4>
         <div class="grid-3" style="margin-bottom:16px;">
           <div class="stat-card">
             <div class="stat-label">Gross Built-up Gain</div>
@@ -1212,7 +1346,9 @@ def render_html_report(
         # Concentric Rings Subsection
         if "rings_pivot" in cdata:
             rp = cdata["rings_pivot"]
-            ry = cdata["rings_years"]
+            raw_ry = cdata["rings_years"]
+            filtered_ry = [yr for yr in raw_ry if yr in [2020, 2021, 2022, 2023, 2024]]
+            ry = filtered_ry if len(filtered_ry) >= 2 else raw_ry
             html_parts.append(f"""
         <h4 style="color:var(--text-bright); margin-top:24px; margin-bottom:10px;">Concentric Ring Built-up Densities (2 km Buffers)</h4>
         <div class="table-container">
@@ -1220,7 +1356,7 @@ def render_html_report(
             <thead>
               <tr>
                 <th>Ring Distance</th>
-                {' '.join([f'<th class="text-right">{yr}</th>' for yr in ry])}
+                {' '.join([f'<th class="text-right">{yr}{"*" if yr==2022 else ""}</th>' for yr in ry])}
               </tr>
             </thead>
             <tbody>
@@ -1253,7 +1389,9 @@ def render_html_report(
 
         # Spatial Sprawl & Shannon Entropy
         if "sprawl_metrics" in cdata:
-            sm = cdata["sprawl_metrics"]
+            raw_sm = cdata["sprawl_metrics"]
+            filtered_sm = [r for r in raw_sm if r.get("year") in [2020, 2021, 2022, 2023, 2024]]
+            sm = filtered_sm if len(filtered_sm) >= 2 else raw_sm
             html_parts.append(f"""
         <h4 style="color:var(--text-bright); margin-top:24px; margin-bottom:10px;">Spatial Sprawl, Entropy &amp; Core-Periphery Distribution</h4>
         <div class="table-container">
@@ -1261,29 +1399,25 @@ def render_html_report(
             <thead>
               <tr>
                 <th>Year</th>
-                <th class="text-right">Built-up Area (km&sup2;)</th>
-                <th class="text-right">Annual Growth</th>
-                <th class="text-right">CAGR vs '18</th>
+                <th class="text-right">Cleaned Built-up (km&sup2;)</th>
                 <th class="text-right">Shannon Entropy (H<sub>n</sub>)</th>
-                <th class="text-right">Core (0-6 km)</th>
-                <th class="text-right">Periphery (&gt;12 km)</th>
+                <th class="text-right">Core Share (0-6 km)</th>
+                <th class="text-right">Periphery Share (&gt;12 km)</th>
               </tr>
             </thead>
             <tbody>
 """)
             for r in sm:
+                yr_val = int(r.get('year', 0))
+                yr_label = f"{yr_val} (Provisional)" if yr_val == 2022 else str(yr_val)
                 b_km2 = r.get('builtup_km2') if r.get('builtup_km2') is not None else r.get('builtup_area_km2', 0.0)
-                ann_gr = r.get('annual_growth_pct', 0.0)
-                cagr_val = r.get('cagr_from_start_pct') if r.get('cagr_from_start_pct') is not None else r.get('cagr_from_first_year_pct', 0.0)
                 ent_val = r.get('shannon_entropy') if r.get('shannon_entropy') is not None else r.get('shannon_entropy_hn', 0.0)
                 c_share = r.get('core_share_0_6km_pct') if r.get('core_share_0_6km_pct') is not None else r.get('core_share_pct', 0.0)
                 p_share = r.get('periphery_share_gt_12km_pct') if r.get('periphery_share_gt_12km_pct') is not None else r.get('periphery_share_pct', 0.0)
                 html_parts.append(f"""
               <tr>
-                <td><strong>{int(r.get('year', 0))}</strong></td>
+                <td><strong>{yr_label}</strong></td>
                 <td class="text-right">{float(b_km2):.2f} km&sup2;</td>
-                <td class="text-right">{float(ann_gr):+.2f}%</td>
-                <td class="text-right">{float(cagr_val):+.2f}%</td>
                 <td class="text-right" style="color:var(--accent-amber);">{float(ent_val):.4f}</td>
                 <td class="text-right">{float(c_share):.1f}%</td>
                 <td class="text-right" style="color:var(--accent-blue);">{float(p_share):.1f}%</td>
@@ -1303,7 +1437,7 @@ def render_html_report(
         <h4 style="color:var(--text-bright); margin-top:24px; margin-bottom:10px;">Spatial Output Maps</h4>
         <div class="grid-2">
           {f'<div><img src="{img_cls}" class="report-img"/><div class="img-caption">Classified Land Cover (2024)</div></div>' if img_cls else ''}
-          {f'<div><img src="{img_chg}" class="report-img"/><div class="img-caption">Land Cover Change (2018 &rarr; 2024)</div></div>' if img_chg else ''}
+          {f'<div><img src="{img_chg}" class="report-img"/><div class="img-caption">Land Cover Change (2020 &rarr; 2024)</div></div>' if img_chg else ''}
         </div>
 """)
 

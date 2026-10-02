@@ -1,0 +1,30 @@
+{
+  "city": "Pune",
+  "start_year": 2020,
+  "end_year": 2024,
+  "seed": 42,
+  "pixel_area_km2": 0.0036,
+  "total_raster_km2": 2057.5296,
+  "total_aoi_km2": 2057.5296,
+  "nodata_km2": 0.0,
+  "nodata_pixels": 0,
+  "strata_areas_km2": {
+    "A": 117.9972,
+    "B": 351.8028,
+    "C": 1532.4084,
+    "D": 55.3212
+  },
+  "strata_pixel_counts": {
+    "A": 32777,
+    "B": 97723,
+    "C": 425669,
+    "D": 15367
+  },
+  "sample_counts": {
+    "A": 100,
+    "B": 50,
+    "C": 100,
+    "D": 50,
+    "total": 300
+  }
+}

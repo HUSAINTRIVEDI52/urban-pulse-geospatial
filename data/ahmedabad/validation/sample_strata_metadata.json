@@ -1,0 +1,30 @@
+{
+  "city": "Ahmedabad",
+  "start_year": 2020,
+  "end_year": 2024,
+  "seed": 42,
+  "pixel_area_km2": 0.0036,
+  "total_raster_km2": 2167.8336,
+  "total_aoi_km2": 2167.8336,
+  "nodata_km2": 0.0,
+  "nodata_pixels": 0,
+  "strata_areas_km2": {
+    "A": 116.6508,
+    "B": 358.2252,
+    "C": 1635.2172,
+    "D": 57.7404
+  },
+  "strata_pixel_counts": {
+    "A": 32403,
+    "B": 99507,
+    "C": 454227,
+    "D": 16039
+  },
+  "sample_counts": {
+    "A": 100,
+    "B": 50,
+    "C": 100,
+    "D": 50,
+    "total": 300
+  }
+}

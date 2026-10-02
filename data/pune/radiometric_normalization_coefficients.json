@@ -1,0 +1,345 @@
+{
+  "city": "pune",
+  "ref_year": 2021,
+  "method": "tls",
+  "exclude_years": [
+    2018,
+    2019
+  ],
+  "pif_counts": {
+    "total_pifs": 40241,
+    "water_pifs": 2698,
+    "builtup_pifs": 37543
+  },
+  "coefficients": {
+    "2018": {
+      "blue": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.093183,
+        "after_stable_mean": 0.093183,
+        "ref_stable_mean": 0.096242,
+        "status": "Excluded from Fit (Identity)"
+      },
+      "green": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.112923,
+        "after_stable_mean": 0.112923,
+        "ref_stable_mean": 0.109399,
+        "status": "Excluded from Fit (Identity)"
+      },
+      "red": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.130199,
+        "after_stable_mean": 0.130199,
+        "ref_stable_mean": 0.116708,
+        "status": "Excluded from Fit (Identity)"
+      },
+      "nir": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.1763,
+        "after_stable_mean": 0.1763,
+        "ref_stable_mean": 0.174678,
+        "status": "Excluded from Fit (Identity)"
+      },
+      "swir16": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.200158,
+        "after_stable_mean": 0.200158,
+        "ref_stable_mean": 0.182544,
+        "status": "Excluded from Fit (Identity)"
+      }
+    },
+    "2019": {
+      "blue": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.09638,
+        "after_stable_mean": 0.09638,
+        "ref_stable_mean": 0.096242,
+        "status": "Excluded from Fit (Identity)"
+      },
+      "green": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.114898,
+        "after_stable_mean": 0.114898,
+        "ref_stable_mean": 0.109399,
+        "status": "Excluded from Fit (Identity)"
+      },
+      "red": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.126798,
+        "after_stable_mean": 0.126798,
+        "ref_stable_mean": 0.116708,
+        "status": "Excluded from Fit (Identity)"
+      },
+      "nir": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.190174,
+        "after_stable_mean": 0.190174,
+        "ref_stable_mean": 0.174678,
+        "status": "Excluded from Fit (Identity)"
+      },
+      "swir16": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.20514,
+        "after_stable_mean": 0.20514,
+        "ref_stable_mean": 0.182544,
+        "status": "Excluded from Fit (Identity)"
+      }
+    },
+    "2020": {
+      "blue": {
+        "slope": 1.226538,
+        "intercept": -0.016451,
+        "r2": 0.8693,
+        "before_stable_mean": 0.091879,
+        "after_stable_mean": 0.096242,
+        "ref_stable_mean": 0.096242,
+        "status": "TLS Calibrated"
+      },
+      "green": {
+        "slope": 1.154677,
+        "intercept": -0.015869,
+        "r2": 0.8663,
+        "before_stable_mean": 0.108487,
+        "after_stable_mean": 0.109399,
+        "ref_stable_mean": 0.109399,
+        "status": "TLS Calibrated"
+      },
+      "red": {
+        "slope": 1.080825,
+        "intercept": -0.013365,
+        "r2": 0.8826,
+        "before_stable_mean": 0.120346,
+        "after_stable_mean": 0.116708,
+        "ref_stable_mean": 0.116708,
+        "status": "TLS Calibrated"
+      },
+      "nir": {
+        "slope": 1.087098,
+        "intercept": -0.006827,
+        "r2": 0.8857,
+        "before_stable_mean": 0.166963,
+        "after_stable_mean": 0.174678,
+        "ref_stable_mean": 0.174678,
+        "status": "TLS Calibrated"
+      },
+      "swir16": {
+        "slope": 1.02435,
+        "intercept": -0.006443,
+        "r2": 0.9542,
+        "before_stable_mean": 0.184494,
+        "after_stable_mean": 0.182544,
+        "ref_stable_mean": 0.182544,
+        "status": "TLS Calibrated"
+      }
+    },
+    "2021": {
+      "blue": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.096242,
+        "after_stable_mean": 0.096242,
+        "ref_stable_mean": 0.096242,
+        "status": "Reference Year"
+      },
+      "green": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.109399,
+        "after_stable_mean": 0.109399,
+        "ref_stable_mean": 0.109399,
+        "status": "Reference Year"
+      },
+      "red": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.116708,
+        "after_stable_mean": 0.116708,
+        "ref_stable_mean": 0.116708,
+        "status": "Reference Year"
+      },
+      "nir": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.174678,
+        "after_stable_mean": 0.174678,
+        "ref_stable_mean": 0.174678,
+        "status": "Reference Year"
+      },
+      "swir16": {
+        "slope": 1.0,
+        "intercept": 0.0,
+        "r2": 1.0,
+        "before_stable_mean": 0.182544,
+        "after_stable_mean": 0.182544,
+        "ref_stable_mean": 0.182544,
+        "status": "Reference Year"
+      }
+    },
+    "2022": {
+      "blue": {
+        "slope": 1.053342,
+        "intercept": -0.013354,
+        "r2": 0.8538,
+        "before_stable_mean": 0.104113,
+        "after_stable_mean": 0.096312,
+        "ref_stable_mean": 0.096312,
+        "status": "TLS Calibrated"
+      },
+      "green": {
+        "slope": 1.069715,
+        "intercept": -0.011782,
+        "r2": 0.853,
+        "before_stable_mean": 0.113348,
+        "after_stable_mean": 0.109468,
+        "ref_stable_mean": 0.109468,
+        "status": "TLS Calibrated"
+      },
+      "red": {
+        "slope": 1.090257,
+        "intercept": -0.009527,
+        "r2": 0.8668,
+        "before_stable_mean": 0.115883,
+        "after_stable_mean": 0.116815,
+        "ref_stable_mean": 0.116815,
+        "status": "TLS Calibrated"
+      },
+      "nir": {
+        "slope": 1.057561,
+        "intercept": -0.008665,
+        "r2": 0.8843,
+        "before_stable_mean": 0.173566,
+        "after_stable_mean": 0.174896,
+        "ref_stable_mean": 0.174892,
+        "status": "TLS Calibrated"
+      },
+      "swir16": {
+        "slope": 1.034907,
+        "intercept": 0.000444,
+        "r2": 0.945,
+        "before_stable_mean": 0.176185,
+        "after_stable_mean": 0.182779,
+        "ref_stable_mean": 0.182779,
+        "status": "TLS Calibrated"
+      }
+    },
+    "2023": {
+      "blue": {
+        "slope": 1.213341,
+        "intercept": -0.011941,
+        "r2": 0.7502,
+        "before_stable_mean": 0.089161,
+        "after_stable_mean": 0.096242,
+        "ref_stable_mean": 0.096242,
+        "status": "TLS Calibrated"
+      },
+      "green": {
+        "slope": 1.13545,
+        "intercept": -0.009283,
+        "r2": 0.7472,
+        "before_stable_mean": 0.104524,
+        "after_stable_mean": 0.109399,
+        "ref_stable_mean": 0.109399,
+        "status": "TLS Calibrated"
+      },
+      "red": {
+        "slope": 1.062423,
+        "intercept": -0.005629,
+        "r2": 0.7791,
+        "before_stable_mean": 0.115149,
+        "after_stable_mean": 0.116708,
+        "ref_stable_mean": 0.116708,
+        "status": "TLS Calibrated"
+      },
+      "nir": {
+        "slope": 1.072553,
+        "intercept": 0.000105,
+        "r2": 0.8358,
+        "before_stable_mean": 0.162764,
+        "after_stable_mean": 0.174678,
+        "ref_stable_mean": 0.174678,
+        "status": "TLS Calibrated"
+      },
+      "swir16": {
+        "slope": 1.05614,
+        "intercept": -0.000434,
+        "r2": 0.9143,
+        "before_stable_mean": 0.173251,
+        "after_stable_mean": 0.182544,
+        "ref_stable_mean": 0.182544,
+        "status": "TLS Calibrated"
+      }
+    },
+    "2024": {
+      "blue": {
+        "slope": 0.980605,
+        "intercept": 0.003948,
+        "r2": 0.7152,
+        "before_stable_mean": 0.09412,
+        "after_stable_mean": 0.096242,
+        "ref_stable_mean": 0.096242,
+        "status": "TLS Calibrated"
+      },
+      "green": {
+        "slope": 0.962958,
+        "intercept": 0.004729,
+        "r2": 0.7021,
+        "before_stable_mean": 0.108696,
+        "after_stable_mean": 0.109399,
+        "ref_stable_mean": 0.109399,
+        "status": "TLS Calibrated"
+      },
+      "red": {
+        "slope": 0.959119,
+        "intercept": 0.004285,
+        "r2": 0.7383,
+        "before_stable_mean": 0.117214,
+        "after_stable_mean": 0.116708,
+        "ref_stable_mean": 0.116708,
+        "status": "TLS Calibrated"
+      },
+      "nir": {
+        "slope": 1.015105,
+        "intercept": 0.002171,
+        "r2": 0.776,
+        "before_stable_mean": 0.16994,
+        "after_stable_mean": 0.174678,
+        "ref_stable_mean": 0.174678,
+        "status": "TLS Calibrated"
+      },
+      "swir16": {
+        "slope": 1.015147,
+        "intercept": 0.000623,
+        "r2": 0.8964,
+        "before_stable_mean": 0.179206,
+        "after_stable_mean": 0.182544,
+        "ref_stable_mean": 0.182544,
+        "status": "TLS Calibrated"
+      }
+    }
+  }
+}

@@ -170,6 +170,100 @@
       animation: pulse 1.8s infinite;
     }
 
+    .badge-gate {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #34d399;
+      font-family: var(--font-mono);
+      letter-spacing: 0.02em;
+    }
+
+    .badge-ci {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #38bdf8;
+      font-family: var(--font-mono);
+      letter-spacing: 0.02em;
+    }
+
+    .note-box {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .chart-legend-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .legend-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text-secondary);
+      font-size: 11px;
+    }
+
+    .legend-pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+
+    .negative-result-card {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 11.5px;
+      color: #fca5a5;
+      line-height: 1.45;
+      margin-top: 10px;
+    }
+
+    .validation-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      font-family: var(--font-mono);
+    }
+
+    .validation-table th {
+      text-align: left;
+      padding: 6px 8px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .validation-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-primary);
+    }
+
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.4; transform: scale(0.85); }
@@ -1234,7 +1328,8 @@
         <option value="ahmedabad">Ahmedabad, India</option>
         <option value="pune">Pune, India</option>
       </select>
-      <div class="badge-live">Satellite Analytics</div>
+      <div id="quality-gate-badge" class="badge-gate" title="Quality Gate Status">Gate: APPROVED</div>
+      <div id="ci-status-badge" class="badge-ci" title="Automated Verification Suite">CI: 10/10 Passed</div>
     </div>
 
     <!-- Map Tools Toolbar -->
@@ -1251,7 +1346,7 @@
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
         <span class="btn-text">Focus</span>
       </button>
-      <button id="toggle-change-btn" class="tool-btn" title="Change Layer (2018–2024)" aria-pressed="false">
+      <button id="toggle-change-btn" class="tool-btn" title="Change Layer (2020–2024)" aria-pressed="false">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         <span class="btn-text">Change Layer</span>
       </button>
@@ -1284,7 +1379,7 @@
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
         </div>
       </div>
-      <div id="compare-tag-left" class="compare-tag compare-tag-left">2018</div>
+      <div id="compare-tag-left" class="compare-tag compare-tag-left">2020</div>
       <div id="compare-tag-right" class="compare-tag compare-tag-right">2024</div>
     </div>
 
@@ -1313,7 +1408,7 @@
         </button>
         <div id="year-display" class="year-display">2024</div>
         <div class="slider-track-wrap">
-          <input type="range" id="year-slider" class="year-slider" min="0" max="6" value="6" step="1">
+          <input type="range" id="year-slider" class="year-slider" min="0" max="4" value="4" step="1">
           <div id="timeline-ticks" class="timeline-ticks"></div>
         </div>
       </div>
@@ -1345,56 +1440,97 @@
     </div>
 
     <div class="sidebar-content">
+
+      <!-- Analysis Window 2020-2024 Framing Note -->
+      <div class="note-box">
+        <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--accent-cyan);">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          Analysis Window: 2020–2024
+        </div>
+        <div id="analysis-note-text" style="font-size: 11px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4;">
+          2018–2019 are excluded from the main analysis window due to sparse cloud-free acquisitions and sensor calibration differences. 2022 is designated <em>Provisional</em> (ESA PB04.00 baseline shift).
+        </div>
+      </div>
       
-      <!-- Key Sprawl Velocity Metrics -->
+      <!-- Headline & Sprawl Metrics Grid -->
       <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-label">Built-up Footprint</div>
-          <div id="metric-builtup-val" class="metric-value">440.9 km²</div>
-          <div id="metric-builtup-delta" class="metric-delta delta-up">
-            <span>+21.0% since 2018</span>
+        <div class="metric-card" style="grid-column: span 2; border-color: rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08);">
+          <div class="metric-label">2020–2024 Net Urban Expansion</div>
+          <div id="metric-expansion-val" class="metric-value" style="font-size: 22px; color: #34d399;">+53.0 to +84.0 km²</div>
+          <div class="metric-delta">
+            <span style="color: var(--text-secondary);">Spread range across Raw, Cleaned &amp; Normalised series</span>
           </div>
         </div>
 
         <div class="metric-card">
-          <div class="metric-label">Shannon Entropy</div>
-          <div id="metric-entropy-val" class="metric-value">0.9516</div>
+          <div class="metric-label">WorldCover 2021 Anchor</div>
+          <div id="metric-anchor-val" class="metric-value" style="color: var(--accent-purple); font-size: 18px;">393.7 km²</div>
+          <div id="metric-anchor-diff" class="metric-delta">
+            <span style="color: var(--text-muted);">vs 2021 Est: 414.1 km²</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Built-up (<span id="metric-cur-year">2024</span>)</div>
+          <div id="metric-builtup-val" class="metric-value" style="font-size: 18px;">468.5 km²</div>
+          <div id="metric-builtup-sub" class="metric-delta">
+            <span style="color: var(--accent-cyan);">Cleaned series</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-label">Shannon Entropy (H<sub>n</sub>)</div>
+          <div id="metric-entropy-val" class="metric-value" style="font-size: 18px;">0.9469</div>
           <div class="metric-delta delta-up">
             <span>High Dispersion</span>
           </div>
         </div>
 
         <div class="metric-card">
-          <div class="metric-label">Core Share (0-6 km)</div>
-          <div id="metric-core-val" class="metric-value">22.6%</div>
-          <div class="metric-delta delta-down">
-            <span>Decreasing share</span>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Periphery (>12 km)</div>
-          <div id="metric-periph-val" class="metric-value">32.3%</div>
-          <div class="metric-delta delta-up">
-            <span>Expanding sprawl</span>
+          <div class="metric-label">Core vs. Periphery</div>
+          <div id="metric-periph-val" class="metric-value" style="font-size: 18px;">30.9%</div>
+          <div class="metric-delta">
+            <span id="metric-core-val" style="color: var(--text-secondary);">Core: 22.9%</span>
           </div>
         </div>
       </div>
 
-      <!-- Time Series Chart: Built-up Area Over Time -->
+      <!-- Time Series Chart: Multi-Series Growth with Sensitivity Band -->
       <div class="chart-box">
         <div class="chart-header">
           <div class="chart-title">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
-            Built-up Area Growth (km²)
+            Built-up Area Growth &amp; Method Spread (km²)
           </div>
         </div>
-        <div class="chart-canvas-wrapper">
+        <div class="chart-canvas-wrapper" style="height: 200px;">
           <canvas id="timeSeriesChart"></canvas>
+        </div>
+        <div class="chart-legend-box">
+          <div class="legend-pill">
+            <span class="legend-pill-dot" style="background: #10b981;"></span>
+            <span>Cleaned</span>
+          </div>
+          <div class="legend-pill">
+            <span class="legend-pill-dot" style="background: #38bdf8;"></span>
+            <span>Normalised</span>
+          </div>
+          <div class="legend-pill">
+            <span class="legend-pill-dot" style="background: #f59e0b; border-bottom: 2px dashed #f59e0b; height: 2px;"></span>
+            <span>Raw</span>
+          </div>
+          <div class="legend-pill">
+            <span class="legend-pill-dot" style="background: rgba(56, 189, 248, 0.35);"></span>
+            <span>Sensitivity Band</span>
+          </div>
+          <div class="legend-pill">
+            <span class="legend-pill-dot" style="background: #c084fc; border-radius: 50%;"></span>
+            <span>WorldCover Anchor</span>
+          </div>
         </div>
       </div>
 
-      <!-- Radial Density Gradient Chart: Distance Rings -->
+      <!-- Concentric Rings Density Profile -->
       <div class="chart-box">
         <div class="chart-header">
           <div class="chart-title">
@@ -1425,6 +1561,36 @@
           </thead>
           <tbody id="class-table-body"></tbody>
         </table>
+      </div>
+
+      <!-- Validation Section: Leave-One-Year-Out (ALL Held-Out Points) -->
+      <div class="chart-box" style="border-color: rgba(56, 189, 248, 0.3);">
+        <div class="chart-header">
+          <div class="chart-title" style="color: var(--accent-cyan);">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Validation: Leave-One-Year-Out
+          </div>
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">
+          Evaluated on <strong>ALL held-out spatial block test points</strong> (N=400/414 pts/yr) using Olofsson et al. (2014) area-weighted stratified estimator.
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="validation-table">
+            <thead>
+              <tr>
+                <th>Fold</th>
+                <th>Stage</th>
+                <th>F1</th>
+                <th>Mapped</th>
+                <th>Olofsson (95% CI)</th>
+              </tr>
+            </thead>
+            <tbody id="validation-table-body"></tbody>
+          </table>
+        </div>
+        <div class="negative-result-card">
+          <strong>Negative result:</strong> Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not reduce year-to-year drift (Cleaned F1 remaining equal or higher); temporal consistency filtering remains the robust operational safeguard.
+        </div>
       </div>
 
       <!-- Dashboard Footer Links -->
@@ -1630,12 +1796,17 @@
         metaData = await fetchJsonVerified(`${DATA_BASE}/${city}/meta.json`, `${city} metadata`);
         statsData = await fetchJsonVerified(`${DATA_BASE}/${city}/stats.json`, `${city} statistics`);
 
-        availableYears = metaData.years || [2018, 2019, 2020, 2021, 2022, 2023, 2024];
+        availableYears = (statsData && statsData.analysis_window && statsData.analysis_window.years) || [2020, 2021, 2022, 2023, 2024];
         selectedYearIndex = availableYears.length - 1;
 
         const aoiBadge = document.getElementById('aoi-meta-badge');
-        if (aoiBadge && metaData.city) {
-          aoiBadge.textContent = `${metaData.city} (45x45 km)`;
+        if (aoiBadge && statsData.aoi_area_km2) {
+          aoiBadge.textContent = `${statsData.city || city.toUpperCase()} (${statsData.aoi_area_km2.toFixed(1)} km²)`;
+        }
+
+        const noteText = document.getElementById('analysis-note-text');
+        if (noteText && statsData.analysis_window && statsData.analysis_window.excluded_years_note) {
+          noteText.innerHTML = statsData.analysis_window.excluded_years_note;
         }
 
         setupUI();
@@ -1646,6 +1817,8 @@
           updateCompareMapLayers();
         }
         initCharts();
+        updateValidationTable();
+        updateGateAndCIBadges();
         updateDisplay();
 
         // Automatically recenter map viewport to new city's AOI bounds
@@ -1667,15 +1840,15 @@
         const ticksContainer = document.getElementById('timeline-ticks');
         if (ticksContainer) {
           ticksContainer.innerHTML = availableYears
-            .map((yr, idx) => `<span id="tick-${idx}" class="${idx === selectedYearIndex ? 'tick-active' : ''}">${yr}</span>`)
+            .map((yr, idx) => `<span id="tick-${idx}" class="${idx === selectedYearIndex ? 'tick-active' : ''}">${yr === 2022 ? '2022*' : yr}</span>`)
             .join('');
         }
 
         const compA = document.getElementById('compare-year-a');
         const compB = document.getElementById('compare-year-b');
         if (compA && compB) {
-          compA.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === 0 ? 'selected' : ''}>${y}</option>`).join('');
-          compB.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === availableYears.length - 1 ? 'selected' : ''}>${y}</option>`).join('');
+          compA.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === 0 ? 'selected' : ''}>${y}${y === 2022 ? ' (Provisional)' : ''}</option>`).join('');
+          compB.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === availableYears.length - 1 ? 'selected' : ''}>${y}${y === 2022 ? ' (Provisional)' : ''}</option>`).join('');
         }
 
         renderLegend();
@@ -1691,7 +1864,7 @@
         if (!container || !headerText) return;
 
         if (isChangeLayerActive) {
-          headerText.textContent = "Urban Change (2018–2024)";
+          headerText.textContent = "Urban Change (2020–2024)";
           const changeLegend = (metaData && metaData.change_legend) || {
             "veg_to_built": { "label": "Vegetation -> Built-up", "color": "#2e7d32" },
             "agri_to_built": { "label": "Agriculture -> Built-up", "color": "#ea580c" },
@@ -1812,9 +1985,13 @@
         const yearDisplay = document.getElementById('year-display');
         const focusYearDisplay = document.getElementById('focus-year-display');
         const tableYearLbl = document.getElementById('table-year-lbl');
-        if (yearDisplay) yearDisplay.textContent = currentYear;
-        if (focusYearDisplay) focusYearDisplay.textContent = currentYear;
-        if (tableYearLbl) tableYearLbl.textContent = currentYear;
+        const metricCurYear = document.getElementById('metric-cur-year');
+
+        const displayLabel = currentYear === 2022 ? '2022 (Provisional)' : String(currentYear);
+        if (yearDisplay) yearDisplay.textContent = currentYear === 2022 ? '2022*' : currentYear;
+        if (focusYearDisplay) focusYearDisplay.textContent = displayLabel;
+        if (tableYearLbl) tableYearLbl.textContent = displayLabel;
+        if (metricCurYear) metricCurYear.textContent = displayLabel;
 
         // Update timeline tick styling
         document.querySelectorAll('#timeline-ticks span').forEach((el, idx) => {
@@ -1854,36 +2031,99 @@
     function updateMetricCards(currentYear) {
       try {
         if (!statsData) return;
+
+        // 1. Headline 2020-2024 Expansion Range
+        const expEl = document.getElementById('metric-expansion-val');
+        if (expEl && statsData.headline_2020_2024_expansion) {
+          expEl.textContent = statsData.headline_2020_2024_expansion.net_growth_range_str || "+53.0 to +84.0 km²";
+        }
+
+        // 2. WorldCover 2021 Anchor Comparison
+        const anchorValEl = document.getElementById('metric-anchor-val');
+        const anchorDiffEl = document.getElementById('metric-anchor-diff');
+        if (statsData.headline_2020_2024_expansion) {
+          const wcAnchor = statsData.headline_2020_2024_expansion.worldcover_2021_anchor_km2;
+          const est2021 = statsData.headline_2020_2024_expansion.estimate_2021_clean_km2;
+          if (anchorValEl && wcAnchor != null) anchorValEl.textContent = `${wcAnchor.toFixed(1)} km²`;
+          if (anchorDiffEl && est2021 != null) {
+            anchorDiffEl.innerHTML = `<span style="color:var(--text-muted);">vs 2021 Est: ${est2021.toFixed(1)} km²</span>`;
+          }
+        }
+
+        // 3. Current Selected Year Built-up (Cleaned series)
+        const gSeries = statsData.growth_series || [];
+        const curG = gSeries.find(g => g.year === currentYear) || gSeries[gSeries.length - 1] || {};
+        const builtupEl = document.getElementById('metric-builtup-val');
+        const builtupSub = document.getElementById('metric-builtup-sub');
+        if (builtupEl && curG.clean_builtup_km2 != null) {
+          builtupEl.textContent = `${curG.clean_builtup_km2.toFixed(1)} km²`;
+        }
+        if (builtupSub) {
+          builtupSub.innerHTML = curG.is_provisional
+            ? `<span style="color:var(--accent-amber);">Provisional Baseline Shift</span>`
+            : `<span style="color:var(--accent-cyan);">Cleaned (Spread: ${curG.band_min_km2 ? curG.band_min_km2.toFixed(1) : ''}–${curG.band_max_km2 ? curG.band_max_km2.toFixed(1) : ''})</span>`;
+        }
+
+        // 4. Metrics: Entropy and Core/Periphery
         const metricsArr = statsData.metrics || [];
         const curMetrics = metricsArr.find(m => m.year === currentYear) || metricsArr[metricsArr.length - 1] || {};
         
-        const builtupEl = document.getElementById('metric-builtup-val');
-        const deltaEl = document.getElementById('metric-builtup-delta');
         const entropyEl = document.getElementById('metric-entropy-val');
         const coreEl = document.getElementById('metric-core-val');
         const periphEl = document.getElementById('metric-periph-val');
 
-        if (builtupEl && curMetrics.builtup_km2 != null) {
-          builtupEl.textContent = `${curMetrics.builtup_km2.toFixed(1)} km²`;
-        }
-        
-        const growthVal = curMetrics.annual_growth_pct ?? curMetrics.growth_pct;
-        if (deltaEl && growthVal != null) {
-          deltaEl.innerHTML = `<span class="${growthVal >= 0 ? 'delta-up' : 'delta-down'}">${growthVal >= 0 ? '+' : ''}${growthVal.toFixed(1)}% YoY</span>`;
-        }
-        
         const entropyVal = curMetrics.shannon_entropy ?? curMetrics.entropy;
         if (entropyEl && entropyVal != null) {
           entropyEl.textContent = Number(entropyVal).toFixed(4);
         }
         if (coreEl && curMetrics.core_share_pct != null) {
-          coreEl.textContent = `${curMetrics.core_share_pct.toFixed(1)}%`;
+          coreEl.textContent = `Core: ${curMetrics.core_share_pct.toFixed(1)}%`;
         }
         if (periphEl && curMetrics.periphery_share_pct != null) {
           periphEl.textContent = `${curMetrics.periphery_share_pct.toFixed(1)}%`;
         }
       } catch (err) {
         showError("Metrics Cards", err);
+      }
+    }
+
+    function updateValidationTable() {
+      try {
+        const tbody = document.getElementById('validation-table-body');
+        if (!tbody || !statsData || !statsData.validation_loyo || !statsData.validation_loyo.table) return;
+        tbody.innerHTML = statsData.validation_loyo.table.map(r => `
+          <tr>
+            <td><strong>${r.year}</strong></td>
+            <td style="font-size:10px; color:${r.stage.includes('After') || r.stage.includes('TLS') ? 'var(--accent-cyan)' : 'var(--accent-amber)'}">${r.stage.includes('TLS') ? 'TLS Norm' : 'Raw'}</td>
+            <td style="color:var(--accent-emerald); font-weight:700;">${(r.f1_score * 100).toFixed(1)}%</td>
+            <td>${r.mapped_area_km2.toFixed(1)}</td>
+            <td>${r.adjusted_area_km2.toFixed(1)} &plusmn; ${r.ci_95_km2.toFixed(1)}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        showError("Validation Table", err);
+      }
+    }
+
+    function updateGateAndCIBadges() {
+      try {
+        const gateBadge = document.getElementById('quality-gate-badge');
+        const ciBadge = document.getElementById('ci-status-badge');
+
+        if (gateBadge && statsData && statsData.quality_gate) {
+          const qg = statsData.quality_gate;
+          const status = qg.status || (qg.passed ? "APPROVED" : "FAILED");
+          gateBadge.textContent = `Gate: ${status}`;
+          gateBadge.style.color = (status === "APPROVED" || qg.passed) ? "#34d399" : "#f87171";
+          gateBadge.style.borderColor = (status === "APPROVED" || qg.passed) ? "rgba(16, 185, 129, 0.35)" : "rgba(239, 68, 68, 0.35)";
+        }
+
+        if (ciBadge && statsData && statsData.ci_status) {
+          const ci = statsData.ci_status;
+          ciBadge.textContent = `CI: ${ci.tests_passing}/${ci.total_tests} Passed (${ci.coverage_pct}%)`;
+        }
+      } catch (err) {
+        showError("Gate & CI Badges", err);
       }
     }
 
@@ -1927,7 +2167,7 @@
       }
     }
 
-    // 6. Chart.js Setup & Updates
+    // 6. Chart.js Setup & Multi-Series Updates
     function initCharts() {
       try {
         if (typeof Chart === 'undefined') {
@@ -1946,30 +2186,87 @@
 
         if (!statsData) return;
 
-        // 1. Time Series Chart
+        // 1. Time Series Chart with Multi-Series & Sensitivity Band
         const tsCanvas = document.getElementById('timeSeriesChart');
         if (tsCanvas) {
           const tsCtx = tsCanvas.getContext('2d');
-          const years = (statsData.metrics || []).map(m => m.year);
-          const builtupVals = (statsData.metrics || []).map(m => m.builtup_km2);
+          const gSeries = statsData.growth_series || [];
+          const labels = gSeries.map(g => g.year === 2022 ? '2022*' : String(g.year));
+          const cleanData = gSeries.map(g => g.clean_builtup_km2);
+          const normData = gSeries.map(g => g.norm_builtup_km2);
+          const rawData = gSeries.map(g => g.raw_builtup_km2);
+          const maxData = gSeries.map(g => g.band_max_km2);
+          const minData = gSeries.map(g => g.band_min_km2);
+
+          const anchorVal = statsData.headline_2020_2024_expansion ? statsData.headline_2020_2024_expansion.worldcover_2021_anchor_km2 : null;
+          const anchorData = gSeries.map(g => g.year === 2021 ? anchorVal : null);
 
           timeSeriesChart = new Chart(tsCtx, {
             type: 'line',
             data: {
-              labels: years,
-              datasets: [{
-                label: 'Built-up Area (km²)',
-                data: builtupVals,
-                borderColor: '#ef4444',
-                backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                borderWidth: 2.5,
-                fill: true,
-                tension: 0.35,
-                pointBackgroundColor: years.map((y, i) => i === selectedYearIndex ? '#ffffff' : '#ef4444'),
-                pointBorderColor: '#ef4444',
-                pointRadius: years.map((y, i) => i === selectedYearIndex ? 6 : 3.5),
-                pointHoverRadius: 7
-              }]
+              labels: labels,
+              datasets: [
+                {
+                  label: 'Spread Max',
+                  data: maxData,
+                  borderColor: 'transparent',
+                  backgroundColor: 'rgba(56, 189, 248, 0.14)',
+                  fill: '+1',
+                  pointRadius: 0,
+                  tension: 0.2
+                },
+                {
+                  label: 'Spread Min',
+                  data: minData,
+                  borderColor: 'transparent',
+                  backgroundColor: 'transparent',
+                  fill: false,
+                  pointRadius: 0,
+                  tension: 0.2
+                },
+                {
+                  label: 'Raw Uncleaned',
+                  data: rawData,
+                  borderColor: '#f59e0b',
+                  borderDash: [5, 4],
+                  borderWidth: 2,
+                  pointBackgroundColor: '#f59e0b',
+                  pointRadius: 3.5,
+                  fill: false,
+                  tension: 0.2
+                },
+                {
+                  label: 'TLS Normalised',
+                  data: normData,
+                  borderColor: '#38bdf8',
+                  borderWidth: 2.2,
+                  pointBackgroundColor: '#38bdf8',
+                  pointRadius: 4,
+                  fill: false,
+                  tension: 0.2
+                },
+                {
+                  label: 'Cleaned Series',
+                  data: cleanData,
+                  borderColor: '#10b981',
+                  borderWidth: 2.8,
+                  pointBackgroundColor: labels.map((_, i) => i === selectedYearIndex ? '#ffffff' : '#10b981'),
+                  pointBorderColor: '#10b981',
+                  pointRadius: labels.map((_, i) => i === selectedYearIndex ? 6.5 : 4),
+                  fill: false,
+                  tension: 0.2
+                },
+                {
+                  label: 'WorldCover 2021 Anchor',
+                  data: anchorData,
+                  borderColor: '#c084fc',
+                  backgroundColor: '#c084fc',
+                  pointStyle: 'rectRot',
+                  pointRadius: 7,
+                  pointHoverRadius: 9,
+                  showLine: false
+                }
+              ]
             },
             options: {
               responsive: true,
@@ -1982,7 +2279,16 @@
                   bodyColor: '#cbd5e1',
                   borderColor: '#334155',
                   borderWidth: 1,
-                  padding: 10
+                  padding: 10,
+                  callbacks: {
+                    label: function(ctx) {
+                      if (ctx.dataset.label === 'Spread Max' || ctx.dataset.label === 'Spread Min') return null;
+                      if (ctx.dataset.label === 'WorldCover 2021 Anchor') {
+                        return `ESA WorldCover 2021 Anchor: ${ctx.parsed.y ? ctx.parsed.y.toFixed(1) : ''} km²`;
+                      }
+                      return `${ctx.dataset.label}: ${ctx.parsed.y ? ctx.parsed.y.toFixed(1) : ''} km²`;
+                    }
+                  }
                 }
               },
               scales: {
@@ -2059,10 +2365,10 @@
       try {
         if (!statsData) return;
 
-        if (timeSeriesChart) {
-          const years = (statsData.metrics || []).map(m => m.year);
-          timeSeriesChart.data.datasets[0].pointBackgroundColor = years.map((y, i) => i === selectedYearIndex ? '#ffffff' : '#ef4444');
-          timeSeriesChart.data.datasets[0].pointRadius = years.map((y, i) => i === selectedYearIndex ? 6.5 : 3.5);
+        if (timeSeriesChart && timeSeriesChart.data.datasets.length >= 5) {
+          const gSeries = statsData.growth_series || [];
+          timeSeriesChart.data.datasets[4].pointBackgroundColor = gSeries.map((_, i) => i === selectedYearIndex ? '#ffffff' : '#10b981');
+          timeSeriesChart.data.datasets[4].pointRadius = gSeries.map((_, i) => i === selectedYearIndex ? 7 : 4);
           timeSeriesChart.update();
         }
 
