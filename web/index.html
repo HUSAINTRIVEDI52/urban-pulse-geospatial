@@ -2201,10 +2201,17 @@
         const anchorDiffEl = document.getElementById('metric-anchor-diff');
         if (h) {
           const wcAnchor = h.worldcover_2021_anchor_km2;
-          const est2021 = h.estimate_2021_norm_km2 || h.estimate_2021_clean_km2;
+          const est2021 = h.estimate_2021_norm_km2;
+          const diffKm2 = h.estimate_2021_diff_km2 ?? (est2021 != null && wcAnchor != null ? est2021 - wcAnchor : null);
+          const diffPct = h.estimate_2021_diff_pct ?? (diffKm2 != null && wcAnchor ? (diffKm2 / wcAnchor) * 100.0 : null);
+          
           if (anchorValEl && wcAnchor != null) anchorValEl.textContent = `${wcAnchor.toFixed(1)} km²`;
           if (anchorDiffEl && est2021 != null) {
-            anchorDiffEl.innerHTML = `<span style="color:var(--text-muted);">vs 2021 Est: ${est2021.toFixed(1)} km²</span>`;
+            const diffSign = (diffKm2 != null && diffKm2 >= 0) ? '+' : '';
+            const diffKm2Str = diffKm2 != null ? `${diffSign}${diffKm2.toFixed(1)} km²` : '';
+            const diffPctStr = diffPct != null ? `${diffSign}${diffPct.toFixed(1)}%` : '';
+            const diffStr = diffKm2 != null ? ` (${diffKm2Str}, ${diffPctStr})` : '';
+            anchorDiffEl.innerHTML = `<span style="color:var(--text-muted);">vs 2021 TLS: ${est2021.toFixed(1)} km²${diffStr}</span>`;
           }
         }
 
@@ -2279,11 +2286,11 @@
 
         if (statsData && statsData.quality_gate) {
           const qg = statsData.quality_gate;
-          const passed = qg.passed ?? (qg.status === "APPROVED");
           const gates = qg.gates || {};
           const gateKeys = Object.keys(gates);
-          const passCount = gateKeys.filter(k => gates[k].status === "PASS").length;
-          const totalCount = gateKeys.length || 5;
+          const passCount = qg.pass_count != null ? qg.pass_count : gateKeys.filter(k => gates[k].passed === true || (gates[k].status && gates[k].status.toUpperCase() === "PASS")).length;
+          const totalCount = qg.total_count || gateKeys.length || 5;
+          const passed = qg.passed ?? (passCount === totalCount);
 
           if (gateBadge) {
             gateBadge.textContent = `Gate: ${passCount}/${totalCount} PASS`;
@@ -2293,30 +2300,25 @@
           }
 
           if (gateOverallStatus) {
-            gateOverallStatus.textContent = passed ? "ALL GATES PASS" : "ATTENTION";
+            gateOverallStatus.textContent = passed ? `${passCount}/${totalCount} PASS` : `${passCount}/${totalCount} PASS`;
             gateOverallStatus.style.color = passed ? "#34d399" : "#f87171";
           }
 
           if (gateList && gateKeys.length > 0) {
-            const labels = {
-              "composite_nodata": "NoData Threshold",
-              "scenes_in_window": "In-Window Scenes",
-              "volatility": "Temporal Volatility",
-              "accuracy": "LOYO F1 Score",
-              "loss_gain_ratio": "Loss/Gain Ratio"
-            };
             gateList.innerHTML = gateKeys.map(k => {
               const g = gates[k];
-              const isPass = g.status === "PASS";
-              const title = labels[k] || k.replace(/_/g, ' ');
+              const isPass = g.passed === true || (g.status && g.status.toUpperCase() === "PASS");
+              const title = g.name || k.replace(/_/g, ' ');
+              const valStr = g.value || g.actual || '';
+              const threshStr = g.threshold || '';
               return `
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
                   <div>
-                    <span style="color:#f8fafc; font-weight:500;">${title}</span>
-                    <span style="color:#64748b; margin-left:4px; font-size:12px;">(${g.actual || g.threshold})</span>
+                    <div style="color:#f8fafc; font-weight:600;">${title}</div>
+                    <div style="color:#94a3b8; font-size:12px;">Val: <span style="color:#e2e8f0; font-family:var(--font-mono);">${valStr}</span> (Limit: ${threshStr})</div>
                   </div>
-                  <span style="padding:1px 6px; border-radius:4px; font-size:12px; font-weight:700; font-family:var(--font-mono); background:${isPass ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}; color:${isPass ? '#34d399' : '#f87171'}; border:1px solid ${isPass ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)'};">
-                    ${g.status}
+                  <span style="padding:2px 7px; border-radius:4px; font-size:12px; font-weight:700; font-family:var(--font-mono); background:${isPass ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}; color:${isPass ? '#34d399' : '#f87171'}; border:1px solid ${isPass ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)'}; margin-left:8px;">
+                    ${isPass ? 'PASS' : 'FAIL'}
                   </span>
                 </div>
               `;

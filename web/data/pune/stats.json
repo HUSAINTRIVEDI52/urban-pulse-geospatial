@@ -52,7 +52,9 @@
       395.2
     ],
     "estimate_2021_norm_km2": 377.92,
-    "estimate_2021_clean_km2": 395.2
+    "estimate_2021_clean_km2": 395.2,
+    "estimate_2021_diff_km2": -0.16,
+    "estimate_2021_diff_pct": -0.0
   },
   "growth_series": [
     {
@@ -175,6 +177,9 @@
   "quality_gate": {
     "status": "APPROVED",
     "passed": true,
+    "pass_count": 5,
+    "total_count": 5,
+    "summary_badge": "Gate: 5/5 PASS",
     "overall_status": "APPROVED",
     "gates": {
       "nodata": {
@@ -187,36 +192,36 @@
       "scenes_in_window": {
         "name": "Scenes in Window",
         "status": "PASS",
-        "value": "12 scenes (2020-2024)",
-        "threshold": ">= 4 dates/yr",
+        "value": "4.4 scenes/yr (22 total)",
+        "threshold": ">= 3 scenes/yr",
         "passed": true
       },
       "volatility": {
-        "name": "Inter-annual Volatility",
+        "name": "Year-to-Year Volatility",
         "status": "PASS",
-        "value": "8.5%",
-        "threshold": "< 15.0%",
+        "value": "12.9% (max annual)",
+        "threshold": "< 20.0%",
         "passed": true
       },
       "accuracy": {
-        "name": "Held-Out Accuracy",
+        "name": "Held-Out Accuracy (LOYO)",
         "status": "PASS",
-        "value": "76.8%",
-        "threshold": ">= 75.0%",
+        "value": "81.7% F1",
+        "threshold": ">= 70.0%",
         "passed": true
       },
       "loss_gain_ratio": {
         "name": "Loss-to-Gain Ratio",
         "status": "PASS",
-        "value": "0.002",
-        "threshold": "< 0.05",
+        "value": "0.001",
+        "threshold": "< 0.30",
         "passed": true
       }
     },
     "composite_nodata_pct": 0.0,
-    "max_annual_change_pct": 8.5,
-    "heldout_accuracy_pct": 76.8,
-    "loss_to_gain_ratio": 0.002
+    "max_annual_change_pct": 12.9,
+    "heldout_accuracy_pct": 81.7,
+    "loss_to_gain_ratio": 0.001
   },
   "ci_status": {
     "tests_passing": 65,

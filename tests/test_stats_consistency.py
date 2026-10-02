@@ -1,10 +1,12 @@
 """
 Unit tests for UrbanPulse stats.json consistency.
 Verifies that stats.json is the single consistent source of truth across both cities:
-- Class areas sum to the valid AOI area within 0.5%.
-- Card metric values equal the corresponding growth and metric series values.
+- The five land-cover class areas sum to the valid AOI area within 0.5% for all years.
+- The built-up row in class_areas strictly equals the card and growth_series norm_builtup_km2 value.
+- The gate count equals the number of passing gates in the tooltip/quality gate dictionary.
 - Headline 2020-2024 range endpoints exactly equal the min and max of the three estimation methods (raw, cleaned, TLS).
 - Validation table mapped areas match Olofsson weighting inputs.
+- WorldCover 2021 comparison uses the TLS-normalised 2021 estimate and computes accurate differences.
 """
 
 import json
@@ -57,6 +59,83 @@ def test_class_areas_sum_to_aoi(city_stats):
         assert abs(sum_pct - 100.0) < 0.1, (
             f"Class shares sum to {sum_pct:.2f}% instead of 100% for {city} {year}"
         )
+
+
+def test_builtup_class_area_equals_card_value(city_stats):
+    """
+    Asserts that the built-up row in class_areas equals the card value and
+    growth_series norm_builtup_km2 value for all years (2020-2024).
+    """
+    city, data = city_stats
+    class_areas = data.get("class_areas", [])
+    growth_series = data.get("growth_series", [])
+
+    for ca in class_areas:
+        yr = ca["year"]
+        g = next((x for x in growth_series if x["year"] == yr), None)
+        assert g is not None, f"Missing growth_series for year {yr} in {city}"
+        
+        # Class areas built-up area must match TLS-normalised main series
+        assert abs(ca["built_up_km2"] - g["norm_builtup_km2"]) < 0.01, (
+            f"class_areas built_up_km2 ({ca['built_up_km2']}) != norm_builtup_km2 ({g['norm_builtup_km2']}) for {city} {yr}"
+        )
+
+
+def test_gate_count_equals_passing_gates_in_tooltip(city_stats):
+    """
+    Asserts that the gate count in quality_gate equals the number of passing gates
+    in the tooltip dictionary and that all 5 gates are explicitly defined.
+    """
+    city, data = city_stats
+    qg = data.get("quality_gate", {})
+    assert qg, f"Missing quality_gate in stats.json for {city}"
+
+    gates = qg.get("gates", {})
+    assert len(gates) == 5, f"Expected 5 gate criteria in quality_gate.gates for {city}"
+    
+    expected_gate_keys = {"nodata", "scenes_in_window", "volatility", "accuracy", "loss_gain_ratio"}
+    assert set(gates.keys()) == expected_gate_keys, f"Gate keys mismatch for {city}: {set(gates.keys())}"
+
+    passing_gates = [k for k, g in gates.items() if g.get("passed") is True or g.get("status") == "PASS"]
+    actual_pass_count = len(passing_gates)
+
+    assert qg.get("pass_count") == actual_pass_count, (
+        f"pass_count ({qg.get('pass_count')}) != passing gates count ({actual_pass_count}) for {city}"
+    )
+    assert qg.get("total_count") == 5, f"total_count ({qg.get('total_count')}) != 5 for {city}"
+
+    # Summary badge string
+    expected_badge = f"Gate: {actual_pass_count}/5 PASS"
+    assert qg.get("summary_badge") == expected_badge, (
+        f"summary_badge ({qg.get('summary_badge')}) != {expected_badge} for {city}"
+    )
+
+
+def test_worldcover_2021_tls_difference_calculation(city_stats):
+    """
+    Asserts that the WorldCover 2021 card comparison uses the TLS-normalised 2021 value
+    and calculates accurate differences in km2 and %.
+    """
+    city, data = city_stats
+    headline = data.get("headline_2020_2024_expansion", {})
+    assert headline, f"Missing headline expansion in {city}"
+
+    wc_anchor = headline.get("worldcover_2021_anchor_km2")
+    est_2021_norm = headline.get("estimate_2021_norm_km2")
+    diff_km2 = headline.get("estimate_2021_diff_km2")
+    diff_pct = headline.get("estimate_2021_diff_pct")
+
+    assert wc_anchor and est_2021_norm, f"Missing WC anchor or 2021 norm for {city}"
+
+    expected_diff_km2 = round(est_2021_norm - wc_anchor, 2)
+    expected_diff_pct = round((expected_diff_km2 / wc_anchor) * 100.0, 1)
+
+    assert abs(diff_km2 - expected_diff_km2) < 0.05, (
+        f"diff_km2 ({diff_km2}) != expected ({expected_diff_km2}) for {city}"
+    )
+    assert abs(diff_pct - expected_diff_pct) < 0.1, (
+        f"diff_pct ({diff_pct}) != expected ({expected_diff_pct}) for {city}"
+    )
 
 
 def test_headline_range_endpoints_match_three_methods(city_stats):
