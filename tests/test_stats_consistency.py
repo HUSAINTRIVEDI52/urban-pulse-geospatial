@@ -275,3 +275,48 @@ def test_validation_mapped_area_consistency(city_stats):
         adjusted_area = row["adjusted_area_km2"]
         ci_95 = row["ci_95_km2"]
         assert adjusted_area > 0 and ci_95 > 0
+
+
+def test_validation_f1_matches_committed_metrics(city_stats):
+    """
+    Asserts that every validation row in stats.json has an F1 score that matches
+    the canonical committed data/metrics.json within 0.001 tolerance.
+    """
+    city, data = city_stats
+    metrics_path = PROJECT_ROOT / "data" / "metrics.json"
+    assert metrics_path.exists(), f"metrics.json missing at {metrics_path}"
+    with open(metrics_path, "r", encoding="utf-8") as f:
+        canonical_metrics = json.load(f)
+
+    expected_rows = canonical_metrics.get(city, {}).get("loyo_all_points", [])
+    assert len(expected_rows) > 0, f"No expected metrics for {city}"
+
+    val_table = data.get("validation_loyo", {}).get("table", [])
+    assert len(val_table) == len(expected_rows), (
+        f"Validation table row count ({len(val_table)}) != canonical metrics ({len(expected_rows)}) for {city}"
+    )
+
+    for i, row in enumerate(val_table):
+        exp = expected_rows[i]
+        assert row["year"] == exp["year"]
+        assert row["stage"] == exp["stage"]
+        diff_f1 = abs(row["f1_score"] - exp["f1_score"])
+        assert diff_f1 <= 0.001, (
+            f"F1 score {row['f1_score']} for {city} {row['year']} {row['stage']} "
+            f"differs from canonical {exp['f1_score']} by {diff_f1:.4f} (> 0.001 tolerance)"
+        )
+
+
+def test_provenance_block_present(city_stats):
+    """
+    Asserts that stats.json contains a complete provenance block with script,
+    git_sha, input file hashes, and timestamp.
+    """
+    city, data = city_stats
+    prov = data.get("provenance")
+    assert prov is not None, f"Missing provenance block in stats.json for {city}"
+    assert prov.get("script") == "pipeline/export_web.py"
+    assert prov.get("git_sha") is not None
+    assert prov.get("generated_at") is not None
+    assert "input_files" in prov
+

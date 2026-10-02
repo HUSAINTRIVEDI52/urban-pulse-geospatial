@@ -3,6 +3,24 @@
   "aoi_area_km2": 2167.83,
   "pixel_resolution_m": 60.0,
   "pixel_area_km2": 0.0036,
+  "provenance": {
+    "script": "pipeline/export_web.py",
+    "git_sha": "bee94da",
+    "generated_at": "2026-10-02T20:43:02.281203+00:00",
+    "input_files": {
+      "raw_classified_rasters": {
+        "2018": "25ec5cc639ea",
+        "2020": "87b8629d3d42",
+        "2021": "19cf030488d7",
+        "2022": "476b4eb6c068",
+        "2023": "7a0df473efc5",
+        "2024": "27931814b58b"
+      },
+      "train_points_pooled": "b686495704d9",
+      "test_points_pooled": "588085ce7916",
+      "canonical_metrics": "2b9e336a661b"
+    }
+  },
   "analysis_window": {
     "start_year": 2020,
     "end_year": 2024,
@@ -130,108 +148,150 @@
     "note": "Ground-reference labels come from ESA WorldCover 2021 for all validation folds (2018 is evaluated as a temporal fold only).",
     "table": [
       {
+        "year": 2018,
+        "stage": "Raw (Before)",
+        "note": "outside displayed window",
+        "outside_displayed_window": true,
+        "n_samples": 400,
+        "precision": 0.6848,
+        "recall": 0.7326,
+        "f1_score": 0.7079,
+        "mapped_area_km2": 428.67,
+        "adjusted_area_km2": 393.57,
+        "ci_95_km2": 64.89,
+        "ci_lower_km2": 328.68,
+        "ci_upper_km2": 458.46
+      },
+      {
+        "year": 2018,
+        "stage": "TLS Normalized (After)",
+        "note": "outside displayed window",
+        "outside_displayed_window": true,
+        "n_samples": 400,
+        "precision": 0.7416,
+        "recall": 0.7674,
+        "f1_score": 0.7543,
+        "mapped_area_km2": 406.31,
+        "adjusted_area_km2": 403.8,
+        "ci_95_km2": 61.5,
+        "ci_lower_km2": 342.3,
+        "ci_upper_km2": 465.3
+      },
+      {
         "year": 2021,
         "stage": "Raw (Before)",
-        "precision": 0.8124,
-        "recall": 0.8431,
-        "f1_score": 0.8275,
+        "note": null,
+        "outside_displayed_window": false,
+        "n_samples": 400,
+        "precision": 0.8,
+        "recall": 0.7907,
+        "f1_score": 0.7953,
         "mapped_area_km2": 413.61,
-        "adjusted_area_km2": 412.3,
-        "ci_95_km2": 42.15,
-        "ci_lower_km2": 370.15,
-        "ci_upper_km2": 454.45
+        "adjusted_area_km2": 414.91,
+        "ci_95_km2": 65.34,
+        "ci_lower_km2": 349.57,
+        "ci_upper_km2": 480.25
       },
       {
         "year": 2021,
         "stage": "TLS Normalized (After)",
-        "precision": 0.826,
-        "recall": 0.8512,
-        "f1_score": 0.8384,
+        "note": null,
+        "outside_displayed_window": false,
+        "n_samples": 400,
+        "precision": 0.7791,
+        "recall": 0.7791,
+        "f1_score": 0.7791,
         "mapped_area_km2": 407.74,
-        "adjusted_area_km2": 409.8,
-        "ci_95_km2": 39.8,
-        "ci_lower_km2": 370.0,
-        "ci_upper_km2": 449.6
+        "adjusted_area_km2": 378.3,
+        "ci_95_km2": 55.5,
+        "ci_lower_km2": 322.8,
+        "ci_upper_km2": 433.8
       },
       {
         "year": 2024,
         "stage": "Raw (Before)",
-        "precision": 0.835,
-        "recall": 0.861,
-        "f1_score": 0.8478,
+        "note": null,
+        "outside_displayed_window": false,
+        "n_samples": 400,
+        "precision": 0.6893,
+        "recall": 0.8256,
+        "f1_score": 0.7513,
         "mapped_area_km2": 474.02,
-        "adjusted_area_km2": 471.2,
-        "ci_95_km2": 45.1,
-        "ci_lower_km2": 426.1,
-        "ci_upper_km2": 516.3
+        "adjusted_area_km2": 415.44,
+        "ci_95_km2": 67.8,
+        "ci_lower_km2": 347.64,
+        "ci_upper_km2": 483.24
       },
       {
         "year": 2024,
         "stage": "TLS Normalized (After)",
-        "precision": 0.842,
-        "recall": 0.869,
-        "f1_score": 0.8553,
+        "note": null,
+        "outside_displayed_window": false,
+        "n_samples": 400,
+        "precision": 0.6804,
+        "recall": 0.7674,
+        "f1_score": 0.7213,
         "mapped_area_km2": 466.19,
-        "adjusted_area_km2": 468.4,
-        "ci_95_km2": 43.5,
-        "ci_lower_km2": 424.9,
-        "ci_upper_km2": 511.9
+        "adjusted_area_km2": 407.3,
+        "ci_95_km2": 69.0,
+        "ci_lower_km2": 338.3,
+        "ci_upper_km2": 476.3
       }
     ],
     "negative_result": "Negative Result: Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not eliminate year-to-year classification noise; temporal consistency filtering remains the robust operational safeguard."
   },
   "quality_gate": {
     "status": "APPROVED",
+    "overall_status": "APPROVED",
     "passed": true,
     "pass_count": 5,
     "total_count": 5,
     "summary_badge": "Gate: 5/5 PASS",
-    "overall_status": "APPROVED",
     "gates": {
       "nodata": {
-        "name": "NoData Gaps",
+        "name": "Composite NoData Gaps",
         "status": "PASS",
         "value": "0.0%",
-        "threshold": "< 5.0%",
+        "threshold": "<= 5.0%",
         "passed": true
       },
       "scenes_in_window": {
         "name": "Scenes in Window",
         "status": "PASS",
         "value": "4.2 scenes/yr (21 total)",
-        "threshold": ">= 3 scenes/yr",
+        "threshold": ">= 2 scenes/yr",
         "passed": true
       },
       "volatility": {
         "name": "Year-to-Year Volatility",
         "status": "PASS",
         "value": "5.3% (max annual)",
-        "threshold": "< 20.0%",
+        "threshold": "<= 15.0%",
         "passed": true
       },
       "accuracy": {
         "name": "Held-Out Accuracy (LOYO)",
         "status": "PASS",
-        "value": "85.5% F1 (2024)",
-        "threshold": ">= 50.0%",
+        "value": "72.1% F1 (min TLS fold)",
+        "threshold": ">= 70.0%",
         "passed": true
       },
       "loss_gain_ratio": {
         "name": "Loss-to-Gain Ratio (Strata D/B)",
         "status": "PASS",
         "value": "0.002 (0.12 / 60.00 km\u00b2)",
-        "threshold": "< 0.30",
+        "threshold": "<= 0.30",
         "passed": true
       }
     },
     "composite_nodata_pct": 0.0,
     "max_annual_change_pct": 5.3,
-    "heldout_accuracy_pct": 85.53,
+    "heldout_accuracy_pct": 72.1,
     "loss_to_gain_ratio": 0.002
   },
   "ci_status": {
-    "tests_passing": 65,
-    "total_tests": 65,
+    "tests_passing": 83,
+    "total_tests": 83,
     "coverage_pct": 98.4,
     "workflow_url": "https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial/actions",
     "badge_url": "https://img.shields.io/github/actions/workflow/status/HUSAINTRIVEDI52/urban-pulse-geospatial/ci.yml?branch=main&label=CI&logo=github&style=flat-square&color=38bdf8"
