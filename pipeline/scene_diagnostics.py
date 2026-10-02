@@ -1,21 +1,23 @@
 """
 UrbanPulse - Sentinel-2 Scene Diagnostics & Radiometric Level Analysis
-Evaluates every scene used across all multi-year composites (2018-2024):
-1. STAC Metadata: Date, MGRS Tile, s2:processing_baseline, eo:cloud_cover.
-2. Stable-Pixel Median Reflectance: Computes median Red, NIR, SWIR16, and Blue reflectance
-   (after SCL 1-pixel dilated cloud masking and Baseline 04.00 radiometric scaling/offset)
-   over fixed stable pixels (classified as Water or Built-up in >= 6 of 7 years).
-3. Flagging: Flags any scene deviating by > 15% from the all-scene median for the same band.
-4. Export: Saves data/{city}/scene_diagnostics.csv.
+Strict Window (Nov 1 - Feb 28), No Scene Cap, Per-Tile Threshold & Quality Screening:
+1. Window: Strictly Nov 1 to Feb 28/29 (no widening into Oct or March).
+2. Archive Gap: 2022 is marked as an archive-gap year (no composite).
+3. STAC Metadata: Date, MGRS Tile, s2:processing_baseline, eo:cloud_cover.
+4. Stable-Pixel Analysis: Computes valid stable-pixel count and median Red, NIR, SWIR16,
+   and Blue reflectance (after SCL 1-pixel dilated cloud masking and radiometric scaling)
+   over fixed stable pixels (Water or Built-up in >= 6 of 7 years).
+5. Quality Filtering & Dropping:
+   - Drops any scene with < 50% of its tile's median valid stable-pixel count.
+   - Drops any scene whose stable-pixel median differs > 25% from its own tile's median in any band.
+6. Export: Saves data/{city}/scene_diagnostics.csv.
 """
 
 import argparse
 import calendar
 import csv
-import json
 import time
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -40,23 +42,16 @@ def load_city_config(city: str, config_path: str | Path | None = None) -> dict[s
         return yaml.safe_load(f)
 
 
-def get_dry_season_range(year: int, config: dict[str, Any], widen_months: int = 0) -> str:
-    """Constructs ISO 8601 dry season date range from YAML config."""
-    temporal_cfg = config.get("temporal", {})
-    dry_season_cfg = temporal_cfg.get("dry_season", {})
+def get_strict_dry_season_range(year: int) -> str:
+    """
+    Constructs strict ISO 8601 dry season date range: Nov 1 (Y-1) to Feb 28/29 (Y).
+    Never widens.
+    """
+    start_year = year - 1
+    start_date = f"{start_year:04d}-11-01"
 
-    start_month = dry_season_cfg.get("start_month", 11)
-    end_month = dry_season_cfg.get("end_month", 2)
-
-    if widen_months > 0:
-        start_month = max(1, start_month - widen_months)
-        end_month = min(12, end_month + widen_months)
-
-    start_year = year - 1 if start_month > end_month else year
-    start_date = f"{start_year:04d}-{start_month:02d}-01"
-
-    _, last_day = calendar.monthrange(year, end_month)
-    end_date = f"{year:04d}-{end_month:02d}-{last_day:02d}"
+    _, last_day = calendar.monthrange(year, 2)
+    end_date = f"{year:04d}-02-{last_day:02d}"
 
     return f"{start_date}/{end_date}"
 
@@ -73,7 +68,7 @@ def scale_and_harmonize_dn(
     if scale is not None and offset is not None:
         reflectance = raw_dn * scale + offset
     else:
-        # Sentinel-2 Processing Baseline 04.00 shift (+1000 DN) effective 2022-01-25
+        # Fallback date check for Baseline 04.00
         if date_str >= "2022-01-25":
             reflectance = (raw_dn - 1000.0) / 10000.0
         else:
@@ -88,14 +83,15 @@ def compute_stable_pixels_mask(
     data_dir: Path,
 ) -> tuple[np.ndarray, dict[str, Any]]:
     """
-    Computes a fixed 2D boolean mask of stable pixels across 2018-2024:
+    Computes a fixed 2D boolean mask of stable pixels across multi-year series:
     Pixels classified as Built-up (class 1) or Water (class 3) in at least 6 of the 7 years.
     """
     city_key = city.lower()
     classes_dict = {}
     profile = None
+    eval_years = [2018, 2019, 2020, 2021, 2022, 2023, 2024]
 
-    for y in years:
+    for y in eval_years:
         candidates = [
             data_dir / city_key / "clean" / f"{city_key}_{y}_classified.tif",
             data_dir / "clean" / f"{city_key}_{y}_classified.tif",
@@ -104,59 +100,51 @@ def compute_stable_pixels_mask(
         ]
         chosen = next((p for p in candidates if p.exists()), None)
         if not chosen:
-            raise FileNotFoundError(f"Missing classified map for {city} in {y}. Looked in: {[str(c) for c in candidates]}")
+            raise FileNotFoundError(
+                f"Missing classified map for {city} in {y}. Looked in: {[str(c) for c in candidates]}"
+            )
 
         with rasterio.open(chosen) as src:
             classes_dict[y] = src.read(1)
             if profile is None:
                 profile = src.profile
 
-    first_year = years[0]
+    first_year = eval_years[0]
     shape = classes_dict[first_year].shape
     stable_counts = np.zeros(shape, dtype=np.int32)
 
-    for y in years:
+    for y in eval_years:
         arr = classes_dict[y]
         # Water = 3, Built-up = 1
         stable_counts += ((arr == 1) | (arr == 3)).astype(np.int32)
 
-    min_stable_years = max(1, len(years) - 1)  # 6 of 7 years
+    min_stable_years = max(1, len(eval_years) - 1)  # 6 of 7 years
     stable_mask = stable_counts >= min_stable_years
 
     return stable_mask, profile
 
 
-def query_year_scenes(
+def query_strict_year_scenes(
     city: str,
     year: int,
     config: dict[str, Any],
-    data_dir: Path,
-    scenes_per_tile: int = 10,
-    max_cloud_cover: float = 10.0,
+    max_cloud_cover: float = 20.0,
 ) -> list[Any]:
-    """Queries and returns the exact STAC items selected for a given year's composite."""
-    city_key = city.lower()
+    """
+    Queries all Sentinel-2 L2A STAC scenes within strict Nov 1 - Feb 28 window.
+    No 20-scene cap.
+    """
+    if year == 2022:
+        return []
+
     bbox = config["spatial"]["bbox"]
-    stac_url = config.get("stac", {}).get("earth_search_url", "https://earth-search.aws.element84.com/v1")
-    collection = config.get("stac", {}).get("collections", {}).get("sentinel_2", "sentinel-2-c1-l2a")
+    stac_url = config.get("stac", {}).get(
+        "earth_search_url", "https://earth-search.aws.element84.com/v1"
+    )
+    collection = config.get("stac", {}).get(
+        "collections", {}).get("sentinel_2", "sentinel-2-c1-l2a")
 
-    # Check if widening was recorded in composite_report_{year}.json
-    widen_months = 0
-    report_candidates = [
-        data_dir / city_key / f"composite_report_{year}.json",
-        data_dir / f"{city_key}_{year}_composite_report.json",
-    ]
-    for rp in report_candidates:
-        if rp.exists():
-            try:
-                with open(rp, encoding="utf-8") as f:
-                    rdata = json.load(f)
-                    widen_months = int(rdata.get("window_widened_months", 0))
-                    break
-            except Exception:
-                pass
-
-    dt_range = get_dry_season_range(year, config, widen_months=widen_months)
+    dt_range = get_strict_dry_season_range(year)
     client = Client.open(stac_url)
 
     search = client.search(
@@ -167,40 +155,127 @@ def query_year_scenes(
     )
     items = list(search.items())
 
-    if not items or len(items) < 2:
-        search = client.search(
-            collections=[collection],
-            bbox=bbox,
-            datetime=dt_range,
-            query={"eo:cloud_cover": {"lt": max_cloud_cover + 15.0}},
+    items.sort(
+        key=lambda it: (
+            it.datetime.strftime("%Y-%m-%d") if it.datetime else str(it.properties.get("datetime"))[:10],
+            float(it.properties.get("eo:cloud_cover", 100.0)),
         )
-        items = list(search.items())
+    )
+    return items
 
-    if not items and widen_months < 2:
-        dt_range = get_dry_season_range(year, config, widen_months=widen_months + 1)
-        search = client.search(
-            collections=[collection],
-            bbox=bbox,
-            datetime=dt_range,
-            query={"eo:cloud_cover": {"lt": max_cloud_cover + 15.0}},
+
+def process_single_scene(
+    item: Any,
+    year: int,
+    city_key: str,
+    profile_bounds: tuple[float, float, float, float],
+    profile_shape: tuple[int, int],
+    stable_mask: np.ndarray,
+) -> dict[str, Any]:
+    """Processes a single STAC item to extract stable pixel medians."""
+    dt_str = item.datetime.strftime("%Y-%m-%d") if item.datetime else str(item.properties.get("datetime"))[:10]
+
+    z = str(item.properties.get("mgrs:utm_zone", ""))
+    b = str(item.properties.get("mgrs:latitude_band", ""))
+    g = str(item.properties.get("mgrs:grid_square", ""))
+    tile_id = f"{z}{b}{g}" if (z and b and g) else item.id.split("_")[1].replace("T", "")
+
+    baseline = str(item.properties.get("s2:processing_baseline", "N/A"))
+    cloud_cover = float(item.properties.get("eo:cloud_cover", 0.0))
+
+    target_bands = ["red", "nir", "swir16", "blue"]
+    dilation_structure = np.ones((3, 3), dtype=bool)
+
+    gdal_env = {
+        "AWS_NO_SIGN_REQUEST": "YES",
+        "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
+        "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif",
+        "VSI_CACHE": "TRUE",
+        "VSI_CACHE_SIZE": "50000000",
+        "GDAL_HTTP_MAX_RETRY": "5",
+        "GDAL_HTTP_RETRY_DELAY": "1",
+    }
+
+    band_arrays = {}
+    for b_name in target_bands + ["scl"]:
+        if b_name not in item.assets:
+            continue
+        asset_href = item.assets[b_name].href
+        resampling_type = Resampling.nearest if b_name == "scl" else Resampling.bilinear
+        for attempt in range(1, 4):
+            try:
+                with rasterio.Env(**gdal_env):
+                    with rasterio.open(asset_href) as src:
+                        win = from_bounds(*profile_bounds, transform=src.transform)
+                        arr = src.read(1, window=win, out_shape=profile_shape, resampling=resampling_type)
+                        band_arrays[b_name] = arr.astype(np.float32)
+                        break
+            except Exception:
+                if attempt < 3:
+                    time.sleep(0.5)
+
+    # Cloud masking
+    scl_arr = band_arrays.get("scl")
+    if scl_arr is not None:
+        cloud_mask = (
+            (scl_arr == 0)
+            | (scl_arr == 1)
+            | (scl_arr == 3)
+            | (scl_arr == 8)
+            | (scl_arr == 9)
+            | (scl_arr == 10)
+            | (scl_arr == 11)
+            | np.isnan(scl_arr)
         )
-        items = list(search.items())
+        dilated_mask = scipy.ndimage.binary_dilation(cloud_mask, structure=dilation_structure, iterations=1)
+    else:
+        dilated_mask = np.zeros(stable_mask.shape, dtype=bool)
 
-    # Group by MGRS tile and sort by cloud cover
-    tile_dict: dict[str, list[Any]] = {}
-    for item in items:
-        z = str(item.properties.get("mgrs:utm_zone", ""))
-        b = str(item.properties.get("mgrs:latitude_band", ""))
-        g = str(item.properties.get("mgrs:grid_square", ""))
-        tile_id = f"{z}{b}{g}" if (z and b and g) else item.id.split("_")[1].replace("T", "")
-        tile_dict.setdefault(tile_id, []).append(item)
+    scene_medians = {}
+    valid_counts = []
 
-    selected_items = []
-    for tile_id, t_items in tile_dict.items():
-        t_items.sort(key=lambda it: it.properties.get("eo:cloud_cover", 100.0))
-        selected_items.extend(t_items[:scenes_per_tile])
+    for b_name in target_bands:
+        raw_band = band_arrays.get(b_name)
+        if raw_band is None:
+            scene_medians[b_name] = None
+            continue
 
-    return selected_items
+        scale = None
+        offset = None
+        if b_name in item.assets:
+            extra = item.assets[b_name].extra_fields
+            raster_bands = extra.get("raster:bands", [])
+            if raster_bands and isinstance(raster_bands, list) and len(raster_bands) > 0:
+                scale = raster_bands[0].get("scale")
+                offset = raster_bands[0].get("offset")
+
+        scaled = scale_and_harmonize_dn(raw_band, item_datetime=dt_str, scale=scale, offset=offset)
+        scaled[dilated_mask] = np.nan
+        scaled[np.isnan(raw_band) | (raw_band <= 0)] = np.nan
+
+        valid_mask = stable_mask & np.isfinite(scaled) & (scaled > 0)
+        valid_px = scaled[valid_mask]
+        valid_counts.append(int(np.sum(valid_mask)))
+
+        med_val = float(np.nanmedian(valid_px)) if len(valid_px) > 0 else None
+        scene_medians[b_name] = round(med_val, 4) if med_val is not None else None
+
+    valid_stable_px = int(np.median(valid_counts)) if valid_counts else 0
+
+    return {
+        "city": city_key,
+        "year": year,
+        "scene_id": item.id,
+        "date": dt_str,
+        "mgrs_tile": tile_id,
+        "processing_baseline": baseline,
+        "cloud_cover_pct": round(cloud_cover, 2),
+        "valid_stable_pixels": valid_stable_px,
+        "stable_median_red": scene_medians.get("red"),
+        "stable_median_nir": scene_medians.get("nir"),
+        "stable_median_swir16": scene_medians.get("swir16"),
+        "stable_median_blue": scene_medians.get("blue"),
+    }
 
 
 def process_scene_diagnostics_for_city(
@@ -208,208 +283,181 @@ def process_scene_diagnostics_for_city(
     years: list[int] | None = None,
     data_dir: str | Path = "data",
     config_path: str | Path | None = None,
-    flag_threshold: float = 0.15,
+    max_cloud_cover: float = 20.0,
+    max_workers: int = 16,
 ) -> list[dict[str, Any]]:
     """
-    Computes scene-by-scene diagnostics across all composite scenes.
+    Evaluates every Sentinel-2 scene in the strict Nov 1 - Feb 28 window (2018-2024, excluding 2022).
+    Applies per-tile median benchmarking and drops anomalous or cloud-depleted scenes.
     """
     if years is None:
-        years = list(range(2018, 2025))
+        years = [2018, 2019, 2020, 2021, 2022, 2023, 2024]
 
     data_path = Path(data_dir)
     config = load_city_config(city=city, config_path=config_path)
     city_key = city.lower()
     city_name = config.get("city", {}).get("name", city.capitalize())
-    bbox = config["spatial"]["bbox"]
 
-    print("=" * 125, flush=True)
-    print(f"[*] UrbanPulse Scene Diagnostics & Radiometric Level Analysis: {city_name} ({years[0]}-{years[-1]})", flush=True)
-    print(f"    - Bounding Box      : {bbox}", flush=True)
-    print(f"    - Stable Mask Filter: Built-up [1] or Water [3] in >= {len(years)-1} of {len(years)} years", flush=True)
-    print(f"    - Flag Threshold    : > {flag_threshold*100:.1f}% deviation from all-scene baseline median", flush=True)
-    print("=" * 125, flush=True)
+    print("=" * 140, flush=True)
+    print(f"[*] UrbanPulse Strict-Window Scene Diagnostics & Tile Quality Screening: {city_name}", flush=True)
+    print(f"    - Strict Window     : Nov 1 to Feb 28/29 (No widening)", flush=True)
+    print(f"    - Scene Cap         : None (All valid in-window scenes evaluated)", flush=True)
+    print(f"    - 2022 Status       : ARCHIVE-GAP YEAR (Skipped / No composite)", flush=True)
+    print(f"    - Stable Mask Filter: Built-up [1] or Water [3] in >= 6 of 7 years", flush=True)
+    print(f"    - Drop Rule 1       : < 50% of tile's median valid stable-pixel count", flush=True)
+    print(f"    - Drop Rule 2       : > 25% deviation from own tile's median reflectance in any band", flush=True)
+    print("=" * 140, flush=True)
 
     # 1. Compute stable pixels mask
     print("\n[Step 1/3] Computing multi-temporal stable pixel mask...", flush=True)
     stable_mask, profile = compute_stable_pixels_mask(city=city_key, years=years, data_dir=data_path)
     total_px = stable_mask.size
     stable_px = int(np.sum(stable_mask))
-    print(f"[+] Stable pixels: {stable_px:,} / {total_px:,} ({stable_px/total_px*100:.2f}% of metropolitan AOI)", flush=True)
+    print(
+        f"[+] Stable pixels: {stable_px:,} / {total_px:,} ({stable_px/total_px*100:.2f}% of metropolitan AOI)",
+        flush=True,
+    )
 
     profile_bounds = array_bounds(profile["height"], profile["width"], profile["transform"])
     profile_shape = (profile["height"], profile["width"])
 
-    # 2. Process scenes year by year
-    print("\n[Step 2/3] Processing individual scenes and computing stable-pixel median reflectance...", flush=True)
-    requested_assets = ["red", "blue", "nir", "swir16", "scl"]
-    target_bands = ["red", "nir", "swir16", "blue"]
-    dilation_structure = np.ones((3, 3), dtype=bool)
-
-    scene_records = []
+    # 2. Query all scenes across all years
+    print("\n[Step 2/3] Querying strict in-window scenes and processing remote assets in parallel...", flush=True)
+    tasks = []
+    yearly_counts = {}
 
     for year in years:
-        items = query_year_scenes(city=city_key, year=year, config=config, data_dir=data_path)
-        if not items:
-            print(f"    [!] Warning: No STAC items found for {city_name} {year}", flush=True)
+        if year == 2022:
+            yearly_counts[year] = {"scenes": 0, "dates": 0, "dates_list": []}
             continue
 
-        print(f"  -> Year {year}: Evaluating {len(items)} scenes...", flush=True)
-
-        gdal_env = {
-            "AWS_NO_SIGN_REQUEST": "YES",
-            "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
-            "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif",
-            "VSI_CACHE": "TRUE",
-            "VSI_CACHE_SIZE": "50000000",
-            "GDAL_HTTP_MAX_RETRY": "5",
-            "GDAL_HTTP_RETRY_DELAY": "1",
+        items = query_strict_year_scenes(
+            city=city_key, year=year, config=config, max_cloud_cover=max_cloud_cover
+        )
+        dates_list = sorted(list({
+            it.datetime.strftime("%Y-%m-%d") if it.datetime else str(it.properties.get("datetime"))[:10]
+            for it in items
+        }))
+        yearly_counts[year] = {
+            "scenes": len(items),
+            "dates": len(dates_list),
+            "dates_list": dates_list,
         }
 
-        def fetch_band_data(item_asset_tuple):
-            b_name, asset_href, resampling_type = item_asset_tuple
-            for attempt in range(1, 4):
-                try:
-                    with rasterio.Env(**gdal_env):
-                        with rasterio.open(asset_href) as src:
-                            win = from_bounds(*profile_bounds, transform=src.transform)
-                            arr = src.read(1, window=win, out_shape=profile_shape, resampling=resampling_type)
-                            return b_name, arr.astype(np.float32)
-                except Exception as e:
-                    if attempt < 3:
-                        time.sleep(1.5)
-                    else:
-                        print(f"       [!] Failed reading {b_name} from {asset_href}: {e}", flush=True)
-                        return b_name, None
+        print(
+            f"  -> Year {year}: Found {len(items)} scenes across {len(dates_list)} distinct dates ({get_strict_dry_season_range(year)})",
+            flush=True,
+        )
 
-        for t_idx, item in enumerate(items):
-            dt_str = item.datetime.strftime("%Y-%m-%d") if item.datetime else str(item.properties.get("datetime"))[:10]
+        for it in items:
+            tasks.append((it, year))
 
-            z = str(item.properties.get("mgrs:utm_zone", ""))
-            b = str(item.properties.get("mgrs:latitude_band", ""))
-            g = str(item.properties.get("mgrs:grid_square", ""))
-            tile_id = f"{z}{b}{g}" if (z and b and g) else item.id.split("_")[1].replace("T", "")
+    print(f"\n[+] Executing {len(tasks)} scene evaluations using {max_workers} concurrent threads...", flush=True)
 
-            baseline = str(item.properties.get("s2:processing_baseline", "N/A"))
-            cloud_cover = float(item.properties.get("eo:cloud_cover", 0.0))
+    raw_scene_records = []
+    executor = ThreadPoolExecutor(max_workers=max_workers)
+    try:
+        futures = {
+            executor.submit(
+                process_single_scene,
+                item=it,
+                year=yr,
+                city_key=city_key,
+                profile_bounds=profile_bounds,
+                profile_shape=profile_shape,
+                stable_mask=stable_mask,
+            ): it.id
+            for it, yr in tasks
+        }
+        done_count = 0
+        for f in as_completed(futures):
+            try:
+                res = f.result()
+                raw_scene_records.append(res)
+            except Exception as exc:
+                print(f"[!] Scene evaluation failed: {exc}", flush=True)
+            done_count += 1
+            if done_count % 10 == 0 or done_count == len(tasks):
+                print(f"    - Processed {done_count:>3}/{len(tasks)} scenes...", flush=True)
+    finally:
+        executor.shutdown(wait=False, cancel_futures=True)
 
-            band_tasks = []
-            for b_name in target_bands:
-                if b_name in item.assets:
-                    band_tasks.append((b_name, item.assets[b_name].href, Resampling.bilinear))
-            if "scl" in item.assets:
-                band_tasks.append(("scl", item.assets["scl"].href, Resampling.nearest))
+    # Sort records deterministically by year, date, tile
+    raw_scene_records.sort(key=lambda r: (r.get("year", 0), r.get("date", ""), r.get("mgrs_tile", ""), r.get("scene_id", "")))
 
-            band_arrays = {}
-            with ThreadPoolExecutor(max_workers=min(len(band_tasks), 6)) as pool:
-                for b_name, arr in pool.map(fetch_band_data, band_tasks):
-                    if arr is not None:
-                        band_arrays[b_name] = arr
+    # 3. Compute Per-Tile Medians and Apply Dropping Rules
+    print("\n[Step 3/3] Calculating per-tile medians and screening for dropped scenes...", flush=True)
+    target_bands = ["red", "nir", "swir16", "blue"]
 
-            # Build SCL cloud mask
-            scl_arr = band_arrays.get("scl")
-            if scl_arr is not None:
-                cloud_mask = (
-                    (scl_arr == 0)
-                    | (scl_arr == 1)
-                    | (scl_arr == 3)
-                    | (scl_arr == 8)
-                    | (scl_arr == 9)
-                    | (scl_arr == 10)
-                    | (scl_arr == 11)
-                    | np.isnan(scl_arr)
-                )
-                dilated_mask = scipy.ndimage.binary_dilation(cloud_mask, structure=dilation_structure, iterations=1)
-            else:
-                dilated_mask = np.zeros(stable_mask.shape, dtype=bool)
+    tile_groups: dict[str, list[dict[str, Any]]] = {}
+    for r in raw_scene_records:
+        tile_groups.setdefault(r["mgrs_tile"], []).append(r)
 
-            scene_medians = {}
+    tile_stats = {}
+    for t_id, t_records in tile_groups.items():
+        valid_counts = [r["valid_stable_pixels"] for r in t_records if r["valid_stable_pixels"] > 0]
+        tile_med_valid = float(np.median(valid_counts)) if valid_counts else 0.0
 
-            for b_name in target_bands:
-                raw_band = band_arrays.get(b_name)
-                if raw_band is None:
-                    scene_medians[b_name] = np.nan
-                    continue
-
-                scale = None
-                offset = None
-                if b_name in item.assets:
-                    extra = item.assets[b_name].extra_fields
-                    raster_bands = extra.get("raster:bands", [])
-                    if raster_bands and isinstance(raster_bands, list) and len(raster_bands) > 0:
-                        scale = raster_bands[0].get("scale")
-                        offset = raster_bands[0].get("offset")
-
-                scaled = scale_and_harmonize_dn(raw_band, item_datetime=dt_str, scale=scale, offset=offset)
-                scaled[dilated_mask] = np.nan
-                scaled[np.isnan(raw_band) | (raw_band <= 0)] = np.nan
-
-                # Compute median over valid stable pixels
-                valid_stable = scaled[stable_mask & np.isfinite(scaled)]
-                if len(valid_stable) > 0:
-                    med_val = float(np.nanmedian(valid_stable))
-                else:
-                    med_val = np.nan
-
-                scene_medians[b_name] = med_val
-
-            r_val = f"{scene_medians['red']:.4f}" if np.isfinite(scene_medians['red']) else "N/A"
-            n_val = f"{scene_medians['nir']:.4f}" if np.isfinite(scene_medians['nir']) else "N/A"
-            s_val = f"{scene_medians['swir16']:.4f}" if np.isfinite(scene_medians['swir16']) else "N/A"
-            b_val = f"{scene_medians['blue']:.4f}" if np.isfinite(scene_medians['blue']) else "N/A"
-
-            print(
-                f"     [{t_idx+1:>2}/{len(items):>2}] {dt_str} ({tile_id:<5}) Baseline={baseline:<5} Cloud={cloud_cover:>5.2f}% -> Medians: R={r_val} N={n_val} S={s_val} B={b_val}",
-                flush=True,
-            )
-
-            scene_records.append({
-                "city": city_key,
-                "year": year,
-                "scene_id": item.id,
-                "date": dt_str,
-                "mgrs_tile": tile_id,
-                "processing_baseline": baseline,
-                "cloud_cover_pct": round(cloud_cover, 2),
-                "stable_median_red": round(scene_medians["red"], 4) if np.isfinite(scene_medians["red"]) else None,
-                "stable_median_nir": round(scene_medians["nir"], 4) if np.isfinite(scene_medians["nir"]) else None,
-                "stable_median_swir16": round(scene_medians["swir16"], 4) if np.isfinite(scene_medians["swir16"]) else None,
-                "stable_median_blue": round(scene_medians["blue"], 4) if np.isfinite(scene_medians["blue"]) else None,
-            })
-
-    # 3. Compute All-Scene Medians and Flag Anomalies (>15% deviation)
-    print("\n[Step 3/3] Calculating all-scene baselines and flagging anomalies (> 15% threshold)...", flush=True)
-    all_medians = {}
-    for b_name in target_bands:
-        col = f"stable_median_{b_name}"
-        vals = [r[col] for r in scene_records if r[col] is not None]
-        all_medians[b_name] = float(np.median(vals)) if vals else 0.0
-
-    print(f"[+] All-Scene Stable-Pixel Baseline Medians:", flush=True)
-    for b_name in target_bands:
-        print(f"    - {b_name.upper():<7}: {all_medians[b_name]:.4f}", flush=True)
-
-    flagged_count = 0
-    for r in scene_records:
-        flags = []
+        band_tile_medians = {}
         for b_name in target_bands:
             col = f"stable_median_{b_name}"
-            val = r[col]
-            base_val = all_medians[b_name]
-            flag_key = f"flag_{b_name}"
-            if val is not None and base_val > 0:
-                diff_pct = (val - base_val) / base_val
-                if abs(diff_pct) > flag_threshold:
-                    r[flag_key] = f"FLAG ({diff_pct*100:+.1f}%)"
-                    flags.append(f"{b_name} ({diff_pct*100:+.1f}%)")
-                else:
-                    r[flag_key] = "OK"
-            else:
-                r[flag_key] = "N/A"
+            vals = [r[col] for r in t_records if r[col] is not None and np.isfinite(r[col])]
+            band_tile_medians[b_name] = float(np.median(vals)) if vals else 0.0
 
-        r["flagged"] = "FLAGGED" if len(flags) > 0 else "OK"
-        r["flag_details"] = "; ".join(flags) if flags else "Within ±15%"
-        if r["flagged"] == "FLAGGED":
-            flagged_count += 1
+        tile_stats[t_id] = {
+            "tile_median_valid_count": tile_med_valid,
+            "band_medians": band_tile_medians,
+        }
+
+    print("[+] Computed Per-Tile Medians:")
+    for t_id, t_info in tile_stats.items():
+        print(f"    - Tile {t_id:<6}: Median Valid Stable Pixels = {t_info['tile_median_valid_count']:,.0f}")
+        for b_name in target_bands:
+            print(f"                   Median {b_name.upper():<7} = {t_info['band_medians'][b_name]:.4f}")
+
+    # Evaluate dropping criteria
+    dropped_scenes = []
+    final_records = []
+
+    for r in raw_scene_records:
+        t_id = r["mgrs_tile"]
+        t_info = tile_stats[t_id]
+        tile_med_valid = t_info["tile_median_valid_count"]
+
+        r["tile_median_valid_count"] = int(tile_med_valid)
+        for b_name in target_bands:
+            r[f"tile_median_{b_name}"] = round(t_info["band_medians"][b_name], 4)
+
+        drop_reasons = []
+
+        # Drop Rule 1: < 50% of tile median valid count
+        if tile_med_valid > 0 and r["valid_stable_pixels"] < (0.50 * tile_med_valid):
+            pct_of_med = (r["valid_stable_pixels"] / tile_med_valid) * 100.0
+            drop_reasons.append(
+                f"Valid stable pixels ({r['valid_stable_pixels']:,}) < 50% of tile median ({tile_med_valid:,.0f}) [{pct_of_med:.1f}%]"
+            )
+
+        # Drop Rule 2: > 25% deviation from own tile's median in any band
+        band_devs = []
+        for b_name in target_bands:
+            val = r[f"stable_median_{b_name}"]
+            b_med = t_info["band_medians"][b_name]
+            if val is not None and b_med > 0:
+                diff_pct = (val - b_med) / b_med
+                if abs(diff_pct) > 0.25:
+                    drop_reasons.append(f"{b_name} ({diff_pct*100:+.1f}%) > 25% dev from tile median")
+                    band_devs.append(f"{b_name} ({diff_pct*100:+.1f}%)")
+                elif abs(diff_pct) > 0.15:
+                    band_devs.append(f"{b_name} ({diff_pct*100:+.1f}%) [flagged >15%]")
+
+        is_dropped = len(drop_reasons) > 0
+        r["status"] = "DROPPED" if is_dropped else "KEPT"
+        r["drop_reasons"] = "; ".join(drop_reasons) if drop_reasons else "None"
+        r["deviations_summary"] = "; ".join(band_devs) if band_devs else "Within ±15%"
+
+        if is_dropped:
+            dropped_scenes.append(r)
+        final_records.append(r)
 
     # 4. Save CSV
     out_dir = data_path / city_key
@@ -425,16 +473,19 @@ def process_scene_diagnostics_for_city(
         "mgrs_tile",
         "processing_baseline",
         "cloud_cover_pct",
+        "valid_stable_pixels",
+        "tile_median_valid_count",
         "stable_median_red",
         "stable_median_nir",
         "stable_median_swir16",
         "stable_median_blue",
-        "flag_red",
-        "flag_nir",
-        "flag_swir16",
-        "flag_blue",
-        "flagged",
-        "flag_details",
+        "tile_median_red",
+        "tile_median_nir",
+        "tile_median_swir16",
+        "tile_median_blue",
+        "status",
+        "drop_reasons",
+        "deviations_summary",
         "scene_id",
     ]
 
@@ -442,62 +493,61 @@ def process_scene_diagnostics_for_city(
         with open(out_csv, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
             writer.writeheader()
-            for r in scene_records:
+            for r in final_records:
                 writer.writerow(r)
-        print(f"[+] Saved scene diagnostics CSV to: {out_csv.resolve()}", flush=True)
+        print(f"[+] Saved diagnostics CSV: {out_csv.resolve()}", flush=True)
 
-    # 5. Print Formatted Table
-    print("\n" + "=" * 135, flush=True)
-    print(f"{'Year':<5} {'Date':<10} {'Tile':<6} {'Baseline':<9} {'Cloud%':<7} {'Red':<8} {'NIR':<8} {'SWIR16':<8} {'Blue':<8} {'Status':<10} {'Flag Details'}", flush=True)
-    print("-" * 135, flush=True)
-    for r in scene_records:
+    # 5. Print Results Table
+    print("\n" + "=" * 145, flush=True)
+    print(
+        f"{'Year':<5} {'Date':<10} {'Tile':<6} {'Baseline':<9} {'Cloud%':<7} {'ValidPx':<8} {'TileMedPx':<9} {'Red':<7} {'NIR':<7} {'SWIR':<7} {'Blue':<7} {'Status':<8} {'Drop Reasons / Deviations'}",
+        flush=True,
+    )
+    print("-" * 145, flush=True)
+    for r in final_records:
         r_str = f"{r['stable_median_red']:.4f}" if r['stable_median_red'] is not None else "N/A"
         n_str = f"{r['stable_median_nir']:.4f}" if r['stable_median_nir'] is not None else "N/A"
         s_str = f"{r['stable_median_swir16']:.4f}" if r['stable_median_swir16'] is not None else "N/A"
         b_str = f"{r['stable_median_blue']:.4f}" if r['stable_median_blue'] is not None else "N/A"
-        status_str = f"[*] {r['flagged']}" if r['flagged'] == "FLAGGED" else "OK"
-        print(f"{r['year']:<5} {r['date']:<10} {r['mgrs_tile']:<6} {r['processing_baseline']:<9} {r['cloud_cover_pct']:<7.2f} {r_str:<8} {n_str:<8} {s_str:<8} {b_str:<8} {status_str:<10} {r['flag_details']}", flush=True)
-    print("=" * 135, flush=True)
-    print(f"[+] Summary: {len(scene_records)} total scenes analyzed. {flagged_count} scene(s) flagged (> 15% deviation).\n", flush=True)
+        stat_disp = f"[*] {r['status']}" if r["status"] == "DROPPED" else "KEPT"
+        reason_disp = r["drop_reasons"] if r["status"] == "DROPPED" else r["deviations_summary"]
+        print(
+            f"{r['year']:<5} {r['date']:<10} {r['mgrs_tile']:<6} {r['processing_baseline']:<9} {r['cloud_cover_pct']:<7.2f} {r['valid_stable_pixels']:<8} {r['tile_median_valid_count']:<9} {r_str:<7} {n_str:<7} {s_str:<7} {b_str:<7} {stat_disp:<8} {reason_disp}",
+            flush=True,
+        )
+    print("=" * 145, flush=True)
 
-    return scene_records
+    print(f"\n[+] Summary for {city_name}:")
+    print(f"    - Total strict in-window scenes evaluated : {len(final_records)}")
+    print(f"    - Total scenes KEPT                       : {len(final_records) - len(dropped_scenes)}")
+    print(f"    - Total scenes DROPPED                    : {len(dropped_scenes)}")
+    print(f"    - Yearly In-Window Breakdown (2018-2024):")
+    for y, counts in yearly_counts.items():
+        if y == 2022:
+            print(f"      * {y}: 0 scenes [ARCHIVE-GAP YEAR]")
+        else:
+            print(f"      * {y}: {counts['scenes']} scenes across {counts['dates']} distinct dates")
+
+    return final_records
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="UrbanPulse - Sentinel-2 Scene-by-Scene Diagnostic & Radiometric Verification"
+        description="UrbanPulse - Sentinel-2 Scene Diagnostics & Quality Screening (Strict Window)"
     )
-    parser.add_argument(
-        "--city",
-        type=str,
-        default="ahmedabad",
-        help="Target city key (e.g. ahmedabad, pune)",
-    )
-    parser.add_argument(
-        "--data-dir",
-        type=Path,
-        default=PROJECT_ROOT / "data",
-        help="Path to data directory (default: data)",
-    )
-    parser.add_argument(
-        "--config",
-        type=Path,
-        default=None,
-        help="Path to city YAML config",
-    )
-    parser.add_argument(
-        "--threshold",
-        type=float,
-        default=0.15,
-        help="Flagging threshold fraction (default: 0.15 for 15 percent)",
-    )
+    parser.add_argument("--city", type=str, default="ahmedabad", help="Target city key (e.g. ahmedabad, pune)")
+    parser.add_argument("--data-dir", type=Path, default=PROJECT_ROOT / "data", help="Path to data directory")
+    parser.add_argument("--config", type=Path, default=None, help="Path to city YAML config")
+    parser.add_argument("--max-cloud", type=float, default=20.0, help="Max cloud cover percentage (default: 20.0)")
+    parser.add_argument("--workers", type=int, default=16, help="Parallel worker threads (default: 16)")
 
     args = parser.parse_args()
     process_scene_diagnostics_for_city(
         city=args.city,
         data_dir=args.data_dir,
         config_path=args.config,
-        flag_threshold=args.threshold,
+        max_cloud_cover=args.max_cloud,
+        max_workers=args.workers,
     )
 
 
