@@ -13,7 +13,7 @@
       2023,
       2024
     ],
-    "excluded_years_note": "2018\u20132019 are excluded from the main analysis window due to sparse cloud-free acquisitions in early archive and sensor calibration differences. 2022 is designated 'Provisional' due to the ESA PB04.00 radiometric processing baseline shift."
+    "excluded_years_note": "2018-2019 excluded: too few in-window Sentinel-2 scenes"
   },
   "headline_2020_2024_expansion": {
     "net_growth_range_km2": [
@@ -21,6 +21,25 @@
       84.03
     ],
     "net_growth_range_str": "+53.0 to +84.0 km\u00b2",
+    "net_growth_range_pct": [
+      12.6,
+      21.9
+    ],
+    "net_growth_range_pct_str": "12.6 to 21.9 %",
+    "methods_breakdown": {
+      "tls_norm": {
+        "change_km2": 59.88,
+        "change_pct": 14.7
+      },
+      "raw": {
+        "change_km2": 52.96,
+        "change_pct": 12.6
+      },
+      "clean": {
+        "change_km2": 84.03,
+        "change_pct": 21.9
+      }
+    },
     "worldcover_2021_anchor_km2": 393.73,
     "estimate_2021_range_km2": [
       407.74,
@@ -43,7 +62,7 @@
     },
     {
       "year": 2021,
-      "display_year": "2021 (Ref)",
+      "display_year": "2021",
       "raw_builtup_km2": 413.61,
       "clean_builtup_km2": 414.07,
       "norm_builtup_km2": 407.74,
@@ -55,14 +74,14 @@
     },
     {
       "year": 2022,
-      "display_year": "2022 (Provisional)",
+      "display_year": "2022",
       "raw_builtup_km2": 423.91,
       "clean_builtup_km2": 441.91,
       "norm_builtup_km2": 422.18,
       "band_min_km2": 422.18,
       "band_max_km2": 441.91,
       "band_spread_km2": 19.73,
-      "is_provisional": true,
+      "is_provisional": false,
       "is_reference": false
     },
     {
@@ -184,119 +203,114 @@
     "lint_status": "PASSED",
     "type_check_status": "PASSED"
   },
+  "years": [
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+  ],
   "class_areas": [
     {
-      "year": 2018,
-      "built_up_km2": 428.6736,
-      "vegetation_km2": 549.8532,
-      "water_km2": 60.1056,
-      "agriculture_km2": 1028.4552,
-      "open_land_km2": 100.746,
-      "total_area_km2": 0.0
-    },
-    {
-      "year": 2019,
-      "built_up_km2": 320.382,
-      "vegetation_km2": 113.5188,
-      "water_km2": 24.2856,
-      "agriculture_km2": 1609.5636,
-      "open_land_km2": 100.0836,
-      "total_area_km2": 0.0
-    },
-    {
       "year": 2020,
-      "built_up_km2": 421.056,
-      "vegetation_km2": 432.1404,
-      "water_km2": 129.2616,
-      "agriculture_km2": 1096.0128,
-      "open_land_km2": 89.3628,
-      "total_area_km2": 0.0
+      "built_up_km2": 421.06,
+      "vegetation_km2": 432.14,
+      "water_km2": 129.26,
+      "agriculture_km2": 1096.01,
+      "open_land_km2": 89.36,
+      "total_area_km2": 2167.83
     },
     {
       "year": 2021,
-      "built_up_km2": 413.6076,
-      "vegetation_km2": 465.0372,
-      "water_km2": 48.0564,
-      "agriculture_km2": 1181.286,
-      "open_land_km2": 59.8464,
-      "total_area_km2": 0.0
+      "built_up_km2": 413.61,
+      "vegetation_km2": 465.04,
+      "water_km2": 48.06,
+      "agriculture_km2": 1181.29,
+      "open_land_km2": 59.85,
+      "total_area_km2": 2167.83
     },
     {
       "year": 2022,
-      "built_up_km2": 423.9072,
-      "vegetation_km2": 298.3356,
-      "water_km2": 28.8072,
-      "agriculture_km2": 1382.3496,
-      "open_land_km2": 34.434,
-      "total_area_km2": 0.0
+      "built_up_km2": 423.91,
+      "vegetation_km2": 298.34,
+      "water_km2": 28.81,
+      "agriculture_km2": 1382.35,
+      "open_land_km2": 34.43,
+      "total_area_km2": 2167.83
     },
     {
       "year": 2023,
-      "built_up_km2": 504.4212,
-      "vegetation_km2": 430.0524,
-      "water_km2": 71.2548,
-      "agriculture_km2": 1053.2916,
-      "open_land_km2": 108.8136,
-      "total_area_km2": 0.0
+      "built_up_km2": 504.42,
+      "vegetation_km2": 430.05,
+      "water_km2": 71.25,
+      "agriculture_km2": 1053.29,
+      "open_land_km2": 108.81,
+      "total_area_km2": 2167.83
     },
     {
       "year": 2024,
-      "built_up_km2": 474.0156,
-      "vegetation_km2": 288.4392,
-      "water_km2": 41.4288,
-      "agriculture_km2": 1298.7684,
-      "open_land_km2": 65.1816,
-      "total_area_km2": 0.0
+      "built_up_km2": 474.02,
+      "vegetation_km2": 288.44,
+      "water_km2": 41.43,
+      "agriculture_km2": 1298.77,
+      "open_land_km2": 65.18,
+      "total_area_km2": 2167.83
     }
   ],
   "metrics": [
     {
-      "year": 2018,
-      "builtup_km2": 428.67,
-      "shannon_entropy": 0.9036,
-      "core_share_pct": 31.87,
-      "periphery_share_pct": 19.55
-    },
-    {
-      "year": 2019,
-      "builtup_km2": 320.38,
-      "shannon_entropy": 0.9229,
-      "core_share_pct": 27.56,
-      "periphery_share_pct": 23.87
-    },
-    {
       "year": 2020,
       "builtup_km2": 421.06,
+      "annual_growth_pct": 31.42,
+      "cagr_pct": -0.89,
       "shannon_entropy": 0.9282,
+      "core_builtup_km2": 94.37,
       "core_share_pct": 26.72,
+      "periphery_builtup_km2": 88.81,
       "periphery_share_pct": 25.15
     },
     {
       "year": 2021,
       "builtup_km2": 413.61,
+      "annual_growth_pct": -1.77,
+      "cagr_pct": -1.19,
       "shannon_entropy": 0.9354,
+      "core_builtup_km2": 95.87,
       "core_share_pct": 25.33,
+      "periphery_builtup_km2": 102.71,
       "periphery_share_pct": 27.13
     },
     {
       "year": 2022,
       "builtup_km2": 423.91,
+      "annual_growth_pct": 2.49,
+      "cagr_pct": -0.28,
       "shannon_entropy": 0.9423,
+      "core_builtup_km2": 96.66,
       "core_share_pct": 24.07,
+      "periphery_builtup_km2": 117.29,
       "periphery_share_pct": 29.2
     },
     {
       "year": 2023,
       "builtup_km2": 504.42,
+      "annual_growth_pct": 18.99,
+      "cagr_pct": 3.31,
       "shannon_entropy": 0.9477,
+      "core_builtup_km2": 97.69,
       "core_share_pct": 22.71,
+      "periphery_builtup_km2": 134.5,
       "periphery_share_pct": 31.27
     },
     {
       "year": 2024,
       "builtup_km2": 474.02,
+      "annual_growth_pct": -6.03,
+      "cagr_pct": 1.69,
       "shannon_entropy": 0.9469,
+      "core_builtup_km2": 97.37,
       "core_share_pct": 22.92,
+      "periphery_builtup_km2": 131.44,
       "periphery_share_pct": 30.94
     }
   ],
@@ -751,5 +765,81 @@
         "builtup_pct": 8.16
       }
     ]
+  },
+  "transitions": {
+    "2018_2024": {
+      "Built-up (2024)": {
+        "Built-up (2018)": 293.5548,
+        "Vegetation (2018)": 31.9392,
+        "Water (2018)": 2.9124,
+        "Agriculture (2018)": 81.1368,
+        "Open land (2018)": 48.5208
+      },
+      "Vegetation (2024)": {
+        "Built-up (2018)": 0.0,
+        "Vegetation (2018)": 194.6448,
+        "Water (2018)": 6.9156,
+        "Agriculture (2018)": 92.124,
+        "Open land (2018)": 7.0164
+      },
+      "Water (2024)": {
+        "Built-up (2018)": 0.0,
+        "Vegetation (2018)": 3.186,
+        "Water (2018)": 30.0528,
+        "Agriculture (2018)": 7.74,
+        "Open land (2018)": 1.7352
+      },
+      "Agriculture (2024)": {
+        "Built-up (2018)": 0.0,
+        "Vegetation (2018)": 325.4256,
+        "Water (2018)": 21.9564,
+        "Agriculture (2018)": 909.5832,
+        "Open land (2018)": 45.684
+      },
+      "Open land (2024)": {
+        "Built-up (2018)": 0.0,
+        "Vegetation (2018)": 10.4832,
+        "Water (2018)": 2.322,
+        "Agriculture (2018)": 26.0676,
+        "Open land (2018)": 24.8328
+      }
+    },
+    "2020_2024": {
+      "Built-up (2024)": {
+        "Built-up (2020)": 360.864,
+        "Vegetation (2020)": 25.3152,
+        "Water (2020)": 1.9296,
+        "Agriculture (2020)": 64.998,
+        "Open land (2020)": 20.9952
+      },
+      "Vegetation (2024)": {
+        "Built-up (2020)": 11.4948,
+        "Vegetation (2020)": 196.4916,
+        "Water (2020)": 4.2552,
+        "Agriculture (2020)": 185.292,
+        "Open land (2020)": 6.606
+      },
+      "Water (2024)": {
+        "Built-up (2020)": 2.916,
+        "Vegetation (2020)": 5.0076,
+        "Water (2020)": 27.81,
+        "Agriculture (2020)": 8.0064,
+        "Open land (2020)": 2.556
+      },
+      "Agriculture (2024)": {
+        "Built-up (2020)": 34.3404,
+        "Vegetation (2020)": 231.552,
+        "Water (2020)": 7.4016,
+        "Agriculture (2020)": 875.9807999999999,
+        "Open land (2020)": 39.492
+      },
+      "Open land (2024)": {
+        "Built-up (2020)": 6.3504,
+        "Vegetation (2020)": 6.7752,
+        "Water (2020)": 0.9252,
+        "Agriculture (2020)": 24.5376,
+        "Open land (2020)": 15.9408
+      }
+    }
   }
 }

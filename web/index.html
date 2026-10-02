@@ -231,6 +231,79 @@
       border-radius: 2px;
     }
 
+    .info-link-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: var(--accent-cyan);
+      text-decoration: none;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .info-link-btn:hover {
+      background: var(--accent-cyan);
+      color: #0f172a;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+      transform: scale(1.1);
+    }
+
+    .tooltip-container {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      cursor: help;
+    }
+
+    .tooltip-popup {
+      visibility: hidden;
+      opacity: 0;
+      width: 270px;
+      background: #0f172a;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #f8fafc;
+      text-align: left;
+      border-radius: 10px;
+      padding: 10px 12px;
+      position: absolute;
+      z-index: 100;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+      transition: opacity 0.2s, visibility 0.2s;
+      pointer-events: none;
+      font-size: 11px;
+      line-height: 1.45;
+      font-weight: normal;
+    }
+
+    .tooltip-popup::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #0f172a transparent transparent transparent;
+    }
+
+    .tooltip-container:hover .tooltip-popup,
+    .tooltip-container:focus-within .tooltip-popup {
+      visibility: visible;
+      opacity: 1;
+    }
+
     .negative-result-card {
       background: rgba(239, 68, 68, 0.1);
       border: 1px solid rgba(239, 68, 68, 0.35);
@@ -1443,38 +1516,64 @@
 
       <!-- Analysis Window 2020-2024 Framing Note -->
       <div class="note-box">
-        <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--accent-cyan);">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-          Analysis Window: 2020–2024
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--accent-cyan);">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            Analysis Window: 2020–2024
+          </div>
+          <a href="./report/#limitations" target="_blank" rel="noopener" class="info-link-btn" title="View Limitations in Project Report" aria-label="Limitations in Report">i</a>
         </div>
         <div id="analysis-note-text" style="font-size: 11px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4;">
-          2018–2019 are excluded from the main analysis window due to sparse cloud-free acquisitions and sensor calibration differences. 2022 is designated <em>Provisional</em> (ESA PB04.00 baseline shift).
+          2018-2019 excluded: too few in-window Sentinel-2 scenes.
         </div>
       </div>
       
       <!-- Headline & Sprawl Metrics Grid -->
       <div class="metrics-grid">
-        <div class="metric-card" style="grid-column: span 2; border-color: rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08);">
-          <div class="metric-label">2020–2024 Net Urban Expansion</div>
-          <div id="metric-expansion-val" class="metric-value" style="font-size: 22px; color: #34d399;">+53.0 to +84.0 km²</div>
+        <!-- 2020-2024 Method Sensitivity Growth Card with Interactive Tooltip -->
+        <div class="metric-card tooltip-container" style="grid-column: span 2; border-color: rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.08); position: relative;">
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <div class="metric-label" style="display: flex; align-items: center; gap: 6px;">
+              <span>2020–2024 Change</span>
+              <span class="info-link-btn" style="width: 15px; height: 15px; font-size: 9px;" title="Hover for method breakdown">i</span>
+            </div>
+            <a href="./report/#validation" target="_blank" rel="noopener" class="info-link-btn" title="View Validation in Project Report" aria-label="Validation in Report">
+              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+            </a>
+          </div>
+          <div id="metric-expansion-val" class="metric-value" style="font-size: 22px; color: #38bdf8;">12.6 to 21.9 %</div>
           <div class="metric-delta">
-            <span style="color: var(--text-secondary);">Spread range across Raw, Cleaned &amp; Normalised series</span>
+            <span id="metric-expansion-sub" style="color: var(--text-secondary);">Spread range across estimation methods</span>
+          </div>
+          <div class="tooltip-popup">
+            <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 6px; font-size: 11.5px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">
+              Method Sensitivity (3 Estimation Approaches)
+            </div>
+            <div style="margin-bottom: 5px;">
+              <strong style="color: #38bdf8;">1. TLS-Normalised (Main):</strong> Cross-calibrated using Total Least Squares regression against pseudo-invariant features across years.
+            </div>
+            <div style="margin-bottom: 5px;">
+              <strong style="color: #10b981;">2. Cleaned:</strong> Enforces temporal consistency (persistence) logic preventing false urban reversal.
+            </div>
+            <div>
+              <strong style="color: #f59e0b;">3. Raw:</strong> Independent annual Random Forest classification without inter-annual calibration.
+            </div>
           </div>
         </div>
 
         <div class="metric-card">
-          <div class="metric-label">WorldCover 2021 Anchor</div>
+          <div class="metric-label">WorldCover 2021 Reference</div>
           <div id="metric-anchor-val" class="metric-value" style="color: var(--accent-purple); font-size: 18px;">393.7 km²</div>
           <div id="metric-anchor-diff" class="metric-delta">
-            <span style="color: var(--text-muted);">vs 2021 Est: 414.1 km²</span>
+            <span style="color: var(--text-muted);">vs 2021 Est: 419.6 km²</span>
           </div>
         </div>
 
         <div class="metric-card">
           <div class="metric-label">Built-up (<span id="metric-cur-year">2024</span>)</div>
-          <div id="metric-builtup-val" class="metric-value" style="font-size: 18px;">468.5 km²</div>
+          <div id="metric-builtup-val" class="metric-value" style="font-size: 18px;">466.2 km²</div>
           <div id="metric-builtup-sub" class="metric-delta">
-            <span style="color: var(--accent-cyan);">Cleaned series</span>
+            <span style="color: var(--accent-cyan);">TLS-Normalised</span>
           </div>
         </div>
 
@@ -1500,7 +1599,7 @@
         <div class="chart-header">
           <div class="chart-title">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
-            Built-up Area Growth &amp; Method Spread (km²)
+            Built-up Area Growth (2020–2024)
           </div>
         </div>
         <div class="chart-canvas-wrapper" style="height: 200px;">
@@ -1508,12 +1607,12 @@
         </div>
         <div class="chart-legend-box">
           <div class="legend-pill">
-            <span class="legend-pill-dot" style="background: #10b981;"></span>
-            <span>Cleaned</span>
+            <span class="legend-pill-dot" style="background: #38bdf8; height: 3px; border-radius: 1px;"></span>
+            <span style="font-weight: 600; color: #38bdf8;">TLS-Normalised (Main)</span>
           </div>
           <div class="legend-pill">
-            <span class="legend-pill-dot" style="background: #38bdf8;"></span>
-            <span>Normalised</span>
+            <span class="legend-pill-dot" style="background: #10b981; border-bottom: 2px dashed #10b981; height: 2px;"></span>
+            <span>Cleaned</span>
           </div>
           <div class="legend-pill">
             <span class="legend-pill-dot" style="background: #f59e0b; border-bottom: 2px dashed #f59e0b; height: 2px;"></span>
@@ -1521,11 +1620,11 @@
           </div>
           <div class="legend-pill">
             <span class="legend-pill-dot" style="background: rgba(56, 189, 248, 0.35);"></span>
-            <span>Sensitivity Band</span>
+            <span>Method Sensitivity</span>
           </div>
           <div class="legend-pill">
             <span class="legend-pill-dot" style="background: #c084fc; border-radius: 50%;"></span>
-            <span>WorldCover Anchor</span>
+            <span>WorldCover 2021 Reference</span>
           </div>
         </div>
       </div>
@@ -1570,6 +1669,7 @@
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Validation: Leave-One-Year-Out
           </div>
+          <a href="./report/#validation" target="_blank" rel="noopener" class="info-link-btn" title="View Validation in Project Report" aria-label="Validation in Report">i</a>
         </div>
         <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">
           Evaluated on <strong>ALL held-out spatial block test points</strong> (N=400/414 pts/yr) using Olofsson et al. (2014) area-weighted stratified estimator.
@@ -1598,14 +1698,22 @@
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <a href="./report/" target="_blank" rel="noopener" style="color: var(--accent-cyan); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>
-            Full Project Report (HTML)
+            Full Project Report
+          </a>
+          <a href="./report/#validation" target="_blank" rel="noopener" style="color: var(--accent-cyan); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+            Validation &amp; Diagnostics &rarr;
+          </a>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <a href="./report/#limitations" target="_blank" rel="noopener" style="color: #fca5a5; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+            Limitations &rarr;
           </a>
           <a href="./report/UrbanPulse_Report.pdf" target="_blank" rel="noopener" style="color: var(--accent-emerald); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             Download PDF
           </a>
         </div>
-        <div style="text-align: center; opacity: 0.7; font-size: 10.5px;">
+        <div style="text-align: center; opacity: 0.7; font-size: 10.5px; margin-top: 4px;">
           UrbanPulse &copy; 2026 &bull; Multi-Temporal Satellite Analytics
         </div>
       </div>
@@ -1622,8 +1730,8 @@
     let currentCity = "ahmedabad";
     let metaData = null;
     let statsData = null;
-    let availableYears = [2018, 2019, 2020, 2021, 2022, 2023, 2024];
-    let selectedYearIndex = 6;
+    let availableYears = [2020, 2021, 2022, 2023, 2024];
+    let selectedYearIndex = 4;
     let isPlaying = false;
     let playInterval = null;
     let isOverlayVisible = true;
@@ -1840,15 +1948,15 @@
         const ticksContainer = document.getElementById('timeline-ticks');
         if (ticksContainer) {
           ticksContainer.innerHTML = availableYears
-            .map((yr, idx) => `<span id="tick-${idx}" class="${idx === selectedYearIndex ? 'tick-active' : ''}">${yr === 2022 ? '2022*' : yr}</span>`)
+            .map((yr, idx) => `<span id="tick-${idx}" class="${idx === selectedYearIndex ? 'tick-active' : ''}">${yr}</span>`)
             .join('');
         }
 
         const compA = document.getElementById('compare-year-a');
         const compB = document.getElementById('compare-year-b');
         if (compA && compB) {
-          compA.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === 0 ? 'selected' : ''}>${y}${y === 2022 ? ' (Provisional)' : ''}</option>`).join('');
-          compB.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === availableYears.length - 1 ? 'selected' : ''}>${y}${y === 2022 ? ' (Provisional)' : ''}</option>`).join('');
+          compA.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === 0 ? 'selected' : ''}>${y}</option>`).join('');
+          compB.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === availableYears.length - 1 ? 'selected' : ''}>${y}</option>`).join('');
         }
 
         renderLegend();
@@ -1925,7 +2033,7 @@
 
         const initialYear = availableYears[selectedYearIndex];
         const annualPngUrl = `${DATA_BASE}/${currentCity}/${initialYear}.png`;
-        const changePngUrl = `${DATA_BASE}/${currentCity}/change_2018_2024.png`;
+        const changePngUrl = `${DATA_BASE}/${currentCity}/change_2020_2024.png`;
 
         // 1. Annual Land Cover Overlay
         map.addSource('annual-overlay-source', {
@@ -1987,8 +2095,8 @@
         const tableYearLbl = document.getElementById('table-year-lbl');
         const metricCurYear = document.getElementById('metric-cur-year');
 
-        const displayLabel = currentYear === 2022 ? '2022 (Provisional)' : String(currentYear);
-        if (yearDisplay) yearDisplay.textContent = currentYear === 2022 ? '2022*' : currentYear;
+        const displayLabel = String(currentYear);
+        if (yearDisplay) yearDisplay.textContent = currentYear;
         if (focusYearDisplay) focusYearDisplay.textContent = displayLabel;
         if (tableYearLbl) tableYearLbl.textContent = displayLabel;
         if (metricCurYear) metricCurYear.textContent = displayLabel;
@@ -2032,36 +2140,44 @@
       try {
         if (!statsData) return;
 
-        // 1. Headline 2020-2024 Expansion Range
+        // 1. Headline 2020-2024 Expansion Percentage Range & Spread Subtitle
         const expEl = document.getElementById('metric-expansion-val');
-        if (expEl && statsData.headline_2020_2024_expansion) {
-          expEl.textContent = statsData.headline_2020_2024_expansion.net_growth_range_str || "+53.0 to +84.0 km²";
+        const expSubEl = document.getElementById('metric-expansion-sub');
+        if (statsData.headline_2020_2024_expansion) {
+          const h = statsData.headline_2020_2024_expansion;
+          if (expEl) {
+            expEl.textContent = h.net_growth_range_pct_str || h.percentage_range || "12.6 to 21.9 %";
+          }
+          if (expSubEl) {
+            expSubEl.textContent = h.net_growth_range_str
+              ? `Range across methods (${h.net_growth_range_str})`
+              : "Spread range across methods";
+          }
         }
 
-        // 2. WorldCover 2021 Anchor Comparison
+        // 2. WorldCover 2021 Reference Comparison
         const anchorValEl = document.getElementById('metric-anchor-val');
         const anchorDiffEl = document.getElementById('metric-anchor-diff');
         if (statsData.headline_2020_2024_expansion) {
           const wcAnchor = statsData.headline_2020_2024_expansion.worldcover_2021_anchor_km2;
-          const est2021 = statsData.headline_2020_2024_expansion.estimate_2021_clean_km2;
+          const est2021 = statsData.headline_2020_2024_expansion.estimate_2021_norm_km2 || statsData.headline_2020_2024_expansion.estimate_2021_clean_km2;
           if (anchorValEl && wcAnchor != null) anchorValEl.textContent = `${wcAnchor.toFixed(1)} km²`;
           if (anchorDiffEl && est2021 != null) {
             anchorDiffEl.innerHTML = `<span style="color:var(--text-muted);">vs 2021 Est: ${est2021.toFixed(1)} km²</span>`;
           }
         }
 
-        // 3. Current Selected Year Built-up (Cleaned series)
+        // 3. Current Selected Year Built-up (TLS-Normalised as Main Series)
         const gSeries = statsData.growth_series || [];
         const curG = gSeries.find(g => g.year === currentYear) || gSeries[gSeries.length - 1] || {};
         const builtupEl = document.getElementById('metric-builtup-val');
         const builtupSub = document.getElementById('metric-builtup-sub');
-        if (builtupEl && curG.clean_builtup_km2 != null) {
-          builtupEl.textContent = `${curG.clean_builtup_km2.toFixed(1)} km²`;
+        const mainBuiltup = curG.norm_builtup_km2 != null ? curG.norm_builtup_km2 : curG.clean_builtup_km2;
+        if (builtupEl && mainBuiltup != null) {
+          builtupEl.textContent = `${mainBuiltup.toFixed(1)} km²`;
         }
         if (builtupSub) {
-          builtupSub.innerHTML = curG.is_provisional
-            ? `<span style="color:var(--accent-amber);">Provisional Baseline Shift</span>`
-            : `<span style="color:var(--accent-cyan);">Cleaned (Spread: ${curG.band_min_km2 ? curG.band_min_km2.toFixed(1) : ''}–${curG.band_max_km2 ? curG.band_max_km2.toFixed(1) : ''})</span>`;
+          builtupSub.innerHTML = `<span style="color:var(--accent-cyan);">TLS-Norm (Spread: ${curG.band_min_km2 ? curG.band_min_km2.toFixed(1) : ''}–${curG.band_max_km2 ? curG.band_max_km2.toFixed(1) : ''})</span>`;
         }
 
         // 4. Metrics: Entropy and Core/Periphery
@@ -2186,12 +2302,12 @@
 
         if (!statsData) return;
 
-        // 1. Time Series Chart with Multi-Series & Sensitivity Band
+        // 1. Time Series Chart with TLS-Norm as Main Line, Raw & Cleaned as Dashed Lines, Method Sensitivity Band
         const tsCanvas = document.getElementById('timeSeriesChart');
         if (tsCanvas) {
           const tsCtx = tsCanvas.getContext('2d');
           const gSeries = statsData.growth_series || [];
-          const labels = gSeries.map(g => g.year === 2022 ? '2022*' : String(g.year));
+          const labels = gSeries.map(g => String(g.year));
           const cleanData = gSeries.map(g => g.clean_builtup_km2);
           const normData = gSeries.map(g => g.norm_builtup_km2);
           const rawData = gSeries.map(g => g.raw_builtup_km2);
@@ -2207,7 +2323,7 @@
               labels: labels,
               datasets: [
                 {
-                  label: 'Spread Max',
+                  label: 'Method Sensitivity',
                   data: maxData,
                   borderColor: 'transparent',
                   backgroundColor: 'rgba(56, 189, 248, 0.14)',
@@ -2216,7 +2332,7 @@
                   tension: 0.2
                 },
                 {
-                  label: 'Spread Min',
+                  label: 'Sensitivity Min',
                   data: minData,
                   borderColor: 'transparent',
                   backgroundColor: 'transparent',
@@ -2225,45 +2341,46 @@
                   tension: 0.2
                 },
                 {
-                  label: 'Raw Uncleaned',
+                  label: 'Raw',
                   data: rawData,
                   borderColor: '#f59e0b',
-                  borderDash: [5, 4],
-                  borderWidth: 2,
+                  borderDash: [4, 4],
+                  borderWidth: 1.5,
                   pointBackgroundColor: '#f59e0b',
-                  pointRadius: 3.5,
+                  pointRadius: 3,
                   fill: false,
                   tension: 0.2
                 },
                 {
-                  label: 'TLS Normalised',
-                  data: normData,
-                  borderColor: '#38bdf8',
-                  borderWidth: 2.2,
-                  pointBackgroundColor: '#38bdf8',
-                  pointRadius: 4,
-                  fill: false,
-                  tension: 0.2
-                },
-                {
-                  label: 'Cleaned Series',
+                  label: 'Cleaned',
                   data: cleanData,
                   borderColor: '#10b981',
-                  borderWidth: 2.8,
-                  pointBackgroundColor: labels.map((_, i) => i === selectedYearIndex ? '#ffffff' : '#10b981'),
-                  pointBorderColor: '#10b981',
-                  pointRadius: labels.map((_, i) => i === selectedYearIndex ? 6.5 : 4),
+                  borderDash: [4, 4],
+                  borderWidth: 1.5,
+                  pointBackgroundColor: '#10b981',
+                  pointRadius: 3,
                   fill: false,
                   tension: 0.2
                 },
                 {
-                  label: 'WorldCover 2021 Anchor',
+                  label: 'TLS-Normalised (Main)',
+                  data: normData,
+                  borderColor: '#38bdf8',
+                  borderWidth: 3.0,
+                  pointBackgroundColor: labels.map((_, i) => i === selectedYearIndex ? '#ffffff' : '#38bdf8'),
+                  pointBorderColor: '#38bdf8',
+                  pointRadius: labels.map((_, i) => i === selectedYearIndex ? 6.5 : 4.5),
+                  fill: false,
+                  tension: 0.2
+                },
+                {
+                  label: 'WorldCover 2021 Reference',
                   data: anchorData,
                   borderColor: '#c084fc',
                   backgroundColor: '#c084fc',
                   pointStyle: 'rectRot',
-                  pointRadius: 7,
-                  pointHoverRadius: 9,
+                  pointRadius: 6.5,
+                  pointHoverRadius: 8.5,
                   showLine: false
                 }
               ]
@@ -2282,9 +2399,12 @@
                   padding: 10,
                   callbacks: {
                     label: function(ctx) {
-                      if (ctx.dataset.label === 'Spread Max' || ctx.dataset.label === 'Spread Min') return null;
-                      if (ctx.dataset.label === 'WorldCover 2021 Anchor') {
-                        return `ESA WorldCover 2021 Anchor: ${ctx.parsed.y ? ctx.parsed.y.toFixed(1) : ''} km²`;
+                      if (ctx.dataset.label === 'Sensitivity Min') return null;
+                      if (ctx.dataset.label === 'Method Sensitivity') {
+                        return `Method Spread: ${ctx.parsed.y ? ctx.parsed.y.toFixed(1) : ''} km²`;
+                      }
+                      if (ctx.dataset.label === 'WorldCover 2021 Reference') {
+                        return `ESA WorldCover 2021 Reference: ${ctx.parsed.y ? ctx.parsed.y.toFixed(1) : ''} km²`;
                       }
                       return `${ctx.dataset.label}: ${ctx.parsed.y ? ctx.parsed.y.toFixed(1) : ''} km²`;
                     }
@@ -2367,8 +2487,8 @@
 
         if (timeSeriesChart && timeSeriesChart.data.datasets.length >= 5) {
           const gSeries = statsData.growth_series || [];
-          timeSeriesChart.data.datasets[4].pointBackgroundColor = gSeries.map((_, i) => i === selectedYearIndex ? '#ffffff' : '#10b981');
-          timeSeriesChart.data.datasets[4].pointRadius = gSeries.map((_, i) => i === selectedYearIndex ? 7 : 4);
+          timeSeriesChart.data.datasets[4].pointBackgroundColor = gSeries.map((_, i) => i === selectedYearIndex ? '#ffffff' : '#38bdf8');
+          timeSeriesChart.data.datasets[4].pointRadius = gSeries.map((_, i) => i === selectedYearIndex ? 6.5 : 4.5);
           timeSeriesChart.update();
         }
 

@@ -51,6 +51,11 @@ CLASS_NAME_TO_ID = {name.lower(): cid for cid, name in PROJECT_CLASSES.items()}
 
 def get_db_connection(db_url: str):
     """Establishes and returns a psycopg2 connection."""
+    if psycopg2 is None:
+        raise ImportError(
+            "psycopg2 is not installed in the local Python environment. "
+            "To load into PostGIS, run within Docker or install psycopg2-binary: `pip install psycopg2-binary`"
+        )
     return psycopg2.connect(db_url)
 
 
@@ -326,41 +331,41 @@ def load_transitions(conn, city_id: str, data_dir: Path) -> int:
             df = pd.read_csv(file_path, index_col=0)
             rows = []
 
-        for row_label, row in df.iterrows():
-            row_str = str(row_label).lower()
-            # Determine from_class
-            from_cid = None
-            for name, cid in CLASS_NAME_TO_ID.items():
-                if name in row_str:
-                    from_cid = cid
-                    break
-
-            if from_cid is None:
-                continue
-
-            for col_label, val in row.items():
-                col_str = str(col_label).lower()
-                to_cid = None
+            for row_label, row in df.iterrows():
+                row_str = str(row_label).lower()
+                # Determine from_class
+                from_cid = None
                 for name, cid in CLASS_NAME_TO_ID.items():
-                    if name in col_str:
-                        to_cid = cid
+                    if name in row_str:
+                        from_cid = cid
                         break
 
-                if to_cid is not None:
-                    area_km2 = float(val)
-                    rows.append((city_id, start_yr, end_yr, from_cid, to_cid, area_km2))
+                if from_cid is None:
+                    continue
 
-        if rows:
-            upsert_sql = """
-            INSERT INTO transitions (city, start_year, end_year, from_class, to_class, area_km2)
-            VALUES %s
-            ON CONFLICT (city, start_year, end_year, from_class, to_class) DO UPDATE SET
-                area_km2 = EXCLUDED.area_km2;
-            """
-            with conn.cursor() as cur:
-                execute_values(cur, upsert_sql, rows)
-            conn.commit()
-            total_rows += len(rows)
+                for col_label, val in row.items():
+                    col_str = str(col_label).lower()
+                    to_cid = None
+                    for name, cid in CLASS_NAME_TO_ID.items():
+                        if name in col_str:
+                            to_cid = cid
+                            break
+
+                    if to_cid is not None:
+                        area_km2 = float(val)
+                        rows.append((city_id, start_yr, end_yr, from_cid, to_cid, area_km2))
+
+            if rows:
+                upsert_sql = """
+                INSERT INTO transitions (city, start_year, end_year, from_class, to_class, area_km2)
+                VALUES %s
+                ON CONFLICT (city, start_year, end_year, from_class, to_class) DO UPDATE SET
+                    area_km2 = EXCLUDED.area_km2;
+                """
+                with conn.cursor() as cur:
+                    _execute_values(cur, upsert_sql, rows)
+                conn.commit()
+                total_rows += len(rows)
 
     return total_rows
 

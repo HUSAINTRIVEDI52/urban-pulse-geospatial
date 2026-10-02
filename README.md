@@ -136,6 +136,43 @@ make report-pdf
 
 ---
 
+## 🔍 Visual Change Validation & Stratified Estimation
+
+UrbanPulse provides an end-to-end blind visual accuracy validation and area-adjustment suite based on **Olofsson et al. (2014)**:
+
+1. **Stratified Sampling** (A: Gain, B: Persistent Built, C: Persistent Non-Built, D: Loss):
+   ```bash
+   python pipeline/make_change_validation_sample.py --city ahmedabad --start 2020 --end 2024 --seed 42
+   ```
+   - Filters out pixels within 2 pixels of stratum edges.
+   - Enforces pairwise spacing $\ge 500\text{ m}$.
+   - Exports `change_sample_blind.csv`, `change_sample_key.csv`, and Google Earth `change_sample.kml`.
+
+2. **Generate 10m True Colour Chips & Standalone Labeller**:
+   ```bash
+   python pipeline/make_label_chips.py --city ahmedabad --start 2020 --end 2024
+   ```
+   - Builds 10 m true colour (B04, B03, B02) composites with SCL cloud mask and 2%-98% fixed percentile stretch.
+   - Cuts $128\times 128$ chips, upscales 4x with bicubic resampling, and overlays the 60m center classifier pixel.
+   - Generates `data/{city}/validation/labeller.html` (single self-contained file with offline shortcuts and Google Maps satellite integration).
+
+3. **Label Samples with Keyboard Shortcuts**:
+   Open `data/{city}/validation/labeller.html` in any web browser:
+   - `Q` / `W` / `E` = Start year Built (`Y`) / Not built (`N`) / Unclear (`unclear`)
+   - `I` / `O` / `P` = End year Built (`Y`) / Not built (`N`) / Unclear (`unclear`)
+   - `←` / `→` = Previous / Next point
+   - `S` = Edit notes
+   - Click **Download CSV** to export labelled answers.
+
+4. **Score Accuracy & Compute Area-Adjusted Change**:
+   ```bash
+   python pipeline/score_change_validation.py --sample-csv data/ahmedabad/validation/change_sample_labelled_ahmedabad.csv
+   ```
+   - Computes per-stratum accuracy matrix.
+   - Estimates area-adjusted **Gross Gain**, **Gross Loss**, and **NET Change** with 95% CIs and continuity correction for boundary proportions ($p=0$ or $1$).
+
+---
+
 ## 📁 Project Tree
 
 ```
@@ -147,7 +184,11 @@ UrbanPulse/
 │   ├── train_classifier.py      # Spatial-block Random Forest model training
 │   ├── temporal_cleanup.py      # Majority rule & urban persistence smoothing
 │   ├── change_detection.py      # Land cover transition matrix & trajectories
+│   ├── make_change_validation_sample.py # 4-stratum sampling with edge buffer & 500m spacing
+│   ├── make_label_chips.py      # 10m true colour Sentinel-2 chip cutter & labeller generator
+│   ├── score_change_validation.py       # Olofsson et al. (2014) area-adjusted change & 95% CIs
 │   ├── ring_analysis.py         # Concentric radial distance density profiling
+
 │   ├── sprawl_metrics.py        # Shannon entropy & sprawl velocity computation
 │   ├── quality_gate.py          # Data quality gate validator
 │   ├── generate_report.py       # Professional self-contained HTML report generator

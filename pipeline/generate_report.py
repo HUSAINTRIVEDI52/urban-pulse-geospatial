@@ -1449,7 +1449,7 @@ def render_html_report(
     # SECTION F: Data Quality & Diagnostics
     # -------------------------------------------------------------------------
     html_parts.append("""
-    <div class="section-card">
+    <div class="section-card" id="validation">
       <h2 class="section-title">&#128300; 5. Data Quality, Diagnostics &amp; Quality Gate</h2>
       <p style="margin-bottom:16px; color:var(--text-muted);">
         Every composite is strictly validated for cloud contamination, NoData gaps, radiometric calibration shifts, and year-to-year area volatility before ingestion.
@@ -1634,7 +1634,7 @@ stac:
     # SECTION H: Limitations
     # -------------------------------------------------------------------------
     html_parts.append("""
-    <div class="section-card">
+    <div class="section-card" id="limitations">
       <h2 class="section-title">&#9888; 7. Limitations</h2>
       <ul style="margin-left:24px; font-size:0.95rem; line-height:1.8; color:var(--text-main);">
         <li><strong>accuracy is agreement with ESA WorldCover, not field-verified ground truth</strong></li>

@@ -83,17 +83,5 @@
       "label": "Built-up Loss -> Other",
       "color": "#0f172a"
     }
-  },
-  "analysis_window": {
-    "start_year": 2020,
-    "end_year": 2024,
-    "years": [
-      2020,
-      2021,
-      2022,
-      2023,
-      2024
-    ],
-    "excluded_years_note": "2018\u20132019 are excluded from the main analysis window due to sparse cloud-free acquisitions in early archive and sensor calibration differences. 2022 is designated 'Provisional' due to the ESA PB04.00 radiometric processing baseline shift."
   }
 }

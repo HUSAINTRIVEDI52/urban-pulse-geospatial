@@ -289,3 +289,80 @@ def test_score_change_validation_blind_key_join(tmp_path):
     assert results["adjusted_gain_km2"] == 50.0
     assert results["adjusted_loss_km2"] == 25.0
     assert results["adjusted_net_km2"] == 25.0
+
+
+def test_extract_and_draw_chip():
+    """
+    Tests chip extraction, 4x bicubic upscaling, and 60m center outline drawing on synthetic array.
+    """
+    from pipeline.make_label_chips import extract_and_draw_chip
+
+    # Synthetic RGB raster: 300 x 300 pixels
+    synthetic_rgb = np.zeros((300, 300, 3), dtype=np.uint8)
+    synthetic_rgb[:, :, 0] = 50   # R
+    synthetic_rgb[:, :, 1] = 120  # G
+    synthetic_rgb[:, :, 2] = 70   # B
+
+    # Center chip extraction
+    chip_img = extract_and_draw_chip(
+        rgb_uint8=synthetic_rgb,
+        center_row=150,
+        center_col=150,
+        chip_size_px=128,
+        upscale_factor=4,
+        pixel_box_size_orig_px=6,
+    )
+
+    assert chip_img.size == (512, 512)
+    assert chip_img.mode == "RGB"
+
+    chip_arr = np.array(chip_img)
+    # Check that yellow outline (255, 235, 59) exists at center box edge [244, 244]
+    yellow = [255, 235, 59]
+    assert np.array_equal(chip_arr[244, 244], yellow) or np.array_equal(chip_arr[244, 256], yellow)
+
+    # Edge chip extraction (near raster boundary)
+    edge_chip_img = extract_and_draw_chip(
+        rgb_uint8=synthetic_rgb,
+        center_row=10,
+        center_col=10,
+        chip_size_px=128,
+        upscale_factor=4,
+        pixel_box_size_orig_px=6,
+    )
+    assert edge_chip_img.size == (512, 512)
+
+
+def test_generate_standalone_labeller_html(tmp_path):
+    """
+    Verifies that the generated labeller HTML is self-contained and completely blind (no stratum info).
+    """
+    from pipeline.make_label_chips import generate_standalone_labeller_html
+
+    out_html = tmp_path / "labeller.html"
+    points = [
+        {"id": 1, "lon": 72.5, "lat": 23.0},
+        {"id": 2, "lon": 72.6, "lat": 23.1},
+    ]
+
+    generate_standalone_labeller_html(
+        city_name="Ahmedabad",
+        start_year=2020,
+        end_year=2024,
+        points_data=points,
+        output_html_path=out_html,
+    )
+
+    assert out_html.exists()
+    content = out_html.read_text(encoding="utf-8")
+
+    # Must contain essential interactive features
+    assert "downloadCSV" in content
+    assert "localStorage" in content
+    assert "jumpToFirstUnlabelled" in content
+    assert "google.com/maps" in content
+    assert "Point #1" in content or "points" in content
+
+    # Must NEVER mention stratum
+    assert "stratum" not in content.lower()
+
