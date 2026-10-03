@@ -150,6 +150,8 @@ Cross-year Total Least Squares (TLS) pseudo-invariant feature (PIF) radiometric 
 
 **Finding**: Radiometric normalisation **did not reduce year-to-year classification drift** across held-out evaluation folds. Consequently, rule-based temporal consistency filtering (3-year majority smoothing and urban persistence constraints) remains the authoritative operational defense against spurious classification noise in UrbanPulse.
 
+> **Methodological Disclosure**: Ahmedabad's 2021, 2023 and 2024 composites use the 20 lowest-cloud scenes between October and March, so they include October and March scenes (11 of 20 in 2024). Pune's composites use November-February only. Ahmedabad's 2020 composite was built earlier with a strict Dec 1-Feb 15 window; current code does not reproduce its exact scene list. How much the window affects Ahmedabad's built-up area has not been tested.
+
 ---
 
 ## 🛡️ Data Quality Gate & CI Status

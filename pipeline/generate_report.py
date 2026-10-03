@@ -1033,6 +1033,11 @@ def render_html_report(
               </ol>
             </li>
           </ul>
+          <div style="margin-top:16px; background:rgba(245, 158, 11, 0.08); border:1px solid rgba(245, 158, 11, 0.3); border-radius:8px; padding:12px 16px;">
+            <p style="font-size:0.88rem; color:#fde68a; margin:0;">
+              <strong>Methodological Disclosure:</strong> Ahmedabad's 2021, 2023 and 2024 composites use the 20 lowest-cloud scenes between October and March, so they include October and March scenes (11 of 20 in 2024). Pune's composites use November-February only. Ahmedabad's 2020 composite was built earlier with a strict Dec 1-Feb 15 window; current code does not reproduce its exact scene list. How much the window affects Ahmedabad's built-up area has not been tested.
+            </p>
+          </div>
         </div>
       </div>
     </div>

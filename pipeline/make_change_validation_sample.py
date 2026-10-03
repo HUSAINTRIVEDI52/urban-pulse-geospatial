@@ -64,6 +64,21 @@ def get_tls_normalized_classified_raster(
     """
     city_key = city.lower()
     city_subpath = data_dir / city_key
+    
+    # Priority: Read from validated_series/ if available
+    validated_tif = city_subpath / "validated_series" / f"{city_key}_{year}_classified.tif"
+    if not validated_tif.exists():
+        validated_tif = data_dir / "validated_series" / f"{city_key}_{year}_classified.tif"
+    
+    if validated_tif.exists():
+        with rasterio.open(validated_tif) as src:
+            classified_2d = src.read(1)
+            valid_mask_2d = classified_2d > 0
+            profile = src.profile.copy()
+            transform = src.transform
+            crs = src.crs
+            return classified_2d, valid_mask_2d, profile, transform, crs
+
     norm_dir = city_subpath / "normalized"
     if not norm_dir.exists():
         norm_dir = data_dir / "normalized"

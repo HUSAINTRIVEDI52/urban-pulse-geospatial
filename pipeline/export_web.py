@@ -371,7 +371,7 @@ def export_web_data(
         max_v = max(r_val, c_val, n_val)
         time_series_data.append({
             "year": y,
-            "display_year": str(y),
+            "display_year": "2022 (partial season (no Jan-Feb))" if y == 2022 else str(y),
             "raw_builtup_km2": round(r_val, 2),
             "clean_builtup_km2": round(c_val, 2),
             "norm_builtup_km2": round(n_val, 2),
@@ -623,8 +623,14 @@ def export_web_data(
     gate_scenes_pass = min_scenes >= 4
     scenes_val_str = f"min {min_scenes} distinct dates ({min_years_str})"
 
-    # 4. Volatility Gate: max consecutive year-to-year change
-    max_volatility = round(max(abs(norm_dict[y] - norm_dict[y-1])/norm_dict[y-1]*100.0 for y in range(2021, 2025)), 1)
+    # 4. Volatility Gate: max consecutive year-to-year change over complete season pairs (2020->2021, 2023->2024), excluding 2022
+    complete_season_pairs = [(2020, 2021), (2023, 2024)]
+    volatility_values = [
+        abs(norm_dict[y2] - norm_dict[y1]) / norm_dict[y1] * 100.0
+        for y1, y2 in complete_season_pairs
+        if y1 in norm_dict and y2 in norm_dict
+    ]
+    max_volatility = round(max(volatility_values), 1) if volatility_values else 0.0
     gate_volatility_pass = max_volatility <= 15.0
 
     # 5. Accuracy Gate: built-up F1 (TLS-retrained variant) across all years

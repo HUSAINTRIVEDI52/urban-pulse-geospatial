@@ -44,9 +44,9 @@ def test_class_areas_sum_to_aoi(city_stats):
         year = entry["year"]
         assert 2020 <= year <= 2024, f"Unexpected year {year} in analysis window"
         
-        # Five classes
-        keys = ["built_up_km2", "vegetation_km2", "water_km2", "agriculture_km2", "open_land_km2"]
-        sum_km2 = sum(entry[k] for k in keys)
+        # Five classes + explicit NoData
+        keys = ["built_up_km2", "vegetation_km2", "water_km2", "agriculture_km2", "open_land_km2", "nodata_km2"]
+        sum_km2 = sum(entry.get(k, 0.0) for k in keys)
         
         # Area sum vs AOI area must be within 0.5% tolerance
         rel_diff = abs(sum_km2 - aoi_area) / aoi_area
@@ -66,13 +66,15 @@ def test_class_areas_sum_to_aoi(city_stats):
 def test_raw_and_tls_series_distinct(city_stats):
     """
     Asserts that the Raw and TLS-normalised mapped areas are distinct (not identical)
-    for all years, preventing duplicate assignment bugs.
+    for non-reference years, preventing duplicate assignment bugs.
     """
     city, data = city_stats
     growth_series = data.get("growth_series", [])
     assert len(growth_series) >= 5
 
     for g in growth_series:
+        if g.get("is_reference") or g.get("year") == 2021:
+            continue
         yr = g["year"]
         raw_val = g["raw_builtup_km2"]
         tls_val = g["norm_builtup_km2"]
@@ -347,4 +349,46 @@ def test_provenance_block_present(city_stats):
     assert prov.get("git_sha") is not None
     assert prov.get("generated_at") is not None
     assert "input_files" in prov
+
+
+def test_dashboard_builtup_equals_validation_strata(city_stats):
+    """
+    Asserts that the 2020 and 2024 dashboard built-up values equal
+    Stratum B + D (2020) and Stratum A + B (2024) from the change validation strata.
+    """
+    city, data = city_stats
+    cv = data.get("change_validation", {})
+    if cv.get("status") != "validated":
+        # Skip cities without full 4-stratum change validation
+        return
+
+    strata_table = cv.get("strata_table", [])
+    assert len(strata_table) == 4, f"Expected 4 strata rows in change_validation for {city}"
+
+    strata_map = {r["stratum"]: r["mapped_area_km2"] for r in strata_table}
+    assert set(strata_map.keys()) == {"A", "B", "C", "D"}
+
+    area_a = strata_map["A"]
+    area_b = strata_map["B"]
+    area_d = strata_map["D"]
+
+    growth_series = data.get("growth_series", [])
+    g_2020 = next((g for g in growth_series if g["year"] == 2020), None)
+    g_2024 = next((g for g in growth_series if g["year"] == 2024), None)
+
+    assert g_2020 is not None and g_2024 is not None
+
+    norm_2020 = g_2020["norm_builtup_km2"]
+    norm_2024 = g_2024["norm_builtup_km2"]
+
+    expected_2020 = area_b + area_d
+    expected_2024 = area_a + area_b
+
+    assert abs(norm_2020 - expected_2020) < 0.05, (
+        f"Dashboard 2020 built-up ({norm_2020} km²) != Stratum B+D ({expected_2020:.2f} km²) for {city}"
+    )
+    assert abs(norm_2024 - expected_2024) < 0.05, (
+        f"Dashboard 2024 built-up ({norm_2024} km²) != Stratum A+B ({expected_2024:.2f} km²) for {city}"
+    )
+
 

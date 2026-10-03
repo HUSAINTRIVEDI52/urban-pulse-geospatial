@@ -185,41 +185,174 @@ def scale_and_harmonize_dn(
     return reflectance
 
 
+def select_scenes_for_composite(
+    client: Client,
+    bbox: list[float],
+    primary_collection: str = "sentinel-2-c1-l2a",
+    max_cloud_cover: float = 20.0,
+    scenes_per_tile: int = 10,
+    city: str = "ahmedabad",
+    year: int = 2024,
+    config: dict[str, Any] | None = None,
+    data_dir: str | Path = "data",
+    scene_ids: list[str] | None = None,
+    strict_window: bool = False,
+    from_report: bool = False,
+    report_path: str | Path | None = None,
+) -> tuple[list[Any], dict[str, list[Any]], str, list[Any], bool, str | None]:
+    """
+    Selects Sentinel-2 scenes for composite creation across multiple opt-in modes:
+    - scene_ids: Explicit STAC scene ID list
+    - from_report: Reads datetime_window and scene_count from composite_report_{year}.json
+    - strict_window: Strict dry season window with date coverage spread and flagged scene exclusion
+    - default: 6-month dry season window (Oct 1 - Mar 31) with lowest cloud cover scenes
+    """
+    if scene_ids:
+        print(f"\n[Step 1/5] Fetching {len(scene_ids)} override scenes from STAC...")
+        search = client.search(collections=[primary_collection], ids=scene_ids)
+        items = list(search.items())
+        selected_items = list(items)
+        tile_dict: dict[str, list[Any]] = {}
+        for it in selected_items:
+            tile_id = it.id.split("_")[1].replace("T", "")
+            tile_dict.setdefault(tile_id, []).append(it)
+        datetime_range = "override"
+        return selected_items, tile_dict, datetime_range, items, False, None
+
+    if from_report:
+        city_key = city.lower().strip()
+        rep_file = Path(report_path) if report_path else Path(data_dir) / city_key / f"composite_report_{year}.json"
+        if not rep_file.exists():
+            rep_file = Path(data_dir) / f"{city_key}_{year}_composite_report.json"
+        
+        datetime_range = f"{year - 1:04d}-10-01/{year:04d}-03-31"
+        target_scene_count = scenes_per_tile * 2
+        mgrs_tiles = []
+        if rep_file.exists():
+            with open(rep_file, "r", encoding="utf-8") as rf:
+                rep_data = json.load(rf)
+            datetime_range = rep_data.get("datetime_window") or rep_data.get("strict_window") or datetime_range
+            target_scene_count = rep_data.get("scene_count", target_scene_count)
+            mgrs_tiles = rep_data.get("mgrs_tiles", [])
+
+        print(f"\n[Step 1/5] Searching from-report window ({datetime_range}, target={target_scene_count} scenes)...")
+        search = client.search(
+            collections=[primary_collection],
+            bbox=bbox,
+            datetime=datetime_range,
+            query={"eo:cloud_cover": {"lt": max_cloud_cover}},
+        )
+        items = list(search.items())
+        raw_tile_dict: dict[str, list[Any]] = {}
+        for it in items:
+            tile_id = it.id.split("_")[1].replace("T", "")
+            raw_tile_dict.setdefault(tile_id, []).append(it)
+
+        per_tile = target_scene_count // max(len(mgrs_tiles), 1) if mgrs_tiles else scenes_per_tile
+        selected_items = []
+        tile_dict = {}
+        tile_keys = mgrs_tiles if mgrs_tiles else list(raw_tile_dict.keys())
+        for t_id in tile_keys:
+            t_items = raw_tile_dict.get(t_id, [])
+            t_sorted = sorted(t_items, key=lambda x: float(x.properties.get("eo:cloud_cover", 100.0)))
+            chosen_for_tile = t_sorted[:per_tile]
+            selected_items.extend(chosen_for_tile)
+            tile_dict[t_id] = chosen_for_tile
+
+        return selected_items, tile_dict, datetime_range, items, False, None
+
+    if strict_window:
+        datetime_range = get_strict_window_range(year, config)
+        print(f"\n[Step 1/5] Searching strict-window scenes ({datetime_range})...")
+        search = client.search(
+            collections=[primary_collection],
+            bbox=bbox,
+            datetime=datetime_range,
+            query={"eo:cloud_cover": {"lt": max_cloud_cover}},
+        )
+        items = list(search.items())
+        data_path = Path(data_dir)
+        flagged_ids = load_flagged_scene_ids(city=city, data_dir=data_path)
+        selected_items, tile_dict = select_scenes_by_date_coverage(
+            items=items,
+            max_scenes_per_tile=scenes_per_tile,
+            flagged_ids=flagged_ids,
+        )
+        all_dates = sorted(list({
+            (it.datetime.strftime("%Y-%m-%d") if it.datetime else str(it.properties.get("datetime"))[:10])
+            for it in items
+        }))
+        is_low_confidence = len(all_dates) < 4
+        low_confidence_reason = f"Fewer than 4 dates in strict window {datetime_range}" if is_low_confidence else None
+        return selected_items, tile_dict, datetime_range, items, is_low_confidence, low_confidence_reason
+
+    # Default baseline 6-month dry season window: Oct 1 to Mar 31
+    start_year = year - 1
+    datetime_range = f"{start_year:04d}-10-01/{year:04d}-03-31"
+    print(f"\n[Step 1/5] Searching default dry-season window scenes ({datetime_range})...")
+    search = client.search(
+        collections=[primary_collection],
+        bbox=bbox,
+        datetime=datetime_range,
+        query={"eo:cloud_cover": {"lt": max_cloud_cover}},
+    )
+    items = list(search.items())
+    raw_tile_dict = {}
+    for it in items:
+        tile_id = it.id.split("_")[1].replace("T", "")
+        raw_tile_dict.setdefault(tile_id, []).append(it)
+
+    selected_items = []
+    tile_dict = {}
+    for t_id, t_items in raw_tile_dict.items():
+        t_sorted = sorted(t_items, key=lambda x: float(x.properties.get("eo:cloud_cover", 100.0)))
+        chosen_for_tile = t_sorted[:scenes_per_tile]
+        selected_items.extend(chosen_for_tile)
+        tile_dict[t_id] = chosen_for_tile
+
+    return selected_items, tile_dict, datetime_range, items, False, None
+
+
 def build_composite(
     city: str = "ahmedabad",
     year: int = 2024,
     resolution: float = 60.0,
     max_cloud_cover: float = 20.0,
-    scenes_per_tile: int = 8,
+    scenes_per_tile: int = 10,
     min_valid_obs: int = 4,
     max_nodata_threshold_pct: float = 5.0,
     force: bool = False,
     config_path: str | Path | None = None,
     data_dir: str | Path = "data",
+    scene_ids: list[str] | None = None,
+    output_dir: str | Path | None = None,
+    strict_window: bool = False,
+    from_report: bool = False,
 ) -> tuple[dict[str, Path], float]:
     """
-    Builds a strict dry-season Sentinel-2 surface reflectance composite:
-    1. Strict window: Dec 1 to Feb 15 (never widened).
-    2. Excludes flagged scenes from scene_diagnostics.py.
-    3. Selects up to 8 scenes per tile spread across distinct acquisition dates.
-    4. Marks low_confidence if distinct dates < 4 inside the window.
-    5. Baseline 04.00 offset harmonization (-1000 DN for >= 2022-01-25).
-    6. SCL 1-pixel dilated cloud masking.
-    7. Exports GeoTIFFs and composite_report.json.
+    Builds a dry-season Sentinel-2 surface reflectance composite:
+    1. Default: 6-month window (Oct 1 to Mar 31) with lowest cloud cover scenes per tile.
+    2. Strict window (opt-in via --strict-window): Dec 1 to Feb 15 / Nov 1 to Feb 28.
+    3. From report (opt-in via --from-report): Window & scene count from existing composite_report JSON.
+    4. Scene override (opt-in via --scene-ids): Specific list of STAC scene IDs.
+    5. SCL 1-pixel dilated cloud masking.
+    6. Exports GeoTIFFs and composite_report.json.
     """
     data_path = Path(data_dir)
     data_path.mkdir(parents=True, exist_ok=True)
+    dest_path = Path(output_dir) if output_dir else data_path
+    dest_path.mkdir(parents=True, exist_ok=True)
 
     city_key = city.lower().strip()
     optical_bands = ["red", "green", "blue", "nir", "swir16"]
-    band_paths = {b: data_path / f"{city_key}_{year}_{b}.tif" for b in optical_bands}
-    report_path = data_path / f"{city_key}_{year}_composite_report.json"
+    band_paths = {b: dest_path / f"{city_key}_{year}_{b}.tif" for b in optical_bands}
+    report_path = dest_path / f"{city_key}_{year}_composite_report.json"
     city_sub_dir = data_path / city_key
     city_sub_dir.mkdir(parents=True, exist_ok=True)
     city_report_path = city_sub_dir / f"composite_report_{year}.json"
 
-    # Skip if outputs already exist and force is not set
-    if not force and all(p.exists() for p in band_paths.values()) and report_path.exists():
+    # Skip if outputs already exist and force is not set and no scene_ids override
+    if not force and not scene_ids and all(p.exists() for p in band_paths.values()) and report_path.exists():
         print(f"[+] Composite bands for {city} ({year}) already exist in {data_path.resolve()}. Skipping rebuild.")
         with rasterio.open(band_paths["red"]) as src:
             red_arr = src.read(1)
@@ -239,45 +372,58 @@ def build_composite(
     requested_assets = optical_bands + ["scl"]
 
     print("=" * 80)
-    print(f"[*] UrbanPulse Strict-Window Composite Builder: {city_name} ({year})")
+    print(f"[*] UrbanPulse Composite Builder: {city_name} ({year})")
     print(f"    - Resolution              : {resolution}m (EPSG:32643)")
     print(f"    - Bounding Box            : {bbox}")
     print(f"    - STAC Endpoint           : {stac_url} [{primary_collection}]")
-    print(f"    - Max Scenes per Tile     : {scenes_per_tile} (Date-spread coverage)")
+    print(f"    - Max Scenes per Tile     : {scenes_per_tile}")
     print(f"    - Min Valid Obs per Pixel : {min_valid_obs}")
     print("=" * 80)
 
-    datetime_range = get_strict_window_range(year, config)
-    print(f"\n[Step 1/5] Searching strict-window scenes ({datetime_range})...")
     client = Client.open(stac_url)
 
-    search = client.search(
-        collections=[primary_collection],
+    (
+        selected_items,
+        tile_dict,
+        datetime_range,
+        items,
+        is_low_confidence,
+        low_confidence_reason,
+    ) = select_scenes_for_composite(
+        client=client,
         bbox=bbox,
-        datetime=datetime_range,
-        query={"eo:cloud_cover": {"lt": max_cloud_cover}},
+        primary_collection=primary_collection,
+        max_cloud_cover=max_cloud_cover,
+        scenes_per_tile=scenes_per_tile,
+        city=city,
+        year=year,
+        config=config,
+        data_dir=data_path,
+        scene_ids=scene_ids,
+        strict_window=strict_window,
+        from_report=from_report,
+        report_path=city_report_path,
     )
-    items = list(search.items())
 
     if not items or len(items) < 2:
-        print(f"[*] Widening cloud filter to < {max_cloud_cover + 15.0}% inside strict window...")
-        search = client.search(
-            collections=[primary_collection],
-            bbox=bbox,
-            datetime=datetime_range,
-            query={"eo:cloud_cover": {"lt": max_cloud_cover + 15.0}},
-        )
-        items = list(search.items())
+        if not scene_ids:
+            print(f"[*] Widening cloud filter to < {max_cloud_cover + 15.0}% inside window...")
+            search = client.search(
+                collections=[primary_collection],
+                bbox=bbox,
+                datetime=datetime_range,
+                query={"eo:cloud_cover": {"lt": max_cloud_cover + 15.0}},
+            )
+            items = list(search.items())
 
-    # Compute distinct acquisition dates inside strict window
+    # Compute distinct acquisition dates inside window
     all_dates = sorted(list({
         (it.datetime.strftime("%Y-%m-%d") if it.datetime else str(it.properties.get("datetime"))[:10])
         for it in items
     }))
 
-    is_low_confidence = len(all_dates) < 4
-    low_confidence_reason = None
-    if is_low_confidence:
+    if strict_window and len(all_dates) < 4:
+        is_low_confidence = True
         low_confidence_reason = (
             f"Fewer than 4 distinct acquisition dates ({len(all_dates)}) found in strict window {datetime_range}."
         )
@@ -505,7 +651,7 @@ if __name__ == "__main__":
         "--max-cloud", type=float, default=20.0, help="Max cloud cover percentage (default: 20.0)"
     )
     parser.add_argument(
-        "--scenes-per-tile", type=int, default=8, help="Scenes per MGRS tile (default: 8)"
+        "--scenes-per-tile", type=int, default=10, help="Scenes per MGRS tile (default: 10)"
     )
     parser.add_argument(
         "--min-valid-obs", type=int, default=4, help="Min valid observations per pixel (default: 4)"
@@ -515,8 +661,14 @@ if __name__ == "__main__":
     )
     parser.add_argument("--config", type=str, default=None, help="Path to city config YAML")
     parser.add_argument("--data-dir", type=str, default="data", help="Data directory")
+    parser.add_argument("--scene-ids", type=str, default=None, help="Comma-separated scene IDs override")
+    parser.add_argument("--output-dir", type=str, default=None, help="Output directory for composite GeoTIFFs")
+    parser.add_argument("--strict-window", action="store_true", help="Use strict dry season window (Dec-Feb / Nov-Feb)")
+    parser.add_argument("--from-report", action="store_true", help="Select scenes matching existing composite_report JSON window and scene count")
 
     args = parser.parse_args()
+    sids = [s.strip() for s in args.scene_ids.split(",")] if args.scene_ids else None
+
     build_composite(
         city=args.city,
         year=args.year,
@@ -527,4 +679,8 @@ if __name__ == "__main__":
         force=args.force,
         config_path=args.config,
         data_dir=args.data_dir,
+        scene_ids=sids,
+        output_dir=args.output_dir,
+        strict_window=args.strict_window,
+        from_report=args.from_report,
     )

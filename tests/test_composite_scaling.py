@@ -227,3 +227,74 @@ def test_date_spread_scene_selection_and_flagged_exclusion():
     assert "scene_00" not in selected_ids
     assert "scene_01" not in selected_ids
 
+
+def test_select_scenes_modes_mocked():
+    """Verify select_scenes_for_composite runs without raising in default, strict-window, scene-ids, and from-report modes."""
+    from datetime import datetime
+    from unittest.mock import MagicMock
+    from pipeline.build_composite import select_scenes_for_composite
+
+    class MockItem:
+        def __init__(self, item_id, dt_str, cloud=1.0, tile="42QZL"):
+            self.id = item_id
+            self.datetime = datetime.strptime(dt_str, "%Y-%m-%d")
+            self.properties = {
+                "datetime": dt_str,
+                "eo:cloud_cover": cloud,
+                "mgrs:utm_zone": tile[:2],
+                "mgrs:latitude_band": tile[2],
+                "mgrs:grid_square": tile[3:],
+            }
+
+    mock_items = [
+        MockItem("S2A_T42QZL_20231101_L2A", "2023-11-01", 2.0, "42QZL"),
+        MockItem("S2A_T42QZL_20231201_L2A", "2023-12-01", 1.0, "42QZL"),
+        MockItem("S2A_T43QBF_20231101_L2A", "2023-11-01", 3.0, "43QBF"),
+        MockItem("S2A_T43QBF_20231201_L2A", "2023-12-01", 0.5, "43QBF"),
+    ]
+
+    mock_client = MagicMock()
+    mock_search = MagicMock()
+    mock_search.items.return_value = mock_items
+    mock_client.search.return_value = mock_search
+
+    bbox = [72.35, 22.81, 72.80, 23.22]
+
+    # 1. Default mode
+    sel, tile_dict, dt_range, items, is_low, reason = select_scenes_for_composite(
+        client=mock_client, bbox=bbox, year=2024, city="ahmedabad"
+    )
+    assert len(sel) > 0
+    assert "42QZL" in tile_dict
+
+    # 2. Strict-window mode
+    dummy_config = {
+        "spatial": {"bbox": bbox},
+        "composite": {"observation_window": {"start_month": 12, "start_day": 1, "end_month": 2, "end_day": 15}},
+    }
+    sel_strict, tile_dict_strict, _, _, _, _ = select_scenes_for_composite(
+        client=mock_client, bbox=bbox, year=2024, city="ahmedabad", strict_window=True, config=dummy_config
+    )
+    assert len(sel_strict) > 0
+
+    # 3. Scene-ids mode
+    sel_ids, tile_dict_ids, _, _, _, _ = select_scenes_for_composite(
+        client=mock_client, bbox=bbox, year=2024, city="ahmedabad", scene_ids=["S2A_T42QZL_20231101_L2A"]
+    )
+    assert len(sel_ids) == 4  # mocked items returned
+
+    # 4. From-report mode
+    sel_rep, tile_dict_rep, _, _, _, _ = select_scenes_for_composite(
+        client=mock_client, bbox=bbox, year=2021, city="ahmedabad", from_report=True, data_dir="data"
+    )
+    assert len(sel_rep) > 0
+
+
+def test_build_composite_cli_help():
+    """Verify python pipeline/build_composite.py --help exits 0."""
+    import subprocess
+    res = subprocess.run(["python", "pipeline/build_composite.py", "--help"], capture_output=True, text=True)
+    assert res.returncode == 0
+    assert "Build Sentinel-2 composite for UrbanPulse" in res.stdout
+
+

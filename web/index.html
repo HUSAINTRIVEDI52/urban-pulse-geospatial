@@ -1700,6 +1700,24 @@
         </div>
         <div class="negative-result-card">
           <strong>Negative result:</strong> Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not reduce year-to-year drift (Cleaned F1 remaining equal or higher); temporal consistency filtering remains the robust operational safeguard.
+          <div style="margin-top:6px; font-size:11px; opacity:0.9; color:#fecaca;">
+            <em>Methodological Disclosure:</em> Ahmedabad's 2021, 2023 and 2024 composites use the 20 lowest-cloud scenes between October and March, so they include October and March scenes (11 of 20 in 2024). Pune's composites use November-February only. Ahmedabad's 2020 composite was built earlier with a strict Dec 1-Feb 15 window; current code does not reproduce its exact scene list. How much the window affects Ahmedabad's built-up area has not been tested.
+          </div>
+        </div>
+      </div>
+
+      <!-- Change Validation Section (Olofsson et al. 2014) -->
+      <div id="change-validation-card" class="chart-box" style="border-color: rgba(56, 189, 248, 0.3);">
+        <div class="chart-header">
+          <div class="chart-title" style="color: var(--accent-cyan);">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            Change Validation (2020–2024)
+          </div>
+          <a href="./report/#change-validation" target="_blank" rel="noopener" class="info-link-btn" title="View Change Validation Details" aria-label="Change Validation Details">i</a>
+        </div>
+        
+        <div id="change-val-content">
+          <!-- Populated dynamically -->
         </div>
       </div>
 
@@ -1958,7 +1976,10 @@
         const ticksContainer = document.getElementById('timeline-ticks');
         if (ticksContainer) {
           ticksContainer.innerHTML = availableYears
-            .map((yr, idx) => `<span id="tick-${idx}" class="${idx === selectedYearIndex ? 'tick-active' : ''}">${yr}</span>`)
+            .map((yr, idx) => {
+              const label = yr === 2022 ? '2022 (partial season (no Jan-Feb))' : yr;
+              return `<span id="tick-${idx}" class="${idx === selectedYearIndex ? 'tick-active' : ''}">${label}</span>`;
+            })
             .join('');
         }
 
@@ -2288,20 +2309,111 @@
           `;
         }
 
-        if (!tbody || !statsData.validation_loyo.table) return;
-        tbody.innerHTML = statsData.validation_loyo.table.map(r => {
-          const isOutside = r.outside_displayed_window || (r.note && r.note.includes('outside'));
-          const yearBadge = isOutside ? `<strong>${r.year}</strong> <span style="font-size:10px; color:var(--text-muted); display:block; line-height:1;">(outside window)</span>` : `<strong>${r.year}</strong>`;
-          return `
-          <tr style="${isOutside ? 'opacity: 0.8;' : ''}">
-            <td>${yearBadge}</td>
-            <td style="font-size: 12px; color:${r.stage.includes('After') || r.stage.includes('TLS') ? 'var(--accent-cyan)' : 'var(--accent-amber)'}">${r.stage.includes('TLS') ? 'TLS Norm' : 'Raw'}</td>
-            <td style="color:var(--accent-emerald); font-weight:700;">${(r.f1_score * 100).toFixed(1)}%</td>
-            <td>${r.mapped_area_km2.toFixed(1)}</td>
-            <td>${r.adjusted_area_km2.toFixed(1)} &plusmn; ${r.ci_95_km2.toFixed(1)}</td>
-          </tr>
-        `;
-        }).join('');
+        if (tbody && statsData.validation_loyo && statsData.validation_loyo.table) {
+          tbody.innerHTML = statsData.validation_loyo.table.map(r => {
+            const isOutside = r.outside_displayed_window || (r.note && r.note.includes('outside'));
+            const yearBadge = isOutside ? `<strong>${r.year}</strong> <span style="font-size:10px; color:var(--text-muted); display:block; line-height:1;">(outside window)</span>` : `<strong>${r.year}</strong>`;
+            return `
+            <tr style="${isOutside ? 'opacity: 0.8;' : ''}">
+              <td>${yearBadge}</td>
+              <td style="font-size: 12px; color:${r.stage.includes('After') || r.stage.includes('TLS') ? 'var(--accent-cyan)' : 'var(--accent-amber)'}">${r.stage.includes('TLS') ? 'TLS Norm' : 'Raw'}</td>
+              <td style="color:var(--accent-emerald); font-weight:700;">${(r.f1_score * 100).toFixed(1)}%</td>
+              <td>${r.mapped_area_km2.toFixed(1)}</td>
+              <td>${r.adjusted_area_km2.toFixed(1)} &plusmn; ${r.ci_95_km2.toFixed(1)}</td>
+            </tr>
+          `;
+          }).join('');
+        }
+
+        // Render 4-Stratum Change Validation Section
+        const changeContainer = document.getElementById('change-val-content');
+        if (changeContainer) {
+          const cv = statsData.change_validation;
+          if (!cv || cv.status !== "validated") {
+            changeContainer.innerHTML = `
+              <div style="font-size: 12px; color: var(--text-muted); padding: 8px 0;">
+                <em>Not independently validated.</em> (Pune evaluated via held-out spatial block cross-validation).
+              </div>
+            `;
+          } else {
+            const strataRows = (cv.strata_table || []).map(s => `
+              <tr>
+                <td><strong>${s.stratum}</strong> <span style="font-size:10px; color:var(--text-muted);">(${s.name.includes('(') ? s.name.split('(')[1].replace(')', '') : s.name})</span></td>
+                <td>${s.mapped_area_km2.toFixed(1)}</td>
+                <td>${s.sample_size}</td>
+                <td>${s.c00}</td>
+                <td style="color:var(--accent-emerald); font-weight:600;">${s.c01_gain}</td>
+                <td style="color:var(--accent-amber); font-weight:600;">${s.c10_loss}</td>
+                <td>${s.c11_built}</td>
+                <td>${s.unclear || 0}</td>
+                <td style="color:var(--accent-cyan); font-weight:700;">${s.accuracy_pct.toFixed(1)}%</td>
+              </tr>
+            `).join('');
+
+            changeContainer.innerHTML = `
+              <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px;">
+                Stratified area-weighted estimator (Olofsson et al. 2014) on 300 visual inspection samples:
+              </div>
+              <div style="overflow-x: auto;">
+                <table class="validation-table" style="font-size: 11px;">
+                  <thead>
+                    <tr>
+                      <th>Stratum</th>
+                      <th>Area (km²)</th>
+                      <th>N</th>
+                      <th>(0,0)</th>
+                      <th>(0,1)</th>
+                      <th>(1,0)</th>
+                      <th>(1,1)</th>
+                      <th>Unclear</th>
+                      <th>Accuracy</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${strataRows}
+                  </tbody>
+                </table>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0;">
+                <div style="background: rgba(255,255,255,0.04); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-subtle);">
+                  <div style="font-size: 10px; color: var(--text-muted);">Adjusted Gain</div>
+                  <div style="font-size: 12px; font-weight: 700; color: var(--accent-emerald); font-family: var(--font-mono);">${cv.adjusted_gain_km2.toFixed(1)} ± ${cv.ci95_gain_km2.toFixed(1)} km²</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.04); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-subtle);">
+                  <div style="font-size: 10px; color: var(--text-muted);">Adjusted Loss</div>
+                  <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); font-family: var(--font-mono);">${cv.adjusted_loss_km2.toFixed(1)} ± ${cv.ci95_loss_km2.toFixed(1)} km²</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.04); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-subtle);">
+                  <div style="font-size: 10px; color: var(--text-muted);">Adjusted Net</div>
+                  <div style="font-size: 12px; font-weight: 700; color: var(--accent-cyan); font-family: var(--font-mono);">${cv.adjusted_net_km2 >= 0 ? '+' : ''}${cv.adjusted_net_km2.toFixed(1)} ± ${cv.ci95_net_km2.toFixed(1)} km²</div>
+                </div>
+              </div>
+
+              <!-- Sensitivity Comparison Row -->
+              <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 8px; margin: 8px 0; font-size: 11px;">
+                <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 4px;">Sensitivity &amp; Baseline Scenarios:</div>
+                <div style="display: flex; flex-direction: column; gap: 3px; color: var(--text-secondary);">
+                  <div>&bull; <strong>Pre-recheck Baseline:</strong> <span style="font-family:var(--font-mono); color:#cbd5e1;">+14.9 ± 83.6 km²</span></div>
+                  <div>&bull; <strong>Without Stratum C Gains (IDs 50 &amp; 172 as errors):</strong> <span style="font-family:var(--font-mono); color:#38bdf8;">+48.3 ± 23.1 km²</span></div>
+                  <div>&bull; <strong>Post-recheck Adjusted Net:</strong> <span style="font-family:var(--font-mono); color:#34d399;">+81.7 ± 51.6 km²</span></div>
+                </div>
+              </div>
+
+              <div style="font-size: 12px; color: var(--text-primary); font-weight: 600; line-height: 1.4; border-left: 2px solid var(--accent-emerald); padding-left: 8px; margin-top: 6px;">
+                ${cv.summary_sentence}
+              </div>
+
+              <div style="font-size: 11px; color: #fde047; margin-top: 8px; line-height: 1.35; padding: 4px 8px; background: rgba(234, 179, 8, 0.08); border-radius: 4px; border: 1px solid rgba(234, 179, 8, 0.2);">
+                <strong>Disclaimer:</strong> Intervals reflect sampling error only; labelling inconsistency (about 9% between passes) is not included.
+              </div>
+
+              <div style="font-size: 10px; color: var(--text-muted); margin-top: 8px; line-height: 1.35; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 6px;">
+                *Note: Strata were built from annual TLS-normalised classifications (3x3 majority filter, no temporal cleanup rules). Validation mapped areas (415.97 / 474.88 km²) match the dashboard TLS series (415.97 / 474.88 km²). 26 of 291 start labels (12 built&rarr;not built, 14 not built&rarr;built) changed between passes 1 and 2 (~9% labeller change rate). The 3rd pass rechecked 10 discordant points (apparent losses/gains) using Google Earth historical imagery; the 6 corrected labels persisted through pass 2, and concordant points were not rechecked. Gross loss standard error applies Laplace (add-one) smoothing for zero-count sample proportions.
+              </div>
+            `;
+          }
+        }
       } catch (err) {
         showError("Validation Table", err);
       }
@@ -2440,7 +2552,7 @@
         if (tsCanvas) {
           const tsCtx = tsCanvas.getContext('2d');
           const gSeries = statsData.growth_series || [];
-          const labels = gSeries.map(g => String(g.year));
+          const labels = gSeries.map(g => g.display_year || (g.year === 2022 ? '2022 (partial season (no Jan-Feb))' : String(g.year)));
           const cleanData = gSeries.map(g => g.clean_builtup_km2);
           const normData = gSeries.map(g => g.norm_builtup_km2);
           const rawData = gSeries.map(g => g.raw_builtup_km2);
