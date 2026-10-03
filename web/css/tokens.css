@@ -1,0 +1,151 @@
+/* ==========================================================================
+   UrbanPulse Design Tokens (web/css/tokens.css)
+   Editorial Science-Magazine Theme: Warm paper panels, ink-navy chrome,
+   Fraunces display serif, Inter body, JetBrains Mono numbers.
+   WCAG AA Compliant contrast across light and dark modes.
+   ========================================================================== */
+
+:root {
+  /* Typography Stacks */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Font Sizes (Accessibility: min 14px mobile / 13px desktop) */
+  --text-xs: 0.8125rem;   /* 13px */
+  --text-sm: 0.875rem;    /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.125rem;    /* 18px */
+  --text-xl: 1.3125rem;   /* 21px */
+  --text-2xl: 1.625rem;   /* 26px */
+  --text-3xl: 2.125rem;   /* 34px */
+
+  /* Line Heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  /* Land Cover Reference Accents */
+  --color-builtup: #d9533f;        /* Terracotta / Brick Red */
+  --color-builtup-dark: #b83d2c;
+  --color-builtup-light: #fbece9;
+  --color-vegetation: #2e7d32;     /* Forest Green */
+  --color-vegetation-light: #e8f5e9;
+  --color-water: #0288d1;          /* Azure Blue */
+  --color-water-light: #e1f5fe;
+  --color-agriculture: #d97706;    /* Warm Amber */
+  --color-agriculture-light: #fef3c7;
+  --color-openland: #8d6e63;       /* Earthy Gray-Brown */
+  --color-openland-light: #efebe9;
+
+  /* Status Accents */
+  --color-success: #15803d;
+  --color-warning: #b45309;
+  --color-error: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Elevation & Shadows */
+  --shadow-sm: 0 1px 2px rgba(13, 19, 31, 0.05);
+  --shadow-md: 0 4px 12px -2px rgba(13, 19, 31, 0.08), 0 2px 6px -1px rgba(13, 19, 31, 0.04);
+  --shadow-lg: 0 12px 28px -4px rgba(13, 19, 31, 0.14), 0 4px 12px -2px rgba(13, 19, 31, 0.06);
+  --shadow-xl: 0 20px 40px -8px rgba(13, 19, 31, 0.22);
+  --shadow-glass: 0 8px 32px rgba(13, 19, 31, 0.28), 0 0 0 1px var(--color-border);
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Layout Constants */
+  --header-height: 56px;
+  --bottom-tab-height: 56px;
+  --sidebar-width: 440px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* ==========================================================================
+   Theme: Light (Warm Editorial "Paper" Look)
+   ========================================================================== */
+:root, [data-theme="light"] {
+  --color-bg-base: #f8f6f0;           /* Warm antique cream */
+  --color-bg-surface: #ffffff;        /* Crisp paper */
+  --color-bg-subtle: #f1ede4;         /* Soft paper tone */
+  --color-bg-panel: rgba(255, 255, 255, 0.96);
+  --color-bg-chrome: #0d1424;         /* Deep ink-navy for map overlays & navbar */
+  --color-bg-chrome-subtle: #17223b;
+  --color-chrome-text: #f8fafc;
+  --color-chrome-muted: #94a3b8;
+  --color-chrome-border: rgba(255, 255, 255, 0.12);
+
+  --color-text-main: #0f172a;         /* Deepest charcoal ink */
+  --color-text-secondary: #334155;    /* High-contrast slate */
+  --color-text-muted: #475569;        /* High-contrast detail text (5.5:1) */
+  --color-text-accent: #b03220;       /* Built-up terracotta */
+
+  --color-border: #dcd4c5;            /* Warm paper border */
+  --color-border-subtle: #e8e2d4;
+  --color-border-strong: #bfb49f;
+  --color-focus: #0284c7;
+
+  --color-accent-primary: #c23b28;    /* Deep terracotta (4.8:1 on white) */
+  --color-accent-hover: #a52f1e;
+  --color-accent-subtle: #f8e8e5;
+  --color-accent-ring: rgba(194, 59, 40, 0.25);
+  
+  --backdrop-blur: blur(12px);
+}
+
+/* ==========================================================================
+   Theme: Dark (Deep Ink-Navy Editorial Look)
+   ========================================================================== */
+[data-theme="dark"] {
+  --color-bg-base: #090e1a;           /* Deep nocturnal ink */
+  --color-bg-surface: #111a2e;        /* Dark slate navy */
+  --color-bg-subtle: #18233c;         /* Elevated navy card */
+  --color-bg-panel: rgba(17, 26, 46, 0.95);
+  --color-bg-chrome: #0b1120;
+  --color-bg-chrome-subtle: #151f36;
+  --color-chrome-text: #f8fafc;
+  --color-chrome-muted: #94a3b8;
+  --color-chrome-border: rgba(255, 255, 255, 0.12);
+
+  --color-text-main: #f8fafc;         /* Crisp near-white */
+  --color-text-secondary: #cbd5e1;    /* Light slate */
+  --color-text-muted: #94a3b8;        /* Medium slate */
+  --color-text-accent: #f06e5b;       /* Glowing terracotta */
+
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-border-subtle: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.22);
+  --color-focus: #38bdf8;
+
+  --color-accent-primary: #f06e5b;
+  --color-accent-hover: #ff8573;
+  --color-accent-subtle: rgba(240, 110, 91, 0.15);
+  --color-accent-ring: rgba(240, 110, 91, 0.35);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.5);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--color-border);
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

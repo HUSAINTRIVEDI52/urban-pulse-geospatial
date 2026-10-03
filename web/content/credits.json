@@ -1,0 +1,48 @@
+{
+  "title": "Data Sources, Attributions & Credits",
+  "disclaimer": "UrbanPulse is an independent academic and open-source geospatial observatory. It is NOT an official government source, municipal census, or statutory planning record. Data is intended for research, public education, and urban policy analysis only.",
+  "license": "Open Source Software licensed under the MIT License. Derived data and analytical outputs released under Creative Commons Attribution 4.0 International (CC BY 4.0).",
+  "sources": [
+    {
+      "name": "Copernicus Sentinel-2",
+      "provider": "European Space Agency (ESA) / European Commission",
+      "license": "Copernicus Open Access Policy (Free, full and open)",
+      "desc": "Surface reflectance multispectral optical satellite imagery at 10m, 20m, and 60m resolution.",
+      "url": "https://sentinels.copernicus.eu/web/sentinel/missions/sentinel-2"
+    },
+    {
+      "name": "ESA WorldCover 2021",
+      "provider": "European Space Agency (ESA)",
+      "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+      "desc": "Global 10m land cover map based on Sentinel-1 and Sentinel-2 data, utilized as an independent macroscopic calibration benchmark.",
+      "url": "https://esa-worldcover.org/"
+    },
+    {
+      "name": "OpenStreetMap",
+      "provider": "OpenStreetMap Contributors",
+      "license": "Open Database License (ODbL 1.0)",
+      "desc": "Cartographic vector tiles, road networks, municipal boundaries, and reference base map features.",
+      "url": "https://www.openstreetmap.org/copyright"
+    },
+    {
+      "name": "Earth Search STAC API",
+      "provider": "Element 84 / AWS Public Datasets",
+      "license": "Public Service API",
+      "desc": "SpatioTemporal Asset Catalog (STAC) compliant search service indexing Sentinel-2 Level-2A imagery.",
+      "url": "https://element84.com/earth-search/"
+    },
+    {
+      "name": "MapLibre GL JS",
+      "provider": "MapLibre Community",
+      "license": "BSD 3-Clause License",
+      "desc": "Open-source WebGL-based vector and raster interactive map client.",
+      "url": "https://maplibre.org/"
+    }
+  ],
+  "links": {
+    "repository": "https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial",
+    "report_html": "./report/",
+    "report_pdf": "./report/UrbanPulse_Report.pdf",
+    "data_json_template": "data/{city}/stats.json"
+  }
+}

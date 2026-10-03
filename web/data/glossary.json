@@ -1,0 +1,220 @@
+{
+  "terms": [
+    {
+      "id": "built-up",
+      "term": "Built-up",
+      "aliases": ["built up", "built-up land", "urban footprint"],
+      "definition": "Land covered by human-made structures such as buildings, paved roads, concrete, and industrial infrastructure.",
+      "detail": "In satellite imagery, built-up areas include residential neighborhoods, factories, asphalt roads, and commercial complexes. UrbanPulse classifies any 60-meter pixel with predominant artificial impervious surface as built-up. It excludes open soil, parks, and seasonal farmland unless paved over.",
+      "report_link": "report/index.html#builtup-definition"
+    },
+    {
+      "id": "land-cover",
+      "term": "Land Cover",
+      "aliases": ["land cover classes", "land cover types"],
+      "definition": "The observed physical material covering the Earth's surface, such as vegetation, water, bare soil, or buildings.",
+      "detail": "Unlike land use (which describes how humans utilize land, like residential vs. commercial), land cover describes the physical characteristics detected by satellite sensors. UrbanPulse tracks five distinct classes: Built-up, Vegetation, Water, Agriculture, and Open Land.",
+      "report_link": "report/index.html#land-cover"
+    },
+    {
+      "id": "sentinel-2",
+      "term": "Sentinel-2",
+      "aliases": ["sentinel 2", "sentinel", "copernicus sentinel-2"],
+      "definition": "A European Space Agency satellite mission providing free, high-resolution optical imagery across multiple color and infrared bands.",
+      "detail": "The twin Sentinel-2 satellites orbit the Earth every 5 days, capturing light across 13 spectral bands at resolutions from 10 to 60 meters. UrbanPulse processes Sentinel-2 surface reflectance images (Level-2A) to monitor urban land transformation over time without commercial vendor lock-in.",
+      "report_link": "report/index.html#data-sources"
+    },
+    {
+      "id": "composite",
+      "term": "Composite",
+      "aliases": ["cloud-free composite", "median composite", "annual composite"],
+      "definition": "A clean, cloud-free image created by merging the clearest pixels across multiple satellite passes during a specific time period.",
+      "detail": "Clouds, haze, and sensor artifacts often obscure individual satellite passes. To create a reliable yearly snapshot, the UrbanPulse pipeline collects all valid scenes within the winter dry-season window, masks clouds and shadows, and calculates the median reflectance value for every pixel.",
+      "report_link": "report/index.html#composite-methodology"
+    },
+    {
+      "id": "dry-season",
+      "term": "Dry Season",
+      "aliases": ["dry season window", "observation window", "winter window"],
+      "definition": "The low-cloud winter months (typically November through February in India) chosen to capture consistent, cloudless satellite images.",
+      "detail": "During the monsoon season, persistent heavy cloud cover and temporary standing water distort satellite readings. Observing cities consistently during the dry winter window minimizes seasonal vegetation swings and ensures maximum optical clarity.",
+      "report_link": "report/index.html#seasonal-window"
+    },
+    {
+      "id": "ndvi",
+      "term": "NDVI",
+      "aliases": ["normalized difference vegetation index"],
+      "definition": "Normalized Difference Vegetation Index: a spectral formula measuring plant greenness and vegetation density.",
+      "detail": "Healthy green plants strongly absorb red light for photosynthesis and reflect near-infrared (NIR) light. NDVI is calculated as (NIR - Red) / (NIR + Red). Values near +1 represent dense green canopy, while built-up structures and bare soil yield values near zero or slightly positive.",
+      "report_link": "report/index.html#spectral-indices"
+    },
+    {
+      "id": "ndbi",
+      "term": "NDBI",
+      "aliases": ["normalized difference built-up index"],
+      "definition": "Normalized Difference Built-up Index: a spectral formula highlighting artificial surfaces like concrete and stone.",
+      "detail": "Built-up surfaces reflect shortwave-infrared (SWIR) light more strongly than near-infrared (NIR). NDBI is calculated as (SWIR - NIR) / (SWIR + NIR). Positive NDBI values generally correspond to paved, artificial, or masonry structures, though dry rocky soil can sometimes present similar signatures.",
+      "report_link": "report/index.html#spectral-indices"
+    },
+    {
+      "id": "mndwi",
+      "term": "MNDWI",
+      "aliases": ["modified normalized difference water index"],
+      "definition": "Modified Normalized Difference Water Index: a formula that sharply isolates open water bodies like rivers, lakes, and reservoirs.",
+      "detail": "Open water absorbs shortwave infrared light almost completely while reflecting visible green light. MNDWI is calculated as (Green - SWIR) / (Green + SWIR). This formula suppresses false water signals from built-up urban noise and clearly demarcates lakes and river corridors.",
+      "report_link": "report/index.html#spectral-indices"
+    },
+    {
+      "id": "random-forest",
+      "term": "Random Forest",
+      "aliases": ["random forest classifier", "rf model"],
+      "definition": "A machine learning algorithm that combines predictions from hundreds of decision trees to classify each pixel into land cover types.",
+      "detail": "Random Forest builds an ensemble of randomized decision trees trained on spectral bands and derived indices. By averaging the votes of all individual trees, it prevents overfitting and produces robust classification boundaries between complex urban land covers.",
+      "report_link": "report/index.html#classification-model"
+    },
+    {
+      "id": "classification",
+      "term": "Classification",
+      "aliases": ["pixel classification", "supervised classification", "land cover map"],
+      "definition": "The automated process of assigning every pixel in a satellite image to a specific category, such as built-up or water.",
+      "detail": "Using trained statistical models, the computer examines the unique reflectance values across colors and infrared bands for each 60m pixel and determines whether it represents buildings, trees, water, crops, or barren land.",
+      "report_link": "report/index.html#classification"
+    },
+    {
+      "id": "worldcover",
+      "term": "WorldCover",
+      "aliases": ["esa worldcover", "worldcover 2021", "esa 10m"],
+      "definition": "The European Space Agency's globally validated 10-meter land cover map, used by UrbanPulse as a benchmark reference.",
+      "detail": "ESA WorldCover 2021 provides an independently audited global baseline. UrbanPulse re-samples WorldCover to our 60m grid and uses its 2021 built-up footprint as an anchor to verify our model's calibration and baseline accuracy.",
+      "report_link": "report/index.html#worldcover-benchmark"
+    },
+    {
+      "id": "normalisation-tls",
+      "term": "Normalisation (TLS)",
+      "aliases": ["tls", "normalisation", "tls-normalised", "tls-normalized", "temporal logistic smoothing"],
+      "definition": "A mathematical calibration technique that harmonizes multi-year satellite images so lighting and atmospheric variations don't mimic false growth.",
+      "detail": "Year-to-year differences in soil moisture, aerosol haze, and sun angle can cause identical ground features to appear brighter or darker. Temporal Logistic Smoothing (TLS) aligns pixel histograms across years to stabilize annual comparisons. UrbanPulse selects the TLS series as its primary metric because its 2021 area matches ESA WorldCover closest and exhibits smooth temporal continuity.",
+      "report_link": "report/index.html#tls-normalisation"
+    },
+    {
+      "id": "stratified-sample",
+      "term": "Stratified Sample",
+      "aliases": ["stratified sampling", "strata", "stratum"],
+      "definition": "A statistical auditing method where points are divided into distinct groups (such as mapped gain or persistent built) before random inspection.",
+      "detail": "Urban expansion often affects only a small percentage of a region's total land. Pure random sampling would select mostly unchanged countryside and miss new urban developments. By stratifying into Mapped Gain (A), Persistent Built (B), Persistent Non-built (C), and Mapped Loss (D), human auditors inspect enough points in every category to achieve statistically sound precision.",
+      "report_link": "report/index.html#sampling-design"
+    },
+    {
+      "id": "olofsson-estimator",
+      "term": "Olofsson Estimator",
+      "aliases": ["olofsson", "olofsson 2014", "error-adjusted area"],
+      "definition": "The international gold-standard statistical method (Olofsson et al. 2014) for calculating real land change by adjusting for map misclassifications.",
+      "detail": "No satellite classification is 100% accurate. Directly counting colored pixels almost always overstates or understates true change. The Olofsson estimator uses human-verified audit points from each stratum to mathematically calculate the true change area along with rigorous 95% confidence intervals.",
+      "report_link": "report/index.html#olofsson-method"
+    },
+    {
+      "id": "confidence-interval",
+      "term": "Confidence Interval",
+      "aliases": ["confidence intervals", "margin of error", "95% ci", "ci95"],
+      "definition": "A statistical range around an estimate indicating the margin of uncertainty due to sampling (e.g. ±51.6 km² at 95% confidence).",
+      "detail": "Because auditors evaluate a representative sample of 300 points rather than inspecting every single square meter on the ground, the results contain sampling uncertainty. A 95% confidence interval means that if we repeated the audit many times, 95% of such calculated intervals would cover the true ground reality. Note: this interval reflects sampling error only and does not include subjective human labelling disagreements.",
+      "report_link": "report/index.html#uncertainty"
+    },
+    {
+      "id": "f1-score",
+      "term": "F1 Score",
+      "aliases": ["f1", "macro f1", "f1-score"],
+      "definition": "A balanced accuracy score between 0 and 1 that equally balances precision (avoiding false alarms) and recall (not missing real structures).",
+      "detail": "If a model predicts 'not built' everywhere, a simple overall accuracy metric could still appear high (e.g., 85%) just because cities occupy a minority of regional land. The F1 score evaluates both how many predicted buildings are real and how many real buildings were correctly caught.",
+      "report_link": "report/index.html#f1-metric"
+    },
+    {
+      "id": "gross-gain-loss",
+      "term": "Gross Gain/Loss",
+      "aliases": ["gross gain", "gross loss", "gross change"],
+      "definition": "Gross gain is the total newly built land added, while gross loss is previously built land converted back to non-built open land.",
+      "detail": "In physical reality, true loss of established city buildings back to farmland or nature is extremely rare in expanding metropolitan regions. Most apparent 'gross loss' detected by raw models represents false positives in the starting year (such as dry fallow fields mistakenly labeled as buildings in 2020).",
+      "report_link": "report/index.html#gross-vs-net"
+    },
+    {
+      "id": "net-change",
+      "term": "Net Change",
+      "aliases": ["net growth", "net expansion", "adjusted net"],
+      "definition": "The overall growth in built-up footprint after subtracting estimated losses from estimated gains.",
+      "detail": "Calculated as Gross Gain minus Gross Loss. For Ahmedabad between 2020 and 2024, the Olofsson error-adjusted net expansion was +81.7 ± 51.6 km², confirming that expansion is statistically distinguishable from zero.",
+      "report_link": "report/index.html#net-change"
+    },
+    {
+      "id": "shannon-entropy",
+      "term": "Shannon Entropy",
+      "aliases": ["entropy", "relative entropy", "shannon entropy (hn)"],
+      "definition": "A spatial dispersion metric from 0 to 1 indicating whether urban growth is tightly clustered (near 0) or sprawling randomly (near 1).",
+      "detail": "Derived from information theory, Shannon Entropy measures the uniformity of built-up development across concentric distance zones. A value close to 1 (like Ahmedabad's 0.950) indicates high spatial dispersion and outward sprawl rather than compact, transit-oriented densification.",
+      "report_link": "report/index.html#entropy"
+    },
+    {
+      "id": "core-vs-periphery",
+      "term": "Core vs Periphery",
+      "aliases": ["core vs. periphery", "core", "periphery", "urban core", "rural periphery"],
+      "definition": "A geographic comparison between the historical city center (0–6 km ring) and the outlying suburban/rural perimeter (>12 km).",
+      "detail": "In mature Indian cities, the historic core is almost completely saturated with buildings (>90% density), meaning nearly all new horizontal expansion occurs in the outer periphery (>12 km from the center), where farmland is actively being converted into logistics parks, highways, and residential developments.",
+      "report_link": "report/index.html#core-periphery"
+    },
+    {
+      "id": "distance-ring",
+      "term": "Distance Ring",
+      "aliases": ["distance rings", "concentric rings", "buffer zones"],
+      "definition": "Concentric 2-kilometer circular bands radiating outward from the municipal center to track how urban density drops with distance.",
+      "detail": "UrbanPulse measures built-up density across nine concentric rings from 0 km to 18 km out. This reveals the classic urban density gradient: dense saturation in inner rings gradually declining to scattered development in outer zones.",
+      "report_link": "report/index.html#distance-rings"
+    },
+    {
+      "id": "quality-gate",
+      "term": "Quality Gate",
+      "aliases": ["quality gates", "pipeline quality gate", "data checks"],
+      "definition": "Automated verification checks in the processing pipeline that halt deployment if satellite data quality or model accuracy falls below standards.",
+      "detail": "UrbanPulse enforces 5 rigorous checks: cloud contamination thresholds (<2%), cloud cover consistency across years, raw composite F1 validation (>=0.75), baseline area alignment with ESA WorldCover, and spatial entropy bounds.",
+      "report_link": "report/index.html#quality-gates"
+    },
+    {
+      "id": "partial-season",
+      "term": "Partial Season",
+      "aliases": ["partial-season", "partial observation", "2022 partial season"],
+      "definition": "An observation year where satellite images could only be gathered for part of the standard winter window.",
+      "detail": "For the 2022 observation year, satellite images were available only for October–December 2021, with no clear scenes available in January–February 2022. Because crop conditions vary between early winter and late winter, this partial coverage creates a known seasonal caveat.",
+      "report_link": "report/index.html#caveats"
+    },
+    {
+      "id": "false-positive",
+      "term": "False Positive",
+      "aliases": ["false positives", "misclassification error"],
+      "definition": "When the automated algorithm mistakenly classifies bare soil, dry crop fields, or river sand as a human building.",
+      "detail": "During dry winters in semi-arid India, dry compacted dirt and harvested fallow fields reflect sunlight with spectral signatures remarkably similar to concrete and stone. In Ahmedabad's validation audit, approximately 4 in 10 newly mapped built-up spots were actually fallow or bare soil.",
+      "report_link": "report/index.html#accuracy-audit"
+    },
+    {
+      "id": "fallow-land",
+      "term": "Fallow Land",
+      "aliases": ["fallow", "dry fallow", "bare soil", "harvested farmland"],
+      "definition": "Agricultural fields left unplanted and dry between crop cycles, which often resemble concrete in satellite imagery.",
+      "detail": "Fallow fields lack moisture and green chlorophyll during winter. Without vegetation, the dry dirt strongly reflects infrared wavelengths, causing machine learning algorithms to sometimes confuse them with paved urban surfaces.",
+      "report_link": "report/index.html#fallow-caveat"
+    },
+    {
+      "id": "60-m-pixel",
+      "term": "60 m Pixel",
+      "aliases": ["60m pixel", "spatial resolution", "60m grid"],
+      "definition": "The smallest unit of area analyzed by UrbanPulse, measuring 60 meters by 60 meters (0.0036 square kilometers or 0.36 hectares).",
+      "detail": "While Sentinel-2 captures some optical bands at 10m and 20m, SWIR atmospheric bands are natively 20m and 60m. Resampling to a unified 60-meter grid reduces random noise and ensures balanced multi-spectral calculations across all bands.",
+      "report_link": "report/index.html#spatial-resolution"
+    },
+    {
+      "id": "km2",
+      "term": "km²",
+      "aliases": ["km2", "sq km", "square kilometers", "square kilometres"],
+      "definition": "Square kilometers: a metric unit of land area equal to 1,000,000 square meters (approximately 247 acres or 100 hectares).",
+      "detail": "UrbanPulse measures metropolitan study extents, annual built-up footprints, and growth rates in square kilometers (km²) to convey real-world physical ground scale.",
+      "report_link": "report/index.html#units"
+    }
+  ]
+}

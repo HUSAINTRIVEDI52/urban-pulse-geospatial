@@ -1,0 +1,45 @@
+{
+  "flows": {
+    "guided_tour": "PASSED (all 4 steps completed, modal closed, flag saved)",
+    "glossary_interaction": "PASSED (popover displayed correct term/definition, more link navigated to glossary)",
+    "city_switch": "PASSED (switched to Pune, AOI updated to 2057.5 km\u00b2 AOI, unvalidated caveat displayed)",
+    "compare_mode": "PASSED (swipe divider operable at 1440px and 390px)",
+    "depth_toggle": "PASSED (title text changes, localStorage synced, layout intact)"
+  },
+  "numbers": {
+    "ahmedabad": "VERIFIED (90 numeric tokens all accounted for in stats.json)"
+  },
+  "accessibility": {
+    "Explore Desktop (1440px)": {
+      "total_violations": 0,
+      "critical_or_serious": 0,
+      "details": []
+    },
+    "Explore Mobile (390px)": {
+      "total_violations": 0,
+      "critical_or_serious": 0,
+      "details": []
+    },
+    "Key Findings (1440px)": {
+      "total_violations": 0,
+      "critical_or_serious": 0,
+      "details": []
+    },
+    "How It's Made (1440px)": {
+      "total_violations": 0,
+      "critical_or_serious": 0,
+      "details": []
+    },
+    "Can I Trust This? (1440px)": {
+      "total_violations": 0,
+      "critical_or_serious": 0,
+      "details": []
+    },
+    "Glossary (1440px)": {
+      "total_violations": 0,
+      "critical_or_serious": 0,
+      "details": []
+    },
+    "summary": "Total critical/serious violations: 0"
+  }
+}

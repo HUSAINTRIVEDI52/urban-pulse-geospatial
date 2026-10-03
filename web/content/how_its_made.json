@@ -1,0 +1,99 @@
+{
+  "title": "How It's Made: The Analytical Pipeline",
+  "lead": "From raw Copernicus Sentinel-2 pixels to validated metropolitan sprawl metrics in six verifiable engineering stages.",
+  "tech_stack_summary": "UrbanPulse is engineered entirely with open-source tools. The pipeline runs within reproducible Docker containers orchestrated by Kubernetes (K3d) with Prometheus monitoring and automated CI/CD validation. Spatial analysis and raster masking are executed using Geospatial Python (Rasterio, Shapely, GeoPandas) and PostGIS, ensuring full reproducibility without proprietary software or cloud lock-in.",
+  "data_flow_steps": [
+    {
+      "step": 1,
+      "name": "Acquisition",
+      "tool": "STAC API",
+      "desc": "Sentinel-2 L2A BOA Reflectance"
+    },
+    {
+      "step": 2,
+      "name": "Compositing",
+      "tool": "Rasterio",
+      "desc": "Cloud-masked median dry-season mosaic"
+    },
+    {
+      "step": 3,
+      "name": "Classification",
+      "tool": "Scikit-Learn",
+      "desc": "Random Forest on 13 bands & indices"
+    },
+    {
+      "step": 4,
+      "name": "Quality Gates",
+      "tool": "Pytest / CI",
+      "desc": "5 automated pipeline sanity checks"
+    },
+    {
+      "step": 5,
+      "name": "Sprawl Metrics",
+      "tool": "GeoPandas",
+      "desc": "Concentric rings & Shannon Entropy"
+    },
+    {
+      "step": 6,
+      "name": "Audit & Web",
+      "tool": "Olofsson Math",
+      "desc": "Error-adjusted areas & static Pages export"
+    }
+  ],
+  "steps": [
+    {
+      "step_number": 1,
+      "title": "Satellite Imagery Ingestion",
+      "headline": "Gathering calibrated surface reflectance from Copernicus Sentinel-2",
+      "what_happens": "The pipeline queries the Earth Search STAC API for multispectral Sentinel-2 Level-2A imagery covering the 45x45 km Area of Interest (AOI) during the winter dry-season observation window.",
+      "why": "Bottom-Of-Atmosphere (BOA) reflectance corrects for atmospheric haze and ozone absorption, providing physically consistent surface reflectances across years.",
+      "limitation": "The observation window must balance cloud-free skies against crop phenology; unseasonal rain or persistent winter smog can limit the number of clean scenes available.",
+      "report_link": "report/index.html#data-sources"
+    },
+    {
+      "step_number": 2,
+      "title": "Cloud Masking & Compositing",
+      "headline": "Generating clean annual median composite mosaics",
+      "what_happens": "Pixels flagged as clouds, cirrus, or cloud shadows by the Scene Classification Layer (SCL) are masked out. For every pixel location, the median reflectance across all valid scenes in the season is computed.",
+      "why": "A single satellite pass contains transient clouds, sensor noise, or shadows. Taking the annual dry-season median synthesizes a robust, cloud-free snapshot representing stable ground conditions.",
+      "limitation": "Compositing combines scenes captured across several weeks; rapid ground changes occurring mid-season are blended into a median reflectance.",
+      "report_link": "report/index.html#composite-methodology"
+    },
+    {
+      "step_number": 3,
+      "title": "Multispectral Classification",
+      "headline": "Supervised Random Forest mapping into five land cover classes",
+      "what_happens": "A Random Forest ensemble classifies each 60-meter pixel into Built-up, Vegetation, Water, Agriculture, or Open Land using 13 spectral bands and derived indices (NDVI, NDBI, MNDWI).",
+      "why": "Random Forest handles non-linear spectral interactions between artificial surfaces and surrounding soils effectively while resisting overfitting.",
+      "limitation": "Dry fallow farmland and compacted river sand share similar spectral reflectance signatures with concrete and stone during dry semi-arid winters.",
+      "report_link": "report/index.html#classification-model"
+    },
+    {
+      "step_number": 4,
+      "title": "Automated Quality Gates & Cross-Validation",
+      "headline": "Strict automated checks halting pipeline execution on anomalies",
+      "what_happens": "Five automated quality gates evaluate composite cloud contamination (<2%), inter-annual cloud consistency, baseline classification F1 against test blocks, ESA WorldCover area alignment, and spatial entropy bounds.",
+      "why": "Automated gates ensure that corrupted satellite tiles or model training regressions are intercepted immediately in CI/CD before any data reaches publication.",
+      "limitation": "Quality gates catch gross pipeline failures and outliers, but cannot catch subtle single-pixel misclassifications on ambiguous urban fringes.",
+      "report_link": "report/index.html#quality-gates"
+    },
+    {
+      "step_number": 5,
+      "title": "Spatial Metrics & Sprawl Measurement",
+      "headline": "Concentric distance rings and Shannon Entropy calculation",
+      "what_happens": "Built-up density is measured across nine concentric 2-km distance rings radiating outward from the municipal center. Relative Shannon Entropy is computed to quantify outward radial dispersion.",
+      "why": "Tracking expansion across distance zones distinguishes compact transit-oriented densification from rapid, vehicle-dependent leapfrog sprawl.",
+      "limitation": "Concentric circular rings assume roughly isotropic radial growth; natural barriers like rivers or hills can cause asymmetrical expansion.",
+      "report_link": "report/index.html#sprawl-analysis"
+    },
+    {
+      "step_number": 6,
+      "title": "Ground-Truth Audit & Error Adjustment",
+      "headline": "Olofsson et al. (2014) stratified area estimation",
+      "what_happens": "Human auditors independently verify 300 stratified random sample points across Mapped Gain (A), Persistent Built (B), Persistent Non-built (C), and Mapped Loss (D). Mathematical estimators compute true area change with 95% confidence intervals.",
+      "why": "Directly counting classified pixels is biased by classification error. Stratified error adjustment is the peer-reviewed gold standard for calculating reliable land change areas.",
+      "limitation": "Confidence intervals reflect statistical sampling uncertainty; subjective human labelling ambiguity (e.g. distinguishing packed gravel from asphalt) contributes non-sampling variance.",
+      "report_link": "report/index.html#change-validation"
+    }
+  ]
+}

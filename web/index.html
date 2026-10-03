@@ -1,3676 +1,579 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>UrbanPulse - Satellite Urban Sprawl & Land Cover Analytics</title>
+  <title>UrbanPulse — Satellite Urban Sprawl & Land Cover Analytics</title>
+  <meta name="description" content="Open-source satellite analytics measuring metropolitan urban sprawl, land cover transitions, and radial growth across India using multi-temporal Sentinel-2 imagery.">
   
-  <!-- Modern Typography -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Self-Hosted Typography (SIL OFL, Offline & Subpath Ready) -->
+  <link rel="stylesheet" href="vendor/fonts/fonts.css">
   
-  <!-- Local Vendor Styles & Scripts (Offline, Docker, GitHub Pages) -->
+  <!-- Local Vendor Styles & Scripts -->
   <link rel="stylesheet" href="vendor/maplibre-gl.css">
   <script src="vendor/maplibre-gl.js"></script>
   <script src="vendor/chart.umd.js"></script>
 
-  <style>
-    :root {
-      --bg-base: #090d16;
-      --bg-surface: rgba(15, 23, 42, 0.88);
-      --bg-surface-hover: rgba(30, 41, 59, 0.95);
-      --bg-card: rgba(30, 41, 59, 0.65);
-      --border-subtle: rgba(255, 255, 255, 0.08);
-      --border-active: rgba(56, 189, 248, 0.4);
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
-      --accent-cyan: #38bdf8;
-      --accent-blue: #3b82f6;
-      --accent-red: #ef4444;
-      --accent-emerald: #10b981;
-      --accent-amber: #f59e0b;
-      --accent-purple: #8b5cf6;
-      --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-      --glass-blur: blur(16px);
-      --shadow-elevation: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      font-family: var(--font-main);
-      background-color: var(--bg-base);
-      color: var(--text-primary);
-      width: 100vw;
-      height: 100vh;
-      height: 100dvh;
-      overflow: hidden;
-      overscroll-behavior: none;
-      display: flex;
-    }
-
-    /* Map Viewport Area */
-    #map-wrapper {
-      position: relative;
-      flex: 1;
-      height: 100vh;
-      height: 100dvh;
-      background: #0b1120;
-      overflow: hidden;
-    }
-
-    #map {
-      width: 100%;
-      height: 100vh;
-      height: 100dvh;
-    }
-
-    /* Glass Effect Utilities */
-    .glass-panel {
-      background: var(--bg-surface);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      border: 1px solid var(--border-subtle);
-      border-radius: 16px;
-      box-shadow: var(--shadow-elevation);
-    }
-
-    /* Top App Navigation Bar */
-    .top-nav {
-      position: absolute;
-      top: calc(16px + env(safe-area-inset-top, 0px));
-      left: 16px;
-      z-index: 20;
-      padding: 10px 18px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .brand-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .brand-icon {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #ef4444, #38bdf8);
-      border-radius: 9px;
-      display: grid;
-      place-items: center;
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
-    }
-
-    .brand-icon svg {
-      width: 18px;
-      height: 18px;
-      fill: #fff;
-    }
-
-    .brand-title {
-      font-size: 16px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      background: linear-gradient(to right, #fff, #94a3b8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .city-select {
-      background: rgba(15, 23, 42, 0.7);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-primary);
-      padding: 6px 12px;
-      border-radius: 10px;
-      font-family: var(--font-main);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      outline: none;
-      transition: all 0.2s;
-    }
-
-    .city-select:hover, .city-select:focus {
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
-    }
-
-    .badge-live {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #34d399;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .badge-live::before {
-      content: '';
-      width: 6px;
-      height: 6px;
-      background-color: #34d399;
-      border-radius: 50%;
-      box-shadow: 0 0 8px #34d399;
-      animation: pulse 1.8s infinite;
-    }
-
-    .badge-gate {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid rgba(16, 185, 129, 0.35);
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #34d399;
-      font-family: var(--font-mono);
-      letter-spacing: 0.02em;
-    }
-
-    .badge-ci {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(56, 189, 248, 0.15);
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #38bdf8;
-      font-family: var(--font-mono);
-      letter-spacing: 0.02em;
-    }
-
-    .note-box {
-      background: rgba(30, 41, 59, 0.7);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      border-radius: 12px;
-      padding: 10px 14px;
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .chart-legend-box {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 12px;
-      font-size: 12px;
-      margin-top: 4px;
-    }
-
-    .legend-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      color: var(--text-secondary);
-      font-size: 12px;
-    }
-
-    .legend-pill-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 2px;
-    }
-
-    .info-link-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 17px;
-      height: 17px;
-      border-radius: 50%;
-      background: rgba(56, 189, 248, 0.15);
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      color: var(--accent-cyan);
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 700;
-      font-family: var(--font-mono);
-      transition: all 0.2s ease;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .info-link-btn:hover {
-      background: var(--accent-cyan);
-      color: #0f172a;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
-      transform: scale(1.1);
-    }
-
-    .tooltip-container {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      cursor: help;
-    }
-
-    .tooltip-popup {
-      visibility: hidden;
-      opacity: 0;
-      width: 270px;
-      background: #0f172a;
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      color: #f8fafc;
-      text-align: left;
-      border-radius: 10px;
-      padding: 10px 12px;
-      position: absolute;
-      z-index: 100;
-      bottom: 125%;
-      left: 50%;
-      transform: translateX(-50%);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
-      transition: opacity 0.2s, visibility 0.2s;
-      pointer-events: none;
-      font-size: 12px;
-      line-height: 1.45;
-      font-weight: normal;
-    }
-
-    .tooltip-popup::after {
-      content: "";
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      margin-left: -5px;
-      border-width: 5px;
-      border-style: solid;
-      border-color: #0f172a transparent transparent transparent;
-    }
-
-    .tooltip-container:hover .tooltip-popup,
-    .tooltip-container:focus-within .tooltip-popup {
-      visibility: visible;
-      opacity: 1;
-    }
-
-    .negative-result-card {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.35);
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 12px;
-      color: #fca5a5;
-      line-height: 1.45;
-      margin-top: 10px;
-    }
-
-    .validation-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-      font-family: var(--font-mono);
-    }
-
-    .validation-table th {
-      text-align: left;
-      padding: 6px 8px;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border-subtle);
-      font-size: 12px;
-      text-transform: uppercase;
-    }
-
-    .validation-table td {
-      padding: 6px 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      color: var(--text-primary);
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.85); }
-    }
-
-    /* Fixed 420px Desktop Side Panel */
-    #dashboard, #sidebar, .dashboard-panel {
-      width: 420px;
-      min-width: 420px;
-      max-width: 420px;
-      height: 100vh;
-      height: 100dvh;
-      background: var(--bg-surface);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      border-left: 1px solid var(--border-subtle);
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      position: relative;
-      z-index: 30;
-      transform: none;
-      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-      overflow-y: auto;
-      border-radius: 0;
-    }
-
-    .sidebar-header {
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--border-subtle);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-    }
-
-    .sidebar-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .sidebar-title svg {
-      width: 18px;
-      height: 18px;
-      color: var(--accent-cyan);
-    }
-
-    .sidebar-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      overscroll-behavior: contain;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .sidebar-content::-webkit-scrollbar {
-      width: 5px;
-    }
-    .sidebar-content::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 10px;
-    }
-
-    /* Metric Cards Grid */
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-
-    .metric-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 12px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      transition: transform 0.2s, border-color 0.2s;
-    }
-
-    .metric-card:hover {
-      border-color: rgba(255, 255, 255, 0.2);
-      transform: translateY(-2px);
-    }
-
-    .metric-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .metric-value {
-      font-size: 20px;
-      font-weight: 800;
-      font-family: var(--font-mono);
-      color: var(--text-primary);
-    }
-
-    .metric-delta {
-      font-size: 12px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .delta-up { color: #f87171; }
-    .delta-down { color: #34d399; }
-
-    /* Chart Containers */
-    .chart-box {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 14px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .chart-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .chart-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .chart-canvas-wrapper {
-      position: relative;
-      height: 180px;
-      width: 100%;
-    }
-
-    /* Class Table */
-    .class-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-
-    .class-table th {
-      text-align: left;
-      padding: 8px 10px;
-      color: var(--text-muted);
-      font-weight: 600;
-      border-bottom: 1px solid var(--border-subtle);
-      text-transform: uppercase;
-      font-size: 12px;
-      letter-spacing: 0.05em;
-    }
-
-    .class-table td {
-      padding: 8px 10px;
-      color: var(--text-primary);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      font-family: var(--font-mono);
-    }
-
-    .class-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--font-main);
-      font-weight: 600;
-    }
-
-    .class-color-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 3px;
-      box-shadow: 0 0 6px currentColor;
-    }
-
-    /* Floating Bottom Timeline Bar */
-    .timeline-bar {
-      position: absolute;
-      bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 20;
-      width: calc(100% - 480px);
-      max-width: 780px;
-      padding: 14px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      transition: all 0.3s;
-    }
-
-    .timeline-controls {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .play-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
-      border: none;
-      color: #fff;
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.35);
-      transition: all 0.2s;
-    }
-
-    .play-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
-    }
-
-    .year-display {
-      font-family: var(--font-mono);
-      font-size: 26px;
-      font-weight: 800;
-      color: var(--text-primary);
-      text-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
-      min-width: 80px;
-    }
-
-    .slider-track-wrap {
-      flex: 1;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .year-slider {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 10px;
-      outline: none;
-      cursor: pointer;
-    }
-
-    .year-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: var(--accent-cyan);
-      box-shadow: 0 0 12px var(--accent-cyan);
-      cursor: pointer;
-      transition: transform 0.15s;
-    }
-
-    .year-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.2);
-    }
-
-    .timeline-ticks {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      font-family: var(--font-mono);
-      color: var(--text-muted);
-    }
-
-    .tick-active {
-      color: var(--accent-cyan);
-      font-weight: 700;
-    }
-
-    /* Floating Map Toolbar Controls */
-    .map-tools {
-      position: absolute;
-      top: calc(16px + env(safe-area-inset-top, 0px));
-      right: 16px;
-      z-index: 20;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .tool-btn {
-      padding: 10px 14px;
-      border-radius: 12px;
-      background: var(--bg-surface);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--glass-blur);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-primary);
-      font-family: var(--font-main);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: var(--shadow-elevation);
-      transition: all 0.2s;
-    }
-
-    .tool-btn:hover {
-      border-color: var(--accent-cyan);
-      background: var(--bg-surface-hover);
-    }
-
-    .tool-btn.active {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: var(--accent-cyan);
-      color: var(--accent-cyan);
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
-    }
-
-    /* Floating Legend */
-    .legend-card {
-      position: absolute;
-      top: calc(72px + env(safe-area-inset-top, 0px));
-      left: 16px;
-      z-index: 20;
-      padding: 14px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      min-width: 200px;
-      max-width: 260px;
-      transition: all 0.25s ease;
-    }
-
-    .legend-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .legend-toggle-icon {
-      transition: transform 0.2s ease;
-    }
-
-    .legend-card.collapsed .legend-body {
-      display: none;
-    }
-
-    .legend-card.collapsed .legend-toggle-icon {
-      transform: rotate(-90deg);
-    }
-
-    .legend-items {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
-    }
-
-    .legend-swatch {
-      width: 14px;
-      height: 14px;
-      border-radius: 4px;
-    }
-
-    /* Opacity Control */
-    .opacity-control {
-      margin-top: 6px;
-      padding-top: 8px;
-      border-top: 1px solid var(--border-subtle);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .opacity-label {
-      font-size: 12px;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    .opacity-slider {
-      flex: 1;
-      height: 4px;
-      -webkit-appearance: none;
-      appearance: none;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-      outline: none;
-    }
-
-    .opacity-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: #fff;
-      cursor: pointer;
-    }
-
-    /* Compare Mode Dual Map Container */
-    #compare-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100vh;
-      height: 100dvh;
-      display: none;
-      z-index: 10;
-    }
-
-    #compare-container.active {
-      display: block;
-    }
-
-    #map-before, #map-after {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100vh;
-      height: 100dvh;
-    }
-
-    #map-before {
-      z-index: 1;
-    }
-
-    #map-after {
-      z-index: 2;
-      clip-path: inset(0 0 0 50%);
-      -webkit-clip-path: inset(0 0 0 50%);
-    }
-
-    .swipe-divider {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      background: var(--accent-cyan);
-      box-shadow: 0 0 15px var(--accent-cyan);
-      cursor: ew-resize;
-      pointer-events: auto;
-      z-index: 35;
-      left: 50%;
-      transform: translateX(-50%);
-      user-select: none;
-    }
-
-    .swipe-handle {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: #0f172a;
-      border: 2px solid var(--accent-cyan);
-      box-shadow: 0 0 20px rgba(56, 189, 248, 0.8);
-      display: grid;
-      place-items: center;
-      color: #fff;
-      cursor: ew-resize;
-      user-select: none;
-    }
-
-    .compare-tag {
-      position: absolute;
-      top: calc(80px + env(safe-area-inset-top, 0px));
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-family: var(--font-mono);
-      font-size: 13px;
-      font-weight: 700;
-      z-index: 28;
-      pointer-events: none;
-    }
-    .compare-tag-left { left: 24px; background: rgba(59, 130, 246, 0.9); border: 1px solid #60a5fa; color: #fff; }
-    .compare-tag-right { right: 24px; background: rgba(239, 68, 68, 0.9); border: 1px solid #f87171; color: #fff; }
-
-    /* Compare Mode Selection Bar */
-    .compare-modal {
-      position: absolute;
-      top: calc(80px + env(safe-area-inset-top, 0px));
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 25;
-      padding: 10px 18px;
-      display: none;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .compare-modal.active {
-      display: flex;
-    }
-
-    .compare-select {
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-primary);
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-family: var(--font-mono);
-      font-size: 13px;
-      outline: none;
-      cursor: pointer;
-    }
-
-    /* Mobile Bottom Sheet & Control Elements (Default Hidden on Desktop) */
-    #dashToggle, .drawer-toggle-btn {
-      display: none;
-    }
-
-    .sheet-handle-bar {
-      display: none;
-    }
-
-    .sidebar-close-btn {
-      display: none;
-    }
-
-    /* Responsive Mobile Layout strictly for Screens Under 768px */
-    @media (max-width: 767px) {
-      body {
-        flex-direction: column;
-      }
-
-      #map-wrapper {
-        width: 100%;
-        height: 100vh;
-        height: 100dvh;
-        flex: 1;
-      }
-
-      /* Stack header: logo and city dropdown on one row, badge hidden */
-      .top-nav {
-        top: calc(10px + env(safe-area-inset-top, 0px));
-        left: 10px;
-        right: 10px;
-        width: calc(100% - 20px);
-        padding: 8px 12px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        box-sizing: border-box;
-      }
-
-      .badge-live {
-        display: none !important;
-      }
-
-      .brand-title {
-        font-size: 14px;
-      }
-
-      .city-select {
-        font-size: 12px;
-        padding: 5px 8px;
-      }
-
-      /* Move MapLibre zoom controls to top-left on mobile so button doesn't cover them */
-      .maplibregl-ctrl-bottom-right {
-        bottom: auto !important;
-        top: calc(68px + env(safe-area-inset-top, 0px)) !important;
-        left: 10px !important;
-        right: auto !important;
-      }
-
-      /* Collapse Change Layer, Compare Mode, Recenter AOI into icon-only column top-right below header */
-      .map-tools {
-        top: calc(68px + env(safe-area-inset-top, 0px));
-        right: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        z-index: 25;
-      }
-
-      .tool-btn {
-        width: 40px;
-        height: 40px;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
-      }
-
-      .tool-btn .btn-text {
-        display: none !important;
-      }
-
-      /* Year slider labels: show only the first, last and every second year */
-      .timeline-ticks span {
-        display: none;
-      }
-      .timeline-ticks span:first-child,
-      .timeline-ticks span:last-child,
-      .timeline-ticks span:nth-child(odd) {
-        display: inline-block;
-      }
-
-      /* Extra 12px bottom clearance so slider panel clears Safari bottom toolbar */
-      .timeline-bar {
-        width: calc(100% - 20px);
-        bottom: calc(88px + env(safe-area-inset-bottom, 0px));
-        left: 50%;
-        padding: 10px 14px;
-        transition: opacity 0.25s ease, transform 0.25s ease;
-      }
-
-      .year-display {
-        font-size: 20px;
-        min-width: 55px;
-      }
-
-      /* Bottom sheet dashboard scoped strictly inside mobile */
-      #dashboard, #sidebar, .dashboard-panel {
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        top: auto !important;
-        width: 100% !important;
-        min-width: 100% !important;
-        max-width: 100% !important;
-        max-height: 70vh !important;
-        max-height: 70dvh !important;
-        height: 70vh !important;
-        height: 70dvh !important;
-        overflow-y: auto !important;
-        transform: translateY(100%) !important;
-        border-radius: 20px 20px 0 0 !important;
-        border-left: none !important;
-        border-top: 1px solid var(--border-subtle) !important;
-        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8) !important;
-        z-index: 100 !important;
-        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        padding-bottom: env(safe-area-inset-bottom, 16px) !important;
-        -webkit-overflow-scrolling: touch !important;
-      }
-
-      #dashboard.open, #sidebar.open, .dashboard-panel.open {
-        transform: translateY(0) !important;
-      }
-
-      /* Hide year slider panel and legend when bottom sheet is open */
-      body.sheet-open #timeline-container,
-      body.sheet-open #legend-card {
-        display: none !important;
-      }
-
-      .sheet-handle-bar {
-        display: flex;
-        width: 100%;
-        padding: 12px 0;
-        justify-content: center;
-        align-items: center;
-        cursor: grab;
-        touch-action: none;
-        user-select: none;
-        -webkit-user-select: none;
-      }
-
-      .sheet-handle {
-        width: 40px;
-        height: 5px;
-        background: rgba(255, 255, 255, 0.45);
-        border-radius: 5px;
-        position: relative;
-      }
-
-      /* 24px invisible tap and drag area around the handle */
-      .sheet-handle::before {
-        content: '';
-        position: absolute;
-        top: -12px;
-        bottom: -12px;
-        left: -20px;
-        right: -20px;
-      }
-
-      .sidebar-header {
-        touch-action: none;
-        user-select: none;
-        -webkit-user-select: none;
-      }
-
-      .sidebar-close-btn {
-        display: flex;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid var(--border-subtle);
-        border-radius: 8px;
-        color: #fff;
-        font-size: 16px;
-        width: 28px;
-        height: 28px;
-        line-height: 1;
-        cursor: pointer;
-        align-items: center;
-        justify-content: center;
-      }
-
-      #dashToggle, .drawer-toggle-btn {
-        display: grid;
-        place-items: center;
-        position: absolute;
-        bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-        right: 18px;
-        z-index: 110;
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: var(--accent-cyan);
-        color: #0f172a;
-        border: none;
-        box-shadow: 0 4px 20px rgba(56, 189, 248, 0.6);
-        cursor: pointer;
-        pointer-events: auto;
-      }
-
-      /* Legend collapsed by default on mobile */
-      .legend-card {
-        top: auto;
-        bottom: calc(88px + env(safe-area-inset-bottom, 0px));
-        left: 10px;
-        padding: 8px 12px;
-        min-width: auto;
-        cursor: pointer;
-        transition: opacity 0.25s ease;
-      }
-
-      /* Focus Restore Bar on Mobile */
-      #focus-restore-bar {
-        top: calc(10px + env(safe-area-inset-top, 0px)) !important;
-        left: 10px !important;
-        padding: 5px 10px !important;
-        gap: 8px !important;
-      }
-
-      /* Compare Mode on Mobile */
-      .compare-modal {
-        top: calc(68px + env(safe-area-inset-top, 0px));
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 6px 10px;
-        gap: 6px;
-        font-size: 12px;
-        max-width: calc(100% - 70px);
-      }
-
-      .compare-select {
-        padding: 4px 6px;
-        font-size: 12px;
-      }
-
-      .compare-tag {
-        top: calc(115px + env(safe-area-inset-top, 0px));
-        padding: 4px 8px;
-        font-size: 12px;
-      }
-    }
-
-    /* Desktop View (768px and up): Two-Column Layout */
-    @media (min-width: 768px) {
-      body {
-        display: flex;
-        flex-direction: row;
-      }
-
-      #map-wrapper {
-        flex: 1;
-        min-width: 0;
-        height: 100vh;
-        height: 100dvh;
-        position: relative;
-      }
-
-      #dashboard, #sidebar, .dashboard-panel {
-        position: relative !important;
-        top: auto !important;
-        bottom: auto !important;
-        left: auto !important;
-        right: auto !important;
-        width: 420px !important;
-        min-width: 420px !important;
-        max-width: 420px !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        max-height: none !important;
-        transform: none !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: flex-start !important;
-        overflow-y: auto !important;
-        border-radius: 0 !important;
-        border-top: none !important;
-        border-left: 1px solid var(--border-subtle) !important;
-        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5) !important;
-        padding-bottom: 0 !important;
-        z-index: 30 !important;
-      }
-
-      #dashToggle, .drawer-toggle-btn {
-        display: none !important;
-      }
-
-      .sheet-handle-bar {
-        display: none !important;
-      }
-
-      .sidebar-close-btn {
-        display: none !important;
-      }
-
-      .legend-card {
-        top: calc(72px + env(safe-area-inset-top, 0px)) !important;
-        left: 16px !important;
-        bottom: auto !important;
-        right: auto !important;
-        max-width: 260px;
-        min-width: 200px;
-        display: flex !important;
-      }
-
-      .timeline-bar {
-        bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        width: calc(100% - 48px) !important;
-        max-width: 680px !important;
-        display: flex !important;
-      }
-
-    .tool-btn:focus-visible,
-    .play-btn:focus-visible,
-    .restore-focus-btn:focus-visible,
-    .drawer-toggle-btn:focus-visible,
-    .sidebar-close-btn:focus-visible,
-    .city-select:focus-visible {
-      outline: 2px solid var(--accent-cyan);
-      outline-offset: 2px;
-    }
-
-    /* Focus Mode Styles */
-    body.focus-mode .top-nav,
-    body.focus-mode #legend-card,
-    body.focus-mode #timeline-container,
-    body.focus-mode #dashboard,
-    body.focus-mode #sidebar,
-    body.focus-mode #dashToggle {
-      display: none !important;
-    }
-
-    body.focus-mode #map-wrapper {
-      width: 100vw !important;
-      min-width: 100vw !important;
-      max-width: 100vw !important;
-      height: 100vh !important;
-      height: 100dvh !important;
-      flex: 1 1 100% !important;
-    }
-
-    /* Focus Restore Top Panel */
-    #focus-restore-bar {
-      position: absolute;
-      top: calc(16px + env(safe-area-inset-top, 0px));
-      left: 16px;
-      z-index: 50;
-      display: none;
-      align-items: center;
-      gap: 12px;
-      padding: 6px 12px 6px 14px;
-      animation: fadeInFocus 0.25s ease forwards;
-    }
-
-    body.focus-mode #focus-restore-bar {
-      display: flex !important;
-    }
-
-    @keyframes fadeInFocus {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .focus-year-badge {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--font-mono);
-      font-size: 15px;
-      font-weight: 800;
-      color: var(--text-primary);
-    }
-
-    .focus-year-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background-color: var(--accent-cyan);
-      box-shadow: 0 0 10px var(--accent-cyan);
-    }
-
-    .restore-focus-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 5px 10px;
-      color: var(--text-primary);
-      font-family: var(--font-main);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .restore-focus-btn:hover {
-      background: rgba(239, 68, 68, 0.25);
-      border-color: rgba(239, 68, 68, 0.6);
-      color: #fca5a5;
-    }
-
-    .kbd-hint {
-      background: rgba(0, 0, 0, 0.45);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 4px;
-      padding: 1px 5px;
-      font-size: 12px;
-      font-family: var(--font-mono);
-      color: var(--text-muted);
-    }
-
-    /* Visible Error Banner */
-    #error-banner {
-      position: fixed;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      width: calc(100% - 32px);
-      max-width: 650px;
-      background: rgba(220, 38, 38, 0.95);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 12px;
-      padding: 12px 16px;
-      color: #ffffff;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      display: none;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 13px;
-    }
-
-    #error-banner.visible {
-      display: flex;
-    }
-
-    .error-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-weight: 700;
-    }
-
-    .error-close-btn {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-      line-height: 1;
-      padding: 0 4px;
-    }
-
-    .error-content {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      line-height: 1.4;
-      white-space: pre-wrap;
-      word-break: break-word;
-      opacity: 0.95;
-    }
-  </style>
+  <!-- Modular Design System Styles -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/map.css">
+  <link rel="stylesheet" href="css/methodology.css">
 </head>
 <body>
+  <!-- Accessible Skip Link -->
+  <a href="#main-workspace" class="skip-link">Skip to main content</a>
 
-  <!-- Visible Error Banner -->
-  <div id="error-banner">
-    <div class="error-header">
-      <span id="error-title">⚠️ Application Notice</span>
-      <button id="error-close-btn" class="error-close-btn" title="Dismiss">&times;</button>
-    </div>
-    <div id="error-content" class="error-content"></div>
-  </div>
+  <!-- Application Shell -->
+  <div class="app-container">
 
-  <!-- Map Viewport -->
-  <div id="map-wrapper">
-    <div id="map"></div>
-
-    <!-- Focus Mode Restore Widget -->
-    <div id="focus-restore-bar" class="focus-restore-bar glass-panel">
-      <div class="focus-year-badge">
-        <span class="focus-year-dot"></span>
-        <span id="focus-year-display">2024</span>
-      </div>
-      <button id="restore-focus-btn" class="restore-focus-btn" aria-label="Exit Focus Mode (Esc)" title="Exit Focus Mode (Esc)">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-        <span>Restore</span>
-        <kbd class="kbd-hint">Esc</kbd>
-      </button>
-    </div>
-
-    <!-- Top App Navigation -->
-    <div class="top-nav glass-panel">
-      <div class="brand-logo">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-        </div>
-        <div>
-          <div class="brand-title">UrbanPulse</div>
-        </div>
-      </div>
-      <select id="city-select" class="city-select">
-        <option value="ahmedabad">Ahmedabad, India</option>
-        <option value="pune">Pune, India</option>
-      </select>
-      <div class="tooltip-container" style="position: relative;">
-        <div id="quality-gate-badge" class="badge-gate" tabindex="0" role="button" aria-label="Quality Gate Checks" style="cursor: pointer;">-</div>
-        <div id="quality-gate-popover" class="tooltip-popup" style="width: 300px; top: 135%; bottom: auto; left: 0; transform: none;">
-          <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
-            <span>Pipeline Quality Gates</span>
-            <span id="gate-overall-status" style="color: var(--text-muted); font-size: 12px;">-</span>
+    <!-- Top Application Bar (Ink-Navy Chrome) -->
+    <header class="app-header">
+      <div class="header-left">
+        <a href="#explore" class="brand-wrapper" aria-label="UrbanPulse Homepage">
+          <div class="brand-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
           </div>
-          <div id="gate-items-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+          <div class="brand-text">
+            <span class="brand-name">UrbanPulse</span>
+            <span class="brand-subtitle">Metropolitan Observatory</span>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation Tabs -->
+        <nav class="nav-tabs" role="tablist" aria-label="Main Navigation">
+          <button class="nav-tab-btn active" data-nav-target="explore" role="tab" aria-selected="true">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+            Explore
+          </button>
+          <button class="nav-tab-btn" data-nav-target="findings" role="tab" aria-selected="false">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M13 2v7h7"/></svg>
+            Key findings
+          </button>
+          <button class="nav-tab-btn" data-nav-target="how" role="tab" aria-selected="false">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+            How it's made
+          </button>
+
+          <button class="nav-tab-btn" data-nav-target="glossary" role="tab" aria-selected="false">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            Glossary
+          </button>
+        </nav>
+      </div>
+
+      <div class="header-right">
+        <!-- City Selector -->
+        <div class="city-select-wrapper">
+          <label for="city-select" class="sr-only">Choose Metropolitan City</label>
+          <select id="city-select" class="city-select" aria-label="Select City">
+            <option value="ahmedabad">Ahmedabad, India</option>
+            <option value="pune">Pune, India</option>
+          </select>
+          <div class="city-select-icon">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+          </div>
         </div>
-      </div>
-      <a href="https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial/actions" target="_blank" rel="noopener" style="text-decoration: none; display: inline-flex; align-items: center;" title="View CI Workflow Runs on GitHub">
-        <img id="ci-shield-img" src="https://img.shields.io/github/actions/workflow/status/HUSAINTRIVEDI52/urban-pulse-geospatial/ci.yml?branch=main&label=CI&logo=github&style=flat-square&color=38bdf8" alt="CI Status" style="height: 22px; border-radius: 4px;" onerror="this.style.display='none'; document.getElementById('ci-status-badge').style.display='inline-flex';">
-        <div id="ci-status-badge" class="badge-ci" style="display: none;" title="Automated Verification Suite">-</div>
-      </a>
-    </div>
 
-    <!-- Map Tools Toolbar -->
-    <div class="map-tools">
-      <button id="toggle-overlay-btn" class="tool-btn active" title="Toggle Classified Layer" aria-pressed="true">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-        <span class="btn-text">Overlay</span>
-      </button>
-      <button id="toggle-basemap-btn" class="tool-btn" title="Switch Basemap (OSM / Satellite)" aria-pressed="false">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-        <span class="btn-text">Basemap</span>
-      </button>
-      <button id="toggle-focus-btn" class="tool-btn" title="Focus Mode (Full Map)" aria-pressed="false">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
-        <span class="btn-text">Focus</span>
-      </button>
-      <button id="toggle-change-btn" class="tool-btn" title="Change Layer (2020–2024)" aria-pressed="false">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        <span class="btn-text">Change Layer</span>
-      </button>
-      <button id="toggle-compare-btn" class="tool-btn" title="Compare Mode" aria-pressed="false">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        <span class="btn-text">Compare Mode</span>
-      </button>
-      <button id="recenter-btn" class="tool-btn" title="Recenter AOI" aria-label="Recenter AOI">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
-        <span class="btn-text">Recenter AOI</span>
-      </button>
-    </div>
-
-    <!-- Compare Mode Bar -->
-    <div id="compare-bar" class="compare-modal glass-panel">
-      <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary);">Left Layer:</span>
-      <select id="compare-year-a" class="compare-select"></select>
-      <span style="color: var(--accent-cyan); font-weight: 800;">VS</span>
-      <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary);">Right Layer:</span>
-      <select id="compare-year-b" class="compare-select"></select>
-      <button id="close-compare-btn" class="tool-btn" style="padding: 4px 10px; font-size: 12px;">Exit</button>
-    </div>
-
-    <!-- Dual Map Compare Container -->
-    <div id="compare-container">
-      <div id="map-before"></div>
-      <div id="map-after"></div>
-      <div id="swipe-divider" class="swipe-divider">
-        <div class="swipe-handle">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
+        <!-- Simple / Detailed Depth Toggle -->
+        <div class="depth-toggle-wrapper" title="Switch between Simple summary and Detailed technical breakdown">
+          <button id="toggle-depth-btn" class="depth-toggle-btn" aria-label="Toggle Simple or Detailed View" aria-pressed="false">
+            <span id="depth-label">Simple</span>
+          </button>
         </div>
-      </div>
-      <div id="compare-tag-left" class="compare-tag compare-tag-left">2020</div>
-      <div id="compare-tag-right" class="compare-tag compare-tag-right">2024</div>
-    </div>
 
-    <!-- Floating Legend Card -->
-    <div id="legend-card" class="legend-card glass-panel">
-      <div id="legend-header" class="legend-title" title="Toggle Legend">
-        <span id="legend-header-text">Land Cover Classes</span>
-        <svg id="legend-toggle-icon" class="legend-toggle-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-      </div>
-      <div id="legend-body" class="legend-body">
-        <div id="legend-items-container" class="legend-items"></div>
-        <div class="opacity-control">
-          <span class="opacity-label">Opacity</span>
-          <input type="range" id="opacity-slider" class="opacity-slider" min="0" max="100" value="90">
-          <span id="opacity-val" style="font-size: 12px; font-family: var(--font-mono); color: var(--text-secondary);">90%</span>
-        </div>
-      </div>
-    </div>
+        <!-- Guided Tour Trigger Button -->
+        <button id="tour-help-btn" class="tool-btn" style="padding: 6px 11px; font-weight: 700; border-radius: var(--radius-full);" aria-label="Start Guided Tour" title="Start Guided Tour">?</button>
 
-    <!-- Floating Bottom Timeline Controls -->
-    <div id="timeline-container" class="timeline-bar glass-panel">
-      <div class="timeline-controls">
-        <button id="play-pause-btn" class="play-btn" title="Play / Pause Animation">
-          <svg id="play-icon" width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-          <svg id="pause-icon" width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        <!-- Theme Toggle Button -->
+        <button id="theme-toggle-btn" class="tool-btn" style="padding: 7px 10px;" aria-label="Toggle Light and Dark Mode" title="Toggle Light / Dark Mode">
+          <span id="theme-toggle-icon">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          </span>
         </button>
-        <div id="year-display" class="year-display">2024</div>
-        <div class="slider-track-wrap">
-          <input type="range" id="year-slider" class="year-slider" min="0" max="4" value="4" step="1">
-          <div id="timeline-ticks" class="timeline-ticks"></div>
-        </div>
+      </div>
+    </header>
+
+    <!-- Hero Strip: Plain English Definition + Quick CTAs -->
+    <div class="hero-strip" id="hero-strip">
+      <div class="hero-strip-text">
+        <span class="hero-badge">Satellite Observatory</span>
+        <span>UrbanPulse monitors metropolitan growth and sprawl across India using multi-temporal <span class="glossary-term" data-term="sentinel-2">Sentinel-2</span> satellite imagery and <span class="glossary-term" data-term="classification">classification</span> models.</span>
+      </div>
+      <div class="hero-actions">
+        <button class="hero-btn hero-btn-primary" id="hero-explore-btn">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          Explore the map
+        </button>
+        <button class="hero-btn hero-btn-ghost" id="hero-how-btn">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+          How it's made
+        </button>
       </div>
     </div>
 
-    <!-- Mobile Dashboard Bottom Sheet Toggle Button -->
-    <button id="dashToggle" class="drawer-toggle-btn" aria-label="Open dashboard" aria-expanded="false" title="Open dashboard">
-      <svg id="dashToggleIcon" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-        <path class="icon-hamburger" d="M4 6h16M4 12h16M4 18h16"/>
-        <path class="icon-close" d="M6 18L18 6M6 6l12 12" style="display: none;"/>
-      </svg>
-    </button>
-  </div>
-
-  <!-- Analytics & Sprawl Dashboard (Bottom sheet on mobile) -->
-  <aside id="dashboard" class="dashboard-panel">
-    <div id="sheet-handle-bar" class="sheet-handle-bar" title="Swipe or click to close">
-      <div class="sheet-handle"></div>
-    </div>
-    <div class="sidebar-header">
-      <div class="sidebar-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-        Urban Analytics Dashboard
-      </div>
+    <!-- Error Banner -->
+    <div id="error-banner">
       <div style="display: flex; align-items: center; gap: 8px;">
-        <span id="aoi-meta-badge" style="font-size: 12px; font-family: var(--font-mono); color: var(--text-muted);">45x45 km</span>
-        <button id="close-dashboard-btn" class="sidebar-close-btn" aria-label="Close dashboard" title="Close Dashboard">&times;</button>
+        <span id="error-title" style="font-weight: 700;">⚠️ Application Notice</span>
+        <span id="error-content"></span>
       </div>
+      <button id="error-close-btn" class="tool-btn" style="padding: 2px 8px; color: inherit; border-color: currentColor;" title="Dismiss">&times;</button>
     </div>
 
-    <div class="sidebar-content">
+    <!-- Main Application Workspace -->
+    <main class="app-workspace" id="main-workspace">
 
-      <!-- Analysis Window 2020-2024 Framing Note -->
-      <div class="note-box">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: var(--accent-cyan);">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-            Analysis Window: 2020–2024
-          </div>
-          <a href="./report/#limitations" target="_blank" rel="noopener" class="info-link-btn" title="View Limitations in Project Report" aria-label="Limitations in Report">i</a>
-        </div>
-        <div id="analysis-note-text" style="font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4;">
-          2018-2019 excluded: too few clear scenes in the Nov-Feb window.
-        </div>
-      </div>
-      
-      <!-- Headline & Sprawl Metrics Grid -->
-      <div class="metrics-grid">
-        <!-- 2020-2024 Method Sensitivity Growth Card with Interactive Tooltip -->
-        <div class="metric-card tooltip-container" style="grid-column: span 2; border-color: rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.08); position: relative;">
-          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-            <div class="metric-label" style="display: flex; align-items: center; gap: 6px;">
-              <span>2020–2024 Change</span>
-              <span class="info-link-btn" style="width: 15px; height: 15px; font-size: 12px;" title="Hover for method breakdown">i</span>
-            </div>
-            <a href="./report/#validation" target="_blank" rel="noopener" class="info-link-btn" title="View Validation in Project Report" aria-label="Validation in Report">
-              <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
-            </a>
-          </div>
-          <div id="metric-expansion-val" class="metric-value" style="font-size: 22px; color: #38bdf8;">12.6 to 21.9 %</div>
-          <div class="metric-delta">
-            <span id="metric-expansion-sub" style="color: var(--text-secondary);">Spread range across estimation methods</span>
-          </div>
-          <div class="tooltip-popup" id="headline-methods-tooltip" style="width: 320px;"></div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">WorldCover 2021 Reference</div>
-          <div id="metric-anchor-val" class="metric-value" style="color: var(--accent-purple); font-size: 18px;">393.7 km²</div>
-          <div id="metric-anchor-diff" class="metric-delta">
-            <span style="color: var(--text-muted);">vs 2021 Est: 419.6 km²</span>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Built-up (<span id="metric-cur-year">2024</span>)</div>
-          <div id="metric-builtup-val" class="metric-value" style="font-size: 18px;">466.2 km²</div>
-          <div id="metric-builtup-sub" class="metric-delta">
-            <span style="color: var(--accent-cyan);">TLS-Normalised</span>
-          </div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-label">Shannon Entropy (H<sub>n</sub>)</div>
-          <div id="metric-entropy-val" class="metric-value" style="font-size: 18px;">0.9469</div>
-          <div class="metric-delta delta-up">
-            <span>High Dispersion</span>
-          </div>
-        </div>
-
-        <div class="metric-card" style="display: flex; flex-direction: column; justify-content: center; gap: 4px;">
-          <div style="display: flex; justify-content: space-between; align-items: baseline;">
-            <span class="metric-label" style="margin: 0; font-size: 11px;">Core (0-6 km)</span>
-            <span id="metric-core-val" class="metric-value" style="font-size: 15px; color: var(--text-primary); font-family: var(--font-mono); font-weight: 700;">-</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--border-subtle); padding-top: 4px;">
-            <span class="metric-label" style="margin: 0; font-size: 11px;">Periphery (&gt;12 km)</span>
-            <span id="metric-periph-val" class="metric-value" style="font-size: 15px; color: var(--accent-cyan); font-family: var(--font-mono); font-weight: 700;">-</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Time Series Chart: Multi-Series Growth with Sensitivity Band -->
-      <div class="chart-box">
-        <div class="chart-header">
-          <div class="chart-title">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
-            Built-up Area Growth (2020–2024)
-          </div>
-        </div>
-        <div class="chart-canvas-wrapper" style="height: 200px;">
-          <canvas id="timeSeriesChart"></canvas>
-        </div>
-        <div class="chart-legend-box">
-          <div class="legend-pill">
-            <span class="legend-pill-dot" style="background: #38bdf8; height: 3px; border-radius: 1px;"></span>
-            <span style="font-weight: 600; color: #38bdf8;">TLS-Normalised (Main)</span>
-          </div>
-          <div class="legend-pill">
-            <span class="legend-pill-dot" style="background: #10b981; border-bottom: 2px dashed #10b981; height: 2px;"></span>
-            <span>Cleaned</span>
-          </div>
-          <div class="legend-pill">
-            <span class="legend-pill-dot" style="background: #f59e0b; border-bottom: 2px dashed #f59e0b; height: 2px;"></span>
-            <span>Raw</span>
-          </div>
-          <div class="legend-pill">
-            <span class="legend-pill-dot" style="background: rgba(56, 189, 248, 0.35);"></span>
-            <span>Method Sensitivity</span>
-          </div>
-          <div class="legend-pill">
-            <span class="legend-pill-dot" style="background: #c084fc; border-radius: 50%;"></span>
-            <span>WorldCover 2021 Reference</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Concentric Rings Density Profile -->
-      <div class="chart-box">
-        <div class="chart-header">
-          <div class="chart-title">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
-            Concentric Ring Density Profile (% Built-up)
-          </div>
-        </div>
-        <div class="chart-canvas-wrapper">
-          <canvas id="ringDensityChart"></canvas>
-        </div>
-      </div>
-
-      <!-- Class Breakdown Table for Current Year -->
-      <div class="chart-box">
-        <div class="chart-header">
-          <div class="chart-title">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-            Land Cover Distribution (<span id="table-year-lbl">2024</span>)
-          </div>
-        </div>
-        <table class="class-table">
-          <thead>
-            <tr>
-              <th>Class</th>
-              <th>Area (km²)</th>
-              <th>Share (%)</th>
-            </tr>
-          </thead>
-          <tbody id="class-table-body"></tbody>
-        </table>
-      </div>
-
-      <!-- Validation Section: Leave-One-Year-Out (ALL Held-Out Points) -->
-      <div class="chart-box" style="border-color: rgba(56, 189, 248, 0.3);">
-        <div class="chart-header">
-          <div class="chart-title" style="color: var(--accent-cyan);">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            Validation: Leave-One-Year-Out
-          </div>
-          <div class="tooltip-container" style="position: relative;">
-            <a href="./report/#validation" target="_blank" rel="noopener" class="info-link-btn" title="View Validation &amp; Data Provenance" aria-label="Validation in Report">i</a>
-            <div id="provenance-popover" class="tooltip-popup" style="width: 290px; top: 120%; bottom: auto; right: 0; left: auto; transform: none;">
-              <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 3px;">
-                Data Provenance &amp; Verification
-              </div>
-              <div id="provenance-content" style="font-size: 11px; color: #94a3b8; display: flex; flex-direction: column; gap: 4px;"></div>
-            </div>
-          </div>
-        </div>
-        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">
-          Evaluated on <strong>ALL held-out spatial block test points</strong> (N=400/414 pts/yr) using Olofsson et al. (2014) area-weighted stratified estimator.
-        </div>
-        <div style="overflow-x: auto;">
-          <table class="validation-table">
-            <thead>
-              <tr>
-                <th>Fold</th>
-                <th>Stage</th>
-                <th>F1</th>
-                <th>Mapped (km²)</th>
-                <th>Olofsson (95% CI)</th>
-              </tr>
-            </thead>
-            <tbody id="validation-table-body"></tbody>
-          </table>
-        </div>
-        <div id="validation-note-text" style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; line-height: 1.45; border-left: 2px solid var(--accent-cyan); padding-left: 8px;">
-          Labels derived from ESA WorldCover 2021 reference for all folds; 2018 is evaluated as a temporal fold only.
-        </div>
-        <div class="negative-result-card">
-          <strong>Negative result:</strong> Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not reduce year-to-year drift; the displayed series has no temporal filtering, and the cleaned series is a sensitivity comparison. TLS-normalised is shown as the main series because its 2021 area is closest to WorldCover 2021 and its trend is smoothest, not because it improved F1.
-          <div style="margin-top:6px; font-size:11px; opacity:0.9; color:#fecaca;">
-            <em>Methodological Disclosure:</em> Ahmedabad's 2021, 2023 and 2024 composites use the 20 lowest-cloud scenes between October and March, so they include October and March scenes (11 of 20 in 2024). Pune's composites use November-February only. Ahmedabad's 2020 composite was built earlier with a strict Dec 1-Feb 15 window; current code does not reproduce its exact scene list. How much the window affects Ahmedabad's built-up area has not been tested.
-          </div>
-        </div>
-      </div>
-
-      <!-- Change Validation Section (Olofsson et al. 2014) -->
-      <div id="change-validation-card" class="chart-box" style="border-color: rgba(56, 189, 248, 0.3);">
-        <div class="chart-header">
-          <div class="chart-title" style="color: var(--accent-cyan);">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-            Change Validation (2020–2024)
-          </div>
-          <a href="./report/#change-validation" target="_blank" rel="noopener" class="info-link-btn" title="View Change Validation Details" aria-label="Change Validation Details">i</a>
-        </div>
+      <!-- ====================================================================
+           VIEW 1: EXPLORE (Interactive Map + Analytics Panel)
+           ==================================================================== -->
+      <section id="view-explore" class="view-container active" role="tabpanel" aria-label="Explore Map and Analytics">
         
-        <div id="change-val-content">
-          <!-- Populated dynamically -->
+        <!-- Map Viewport Wrapper -->
+        <div id="map-wrapper">
+          <div id="map"></div>
+
+          <!-- Focus Mode Restore Widget -->
+          <div id="focus-restore-bar" class="focus-restore-bar">
+            <span style="font-size: 12px; font-weight: 600;">Focus Mode &bull; <span id="focus-year-display">2024</span></span>
+            <button id="restore-focus-btn" class="hero-btn hero-btn-primary" aria-label="Exit Focus Mode (Esc)">
+              Restore Panel <kbd style="font-size: 10px; margin-left: 4px; opacity: 0.8;">Esc</kbd>
+            </button>
+          </div>
+
+          <!-- Map Tools Floating Toolbar -->
+          <div class="map-tools" aria-label="Map Tools">
+            <button id="toggle-overlay-btn" class="tool-btn active" title="Overlay: Toggle satellite classification layer visibility on the map" aria-label="Overlay: Toggle satellite classification layer visibility" aria-pressed="true">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              <span class="btn-text">Overlay</span>
+            </button>
+            <button id="toggle-change-btn" class="tool-btn" title="Change Layer: Highlights newly developed land (gain), lost built-up (loss), and persistent areas" aria-label="Change Layer: Highlights newly developed and persistent areas" aria-pressed="false">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span class="btn-text">Change Layer</span>
+            </button>
+            <button id="toggle-compare-btn" class="tool-btn" title="Compare Mode: Swipe left and right to inspect how urban boundaries shifted between any two years" aria-label="Compare Mode: Swipe left and right to compare two years" aria-pressed="false">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              <span class="btn-text">Compare Mode</span>
+            </button>
+            <button id="recenter-btn" class="tool-btn" title="Recenter AOI: Re-centers the viewport over the metropolitan Area of Interest" aria-label="Recenter AOI">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+              <span class="btn-text">Recenter AOI</span>
+            </button>
+            <button id="toggle-focus-btn" class="tool-btn" title="Focus Mode: Collapses the analytics sidebar for a full-screen map view" aria-label="Focus: Toggle full screen map" aria-pressed="false">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+              <span class="btn-text">Focus</span>
+            </button>
+          </div>
+
+          <!-- Compare Swipe Bar -->
+          <div id="compare-bar" class="compare-modal">
+            <span style="font-size: 12px; font-weight: 600;">Left:</span>
+            <select id="compare-year-a" class="compare-select"></select>
+            <span style="color: var(--color-accent-primary); font-weight: 800;">VS</span>
+            <span style="font-size: 12px; font-weight: 600;">Right:</span>
+            <select id="compare-year-b" class="compare-select"></select>
+            <button id="close-compare-btn" class="hero-btn hero-btn-ghost" style="padding: 2px 8px;">Exit</button>
+          </div>
+
+          <!-- Compare Dual Map Container -->
+          <div id="compare-container">
+            <div id="map-before"></div>
+            <div id="map-after"></div>
+            <div id="swipe-divider" class="swipe-divider">
+              <div class="swipe-handle">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
+              </div>
+            </div>
+            <div id="compare-tag-left" class="compare-tag compare-tag-left">2020</div>
+            <div id="compare-tag-right" class="compare-tag compare-tag-right">2024</div>
+          </div>
+
+          <!-- Floating Legend Card -->
+          <div id="legend-card" class="legend-card">
+            <div id="legend-header" class="legend-title">
+              <span>Land Cover Classes</span>
+            </div>
+            <div id="legend-body" class="legend-body">
+              <div id="legend-items-container" class="legend-items"></div>
+            </div>
+          </div>
+
+          <!-- Floating Bottom Timeline Bar -->
+          <div id="timeline-container" class="timeline-bar">
+            <div class="timeline-controls">
+              <button id="play-pause-btn" class="play-btn" title="Play / Pause Annual Timeline Animation">
+                <svg id="play-icon" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <svg id="pause-icon" width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+              </button>
+              <div id="year-display" class="year-display">2024</div>
+              <div class="slider-track-wrap">
+                <input type="range" id="year-slider" class="year-slider" min="0" max="4" value="4" step="1" aria-label="Select Analysis Year">
+                <div id="timeline-ticks" class="timeline-ticks"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mobile Dashboard Toggle Button -->
+          <button id="dashToggle" class="tool-btn" style="position: absolute; bottom: 12px; right: 12px; z-index: 60; display: none;" aria-label="Open Dashboard" aria-expanded="false">
+            <span>Analytics Panel</span>
+          </button>
         </div>
-      </div>
 
-      <!-- Dashboard Footer Links -->
-      <div style="padding: 16px 8px 8px 8px; border-top: 1px solid var(--border-subtle); margin-top: 16px; display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: var(--text-muted);">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <a href="./report/" target="_blank" rel="noopener" style="color: var(--accent-cyan); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>
-            Full Project Report
-          </a>
-          <a href="./report/#validation" target="_blank" rel="noopener" style="color: var(--accent-cyan); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-            Validation &amp; Diagnostics &rarr;
-          </a>
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <a href="./report/#limitations" target="_blank" rel="noopener" style="color: #fca5a5; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-            Limitations &rarr;
-          </a>
-          <a href="./report/UrbanPulse_Report.pdf" target="_blank" rel="noopener" style="color: var(--accent-emerald); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            Download PDF
-          </a>
-        </div>
-        <div style="text-align: center; opacity: 0.7; font-size: 12px; margin-top: 4px;">
-          UrbanPulse &copy; 2026 &bull; Multi-Temporal Satellite Analytics
-        </div>
-      </div>
-
-    </div>
-  </aside>
-
-  <!-- Application Logic -->
-  <script>
-    // Base data path (relative for offline, GitHub Pages, and Docker support)
-    const DATA_BASE = "./data";
-
-    // Application State
-    let currentCity = "ahmedabad";
-    let metaData = null;
-    let statsData = null;
-    let availableYears = [2020, 2021, 2022, 2023, 2024];
-    let selectedYearIndex = 4;
-    let isPlaying = false;
-    let playInterval = null;
-    let isOverlayVisible = true;
-    let currentBasemap = 'osm'; // 'osm' | 'satellite'
-    let isFocusModeActive = false;
-    let isChangeLayerActive = false;
-    let isCompareModeActive = false;
-    let currentOpacity = 0.90;
-    let splitPercent = 50.0;
-    let isDraggingDivider = false;
-
-    // Map instances
-    let map = null;
-    let mapLoaded = false;
-    let mapBefore = null;
-    let mapAfter = null;
-    let mapBeforeLoaded = false;
-    let mapAfterLoaded = false;
-    let syncingMaps = false;
-
-    // Charts
-    let timeSeriesChart = null;
-    let ringDensityChart = null;
-
-    // Visible UI Error Banner Helper
-    function showError(section, message) {
-      console.error(`[UrbanPulse Error] [${section}]:`, message);
-      const banner = document.getElementById('error-banner');
-      const content = document.getElementById('error-content');
-      const title = document.getElementById('error-title');
-      if (banner && content) {
-        title.textContent = `⚠️ Error in ${section}`;
-        content.textContent = typeof message === 'object' ? (message.stack || message.message || JSON.stringify(message)) : String(message);
-        banner.classList.add('visible');
-      }
-    }
-
-    function clearError() {
-      const banner = document.getElementById('error-banner');
-      if (banner) banner.classList.remove('visible');
-    }
-
-    // Helper to verify fetch responses
-    async function fetchJsonVerified(url, desc) {
-      try {
-        const res = await fetch(url);
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status} (${res.statusText}) when fetching ${desc} from ${url}`);
-        }
-        return await res.json();
-      } catch (err) {
-        showError(`Fetch ${desc}`, err);
-        throw err;
-      }
-    }
-
-    // Basemap configuration generator (OpenStreetMap & Esri Satellite Raster Sources)
-    function getBasemapStyle() {
-      return {
-        version: 8,
-        sources: {
-          'osm-basemap': {
-            type: 'raster',
-            tiles: [
-              'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-            ],
-            tileSize: 256,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
-            maxzoom: 19
-          },
-          'satellite-basemap': {
-            type: 'raster',
-            tiles: [
-              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-            ],
-            tileSize: 256,
-            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
-            maxzoom: 19
-          }
-        },
-        layers: [
-          {
-            id: 'osm-basemap-layer',
-            type: 'raster',
-            source: 'osm-basemap',
-            minzoom: 0,
-            maxzoom: 19,
-            layout: {
-              visibility: currentBasemap === 'osm' ? 'visible' : 'none'
-            }
-          },
-          {
-            id: 'satellite-basemap-layer',
-            type: 'raster',
-            source: 'satellite-basemap',
-            minzoom: 0,
-            maxzoom: 19,
-            layout: {
-              visibility: currentBasemap === 'satellite' ? 'visible' : 'none'
-            }
-          }
-        ]
-      };
-    }
-
-    // Two-way synchronization between before & after maps
-    function syncMaps(source, target) {
-      if (syncingMaps || !source || !target) return;
-      try {
-        syncingMaps = true;
-        target.jumpTo({
-          center: source.getCenter(),
-          zoom: source.getZoom(),
-          bearing: source.getBearing(),
-          pitch: source.getPitch()
-        });
-      } catch (err) {
-        console.warn("[UrbanPulse Map Sync Warning]:", err);
-      } finally {
-        syncingMaps = false;
-      }
-    }
-
-    // 1. Initialize Single MapLibre GL Map
-    function initMap() {
-      try {
-        const MapLibreClass = window.maplibregl || window.maplibreGl || (typeof maplibregl !== 'undefined' ? maplibregl : null);
-        if (!MapLibreClass) {
-          throw new Error("MapLibre GL library not loaded. Check vendor/maplibre-gl.js.");
-        }
-
-        map = new MapLibreClass.Map({
-          container: 'map',
-          style: getBasemapStyle(),
-          center: [72.5714, 23.0225],
-          zoom: 10.5,
-          pitch: 0,
-          attributionControl: true
-        });
-
-        map.addControl(new MapLibreClass.NavigationControl({ showCompass: false }), 'bottom-right');
-
-        map.on('error', (e) => {
-          console.warn("[MapLibre Warning]:", e);
-        });
-
-        map.on('load', async () => {
-          mapLoaded = true;
-          try {
-            await loadCityData(currentCity);
-          } catch (err) {
-            showError("Map Load Data", err);
-          }
-          requestAnimationFrame(() => {
-            if (map) { try { map.resize(); } catch (e) {} }
-            if (timeSeriesChart) { try { timeSeriesChart.resize(); } catch (e) {} }
-            if (ringDensityChart) { try { ringDensityChart.resize(); } catch (e) {} }
-          });
-        });
-
-      } catch (err) {
-        showError("Map Initialization", err);
-      }
-    }
-
-    // 2. Fetch and Load City Data
-    async function loadCityData(city) {
-      try {
-        currentCity = city;
-        metaData = await fetchJsonVerified(`${DATA_BASE}/${city}/meta.json`, `${city} metadata`);
-        statsData = await fetchJsonVerified(`${DATA_BASE}/${city}/stats.json`, `${city} statistics`);
-
-        availableYears = (statsData && statsData.analysis_window && statsData.analysis_window.years) || [2020, 2021, 2022, 2023, 2024];
-        selectedYearIndex = availableYears.length - 1;
-
-        const aoiBadge = document.getElementById('aoi-meta-badge');
-        if (aoiBadge && statsData.aoi_area_km2) {
-          aoiBadge.textContent = `${statsData.city || city.toUpperCase()} (${statsData.aoi_area_km2.toFixed(1)} km²)`;
-        }
-
-        const noteText = document.getElementById('analysis-note-text');
-        if (noteText && statsData.analysis_window && statsData.analysis_window.excluded_years_note) {
-          noteText.innerHTML = statsData.analysis_window.excluded_years_note;
-        }
-
-        setupUI();
-        if (mapLoaded && map) {
-          initMapLayers();
-        }
-        if (isCompareModeActive) {
-          updateCompareMapLayers();
-        }
-        initCharts();
-        updateValidationTable();
-        updateGateAndCIBadges();
-        updateDisplay();
-
-        // Automatically recenter map viewport to new city's AOI bounds
-        recenterAOI();
-      } catch (err) {
-        showError("City Data Loader", err);
-      }
-    }
-
-    // 3. UI Controls Setup (Ticks, Dropdowns, Legend)
-    function setupUI() {
-      try {
-        const slider = document.getElementById('year-slider');
-        if (slider) {
-          slider.max = availableYears.length - 1;
-          slider.value = selectedYearIndex;
-        }
-
-        const ticksContainer = document.getElementById('timeline-ticks');
-        if (ticksContainer) {
-          ticksContainer.innerHTML = availableYears
-            .map((yr, idx) => {
-              const label = yr === 2022 ? '2022 - partial season, no Jan-Feb' : yr;
-              return `<span id="tick-${idx}" class="${idx === selectedYearIndex ? 'tick-active' : ''}">${label}</span>`;
-            })
-            .join('');
-        }
-
-        const compA = document.getElementById('compare-year-a');
-        const compB = document.getElementById('compare-year-b');
-        if (compA && compB) {
-          compA.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === 0 ? 'selected' : ''}>${y}</option>`).join('');
-          compB.innerHTML = availableYears.map((y, i) => `<option value="${y}" ${i === availableYears.length - 1 ? 'selected' : ''}>${y}</option>`).join('');
-        }
-
-        renderLegend();
-      } catch (err) {
-        showError("Setup UI", err);
-      }
-    }
-
-    function renderLegend() {
-      try {
-        const container = document.getElementById('legend-items-container');
-        const headerText = document.getElementById('legend-header-text');
-        if (!container || !headerText) return;
-
-        if (isChangeLayerActive) {
-          headerText.textContent = "Urban Change (2020–2024)";
-          const changeLegend = (metaData && metaData.change_legend) || {
-            "veg_to_built": { "label": "Vegetation -> Built-up", "color": "#2e7d32" },
-            "agri_to_built": { "label": "Agriculture -> Built-up", "color": "#ea580c" },
-            "open_to_built": { "label": "Open land -> Built-up", "color": "#8b5cf6" },
-            "built_loss": { "label": "Built-up Loss -> Other", "color": "#0f172a" }
-          };
-
-          container.innerHTML = Object.values(changeLegend).map(item => `
-            <div class="legend-item">
-              <div class="legend-swatch" style="background: ${item.color};"></div>
-              <span>${item.label}</span>
-            </div>
-          `).join('');
-        } else {
-          headerText.textContent = "Land Cover Classes";
-          const classes = (metaData && metaData.classes) || {
-            "1": { name: "Built-up", color: "#e41a1c" },
-            "2": { name: "Vegetation", color: "#238b45" },
-            "3": { name: "Water", color: "#1f78b4" },
-            "4": { name: "Agriculture", color: "#ffd92f" },
-            "5": { name: "Open land", color: "#d2b48c" }
-          };
-          container.innerHTML = Object.entries(classes).map(([cid, cls]) => `
-            <div class="legend-item">
-              <div class="legend-swatch" style="background: ${cls.color}; box-shadow: 0 0 6px ${cls.color}55;"></div>
-              <span>${cls.name}</span>
-            </div>
-          `).join('');
-        }
-      } catch (err) {
-        showError("Legend Render", err);
-      }
-    }
-
-    // 4. Map Layers Initialization with Ordered Bounds Quad
-    function initMapLayers() {
-      try {
-        if (!map || !mapLoaded || !metaData || !metaData.bounds) return;
-
-        // Bounds: [min_lon, min_lat, max_lon, max_lat] -> [west, south, east, north]
-        const [west, south, east, north] = metaData.bounds;
-        
-        // Exact MapLibre image coordinate format: [[west, north], [east, north], [east, south], [west, south]]
-        const coordinates = [
-          [west, north], // Top-Left (NW)
-          [east, north], // Top-Right (NE)
-          [east, south], // Bottom-Right (SE)
-          [west, south]  // Bottom-Left (SW)
-        ];
-
-        // Clean up any existing raster layers & sources
-        ['annual-overlay-layer', 'change-overlay-layer'].forEach(layerId => {
-          if (map.getLayer(layerId)) map.removeLayer(layerId);
-        });
-        ['annual-overlay-source', 'change-overlay-source'].forEach(sourceId => {
-          if (map.getSource(sourceId)) map.removeSource(sourceId);
-        });
-
-        const initialYear = availableYears[selectedYearIndex];
-        const annualPngUrl = `${DATA_BASE}/${currentCity}/${initialYear}.png`;
-        const changePngUrl = `${DATA_BASE}/${currentCity}/change_2020_2024.png`;
-
-        // 1. Annual Land Cover Overlay
-        map.addSource('annual-overlay-source', {
-          type: 'image',
-          url: annualPngUrl,
-          coordinates: coordinates
-        });
-
-        map.addLayer({
-          id: 'annual-overlay-layer',
-          type: 'raster',
-          source: 'annual-overlay-source',
-          layout: {
-            visibility: (isOverlayVisible && !isChangeLayerActive) ? 'visible' : 'none'
-          },
-          paint: {
-            'raster-opacity': currentOpacity,
-            'raster-resampling': 'nearest'
-          }
-        });
-
-        // 2. Change Detection Overlay (initially hidden)
-        map.addSource('change-overlay-source', {
-          type: 'image',
-          url: changePngUrl,
-          coordinates: coordinates
-        });
-
-        map.addLayer({
-          id: 'change-overlay-layer',
-          type: 'raster',
-          source: 'change-overlay-source',
-          layout: {
-            visibility: (isOverlayVisible && isChangeLayerActive) ? 'visible' : 'none'
-          },
-          paint: {
-            'raster-opacity': currentOpacity,
-            'raster-resampling': 'nearest'
-          }
-        });
-
-        // Center map to AOI bounds
-        map.fitBounds([
-          [west, south],
-          [east, north]
-        ], { padding: 40, duration: 800 });
-
-      } catch (err) {
-        showError("Map Layers Setup", err);
-      }
-    }
-
-    // 5. Update UI and Layer Display on Year Change
-    function updateDisplay() {
-      try {
-        const currentYear = availableYears[selectedYearIndex];
-        const yearDisplay = document.getElementById('year-display');
-        const focusYearDisplay = document.getElementById('focus-year-display');
-        const tableYearLbl = document.getElementById('table-year-lbl');
-        const metricCurYear = document.getElementById('metric-cur-year');
-
-        const displayLabel = String(currentYear);
-        if (yearDisplay) yearDisplay.textContent = currentYear;
-        if (focusYearDisplay) focusYearDisplay.textContent = displayLabel;
-        if (tableYearLbl) tableYearLbl.textContent = displayLabel;
-        if (metricCurYear) metricCurYear.textContent = displayLabel;
-
-        // Update timeline tick styling
-        document.querySelectorAll('#timeline-ticks span').forEach((el, idx) => {
-          el.className = idx === selectedYearIndex ? 'tick-active' : '';
-        });
-
-        // Update Map Image Source
-        if (map && mapLoaded && !isChangeLayerActive && !isCompareModeActive && map.getSource('annual-overlay-source')) {
-          const [west, south, east, north] = metaData.bounds;
-          const coordinates = [
-            [west, north],
-            [east, north],
-            [east, south],
-            [west, south]
-          ];
-          const annualUrl = `${DATA_BASE}/${currentCity}/${currentYear}.png`;
-          map.getSource('annual-overlay-source').updateImage({
-            url: annualUrl,
-            coordinates: coordinates
-          });
-        }
-
-        // Update Metrics Cards
-        updateMetricCards(currentYear);
-
-        // Update Class Table
-        updateClassTable(currentYear);
-
-        // Update Charts
-        updateCharts(currentYear);
-
-      } catch (err) {
-        showError("Display Update", err);
-      }
-    }
-
-    function updateMetricCards(currentYear) {
-      try {
-        if (!statsData) return;
-
-        // 1. Headline 2020-2024 Expansion Percentage Range & Spread Subtitle
-        const expEl = document.getElementById('metric-expansion-val');
-        const expSubEl = document.getElementById('metric-expansion-sub');
-        const tooltipEl = document.getElementById('headline-methods-tooltip');
-        const h = statsData.headline_2020_2024_expansion || {};
-        const methods = h.methods || statsData.methods_breakdown || {};
-
-        if (expEl) {
-          expEl.textContent = h.net_growth_range_pct_str || (h.min_change_pct != null && h.max_change_pct != null ? `${h.min_change_pct.toFixed(1)} to ${h.max_change_pct.toFixed(1)} %` : "12.6 to 21.9 %");
-        }
-        if (expSubEl) {
-          expSubEl.textContent = h.net_growth_range_str
-            ? `Range across methods (${h.net_growth_range_str})`
-            : "Spread range across methods";
-        }
-
-        if (tooltipEl && methods) {
-          const raw = methods.raw || {};
-          const clean = methods.clean || methods.cleaned || {};
-          const tls = methods.tls_norm || methods.tls || {};
-          tooltipEl.innerHTML = `
-            <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 8px; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">
-              2020–2024 Change by Estimation Method
-            </div>
-            <div style="margin-bottom: 8px;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <strong style="color: #38bdf8;">1. TLS-Normalised (Main):</strong>
-                <span style="font-family:var(--font-mono); font-weight:700; color:#38bdf8;">+${tls.change_km2 != null ? tls.change_km2.toFixed(1) : '0.0'} km² (+${tls.change_pct != null ? tls.change_pct.toFixed(1) : '0.0'}%)</span>
-              </div>
-              <div style="color: #94a3b8; font-size: 12px; margin-top: 2px;">
-                ${tls.start_km2 != null ? tls.start_km2.toFixed(1) : ''} &rarr; ${tls.end_km2 != null ? tls.end_km2.toFixed(1) : ''} km² (${tls.description || 'PIF cross-calibrated'})
-              </div>
-            </div>
-            <div style="margin-bottom: 8px;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <strong style="color: #10b981;">2. Cleaned:</strong>
-                <span style="font-family:var(--font-mono); font-weight:700; color:#10b981;">+${clean.change_km2 != null ? clean.change_km2.toFixed(1) : '0.0'} km² (+${clean.change_pct != null ? clean.change_pct.toFixed(1) : '0.0'}%)</span>
-              </div>
-              <div style="color: #94a3b8; font-size: 12px; margin-top: 2px;">
-                ${clean.start_km2 != null ? clean.start_km2.toFixed(1) : ''} &rarr; ${clean.end_km2 != null ? clean.end_km2.toFixed(1) : ''} km² (${clean.description || 'Temporal persistence filter on raw classification'})
-              </div>
-            </div>
-            <div>
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <strong style="color: #f59e0b;">3. Raw:</strong>
-                <span style="font-family:var(--font-mono); font-weight:700; color:#f59e0b;">+${raw.change_km2 != null ? raw.change_km2.toFixed(1) : '0.0'} km² (+${raw.change_pct != null ? raw.change_pct.toFixed(1) : '0.0'}%)</span>
-              </div>
-              <div style="color: #94a3b8; font-size: 12px; margin-top: 2px;">
-                ${raw.start_km2 != null ? raw.start_km2.toFixed(1) : ''} &rarr; ${raw.end_km2 != null ? raw.end_km2.toFixed(1) : ''} km² (${raw.description || 'Original independent annual RF classification'})
-              </div>
-            </div>
-          `;
-        }
-
-        // 2. WorldCover 2021 Reference Comparison
-        const anchorValEl = document.getElementById('metric-anchor-val');
-        const anchorDiffEl = document.getElementById('metric-anchor-diff');
-        if (h) {
-          const wcAnchor = h.worldcover_2021_anchor_km2;
-          const est2021 = h.estimate_2021_norm_km2;
-          const diffKm2 = h.estimate_2021_diff_km2 ?? (est2021 != null && wcAnchor != null ? est2021 - wcAnchor : null);
-          const diffPct = h.estimate_2021_diff_pct ?? (diffKm2 != null && wcAnchor ? (diffKm2 / wcAnchor) * 100.0 : null);
+        <!-- Editorial Analytics Dashboard Panel (Sidebar / Bottom Sheet) -->
+        <aside id="dashboard" class="dashboard-panel" tabindex="0" aria-label="City Analytics Panel">
+          <div id="sheet-handle-bar" class="sheet-handle-bar" title="Swipe or click to expand/collapse">
+            <div class="sheet-handle"></div>
+          </div>
           
-          if (anchorValEl && wcAnchor != null) anchorValEl.textContent = `${wcAnchor.toFixed(1)} km²`;
-          if (anchorDiffEl && est2021 != null) {
-            const diffSign = (diffKm2 != null && diffKm2 >= 0) ? '+' : '';
-            const diffKm2Str = diffKm2 != null ? `${diffSign}${diffKm2.toFixed(1)} km²` : '';
-            const diffPctStr = diffPct != null ? `${diffSign}${diffPct.toFixed(1)}%` : '';
-            const diffStr = diffKm2 != null ? ` (${diffKm2Str}, ${diffPctStr})` : '';
-            anchorDiffEl.innerHTML = `<span style="color:var(--text-muted);">vs 2021 TLS: ${est2021.toFixed(1)} km²${diffStr}</span>`;
-          }
-        }
-
-        // 3. Current Selected Year Built-up (TLS-Normalised as Main Series)
-        const gSeries = statsData.growth_series || [];
-        const curG = gSeries.find(g => g.year === currentYear) || gSeries[gSeries.length - 1] || {};
-        const builtupEl = document.getElementById('metric-builtup-val');
-        const builtupSub = document.getElementById('metric-builtup-sub');
-        const mainBuiltup = curG.norm_builtup_km2 != null ? curG.norm_builtup_km2 : curG.clean_builtup_km2;
-        if (builtupEl && mainBuiltup != null) {
-          builtupEl.textContent = `${mainBuiltup.toFixed(1)} km²`;
-        }
-        if (builtupSub) {
-          const minB = curG.band_min_km2 != null ? curG.band_min_km2.toFixed(1) : (curG.raw_builtup_km2 != null ? curG.raw_builtup_km2.toFixed(1) : '');
-          const maxB = curG.band_max_km2 != null ? curG.band_max_km2.toFixed(1) : (mainBuiltup != null ? mainBuiltup.toFixed(1) : '');
-          builtupSub.innerHTML = `<span style="color:var(--accent-cyan);">TLS-Norm (Spread: ${minB}–${maxB} km²)</span>`;
-        }
-
-        // 4. Metrics: Entropy and Core/Periphery
-        const metricsArr = statsData.metrics || [];
-        const curMetrics = metricsArr.find(m => m.year === currentYear) || metricsArr[metricsArr.length - 1] || {};
-        
-        const entropyEl = document.getElementById('metric-entropy-val');
-        const coreEl = document.getElementById('metric-core-val');
-        const periphEl = document.getElementById('metric-periph-val');
-
-        const entropyVal = curMetrics.shannon_entropy ?? curMetrics.entropy;
-        if (entropyEl && entropyVal != null) {
-          entropyEl.textContent = Number(entropyVal).toFixed(4);
-        }
-        if (coreEl && curMetrics.core_share_pct != null) {
-          coreEl.textContent = `${curMetrics.core_share_pct.toFixed(1)}%`;
-        }
-        if (periphEl && curMetrics.periphery_share_pct != null) {
-          periphEl.textContent = `${curMetrics.periphery_share_pct.toFixed(1)}%`;
-        }
-      } catch (err) {
-        showError("Metrics Cards", err);
-      }
-    }
-
-    function updateValidationTable() {
-      try {
-        const tbody = document.getElementById('validation-table-body');
-        const noteEl = document.getElementById('validation-note-text');
-        const provEl = document.getElementById('provenance-content');
-        if (!statsData || !statsData.validation_loyo) return;
-
-        if (noteEl && statsData.validation_loyo.note) {
-          noteEl.textContent = statsData.validation_loyo.note;
-        }
-
-        if (provEl && statsData.provenance) {
-          const prov = statsData.provenance;
-          const rasters = prov.input_files ? prov.input_files.raw_classified_rasters || {} : {};
-          const rKeys = Object.keys(rasters).join(', ');
-          provEl.innerHTML = `
-            <div><strong>Script:</strong> <span style="font-family:var(--font-mono); color:#e2e8f0;">${prov.script}</span></div>
-            <div><strong>Git Commit:</strong> <span style="font-family:var(--font-mono); color:#38bdf8;">${prov.git_sha}</span></div>
-            <div><strong>Generated:</strong> <span style="font-family:var(--font-mono); color:#94a3b8;">${new Date(prov.generated_at).toLocaleString()}</span></div>
-            <div style="margin-top:4px; padding-top:4px; border-top:1px solid rgba(255,255,255,0.08);">
-              <div><strong>Train Points:</strong> <span style="font-family:var(--font-mono); color:#e2e8f0;">${prov.input_files ? prov.input_files.train_points_pooled : 'verified'}</span></div>
-              <div><strong>Test Points:</strong> <span style="font-family:var(--font-mono); color:#e2e8f0;">${prov.input_files ? prov.input_files.test_points_pooled : 'verified'}</span></div>
-              <div><strong>Rasters:</strong> <span style="font-family:var(--font-mono); color:#e2e8f0;">${rKeys}</span></div>
+          <div class="sidebar-header">
+            <div class="sidebar-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+              <span id="dashboard-city-title">Ahmedabad Growth Analytics</span>
             </div>
-          `;
-        }
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="aoi-meta-badge" style="font-size: 11px; font-family: var(--font-mono); color: var(--color-text-muted); background: var(--color-bg-subtle); padding: 3px 6px; border-radius: var(--radius-sm);">45x45 km</span>
+              <button class="depth-toggle-btn mobile-depth-toggle" style="font-size: 11px; padding: 2px 8px; border: 1px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-bg-subtle); color: var(--color-text-main);" title="Toggle Simple/Detailed View" aria-label="Toggle Simple or Detailed View">
+                <span class="mobile-depth-label">Simple</span>
+              </button>
+              <button id="close-dashboard-btn" class="tool-btn" style="display: none; padding: 4px;" aria-label="Close Dashboard">&times;</button>
+            </div>
+          </div>
 
-        if (tbody && statsData.validation_loyo && statsData.validation_loyo.table) {
-          tbody.innerHTML = statsData.validation_loyo.table.map(r => {
-            const isOutside = r.outside_displayed_window || (r.note && r.note.includes('outside'));
-            const yearBadge = isOutside ? `<strong>${r.year}</strong> <span style="font-size:10px; color:var(--text-muted); display:block; line-height:1;">(outside window)</span>` : `<strong>${r.year}</strong>`;
-            return `
-            <tr style="${isOutside ? 'opacity: 0.8;' : ''}">
-              <td>${yearBadge}</td>
-              <td style="font-size: 12px; color:${r.stage.includes('After') || r.stage.includes('TLS') ? 'var(--accent-cyan)' : 'var(--accent-amber)'}">${r.stage.includes('TLS') ? 'TLS Norm' : 'Raw'}</td>
-              <td style="color:var(--accent-emerald); font-weight:700;">${(r.f1_score * 100).toFixed(1)}%</td>
-              <td>${r.mapped_area_km2.toFixed(1)}</td>
-              <td>${r.adjusted_area_km2.toFixed(1)} &plusmn; ${r.ci_95_km2.toFixed(1)}</td>
-            </tr>
-          `;
-          }).join('');
-        }
-
-        // Render 4-Stratum Change Validation Section
-        const changeContainer = document.getElementById('change-val-content');
-        if (changeContainer) {
-          const cv = statsData.change_validation;
-          if (!cv || cv.status !== "validated") {
-            changeContainer.innerHTML = `
-              <div style="font-size: 12px; color: var(--text-muted); padding: 8px 0;">
-                <em>Not independently validated.</em> (Pune evaluated via held-out spatial block cross-validation).
+          <div class="sidebar-content">
+            
+            <!-- Framing Notice -->
+            <div class="note-box">
+              <div class="note-box-title">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                <span>Analysis Window: 2020–2024</span>
               </div>
-            `;
-          } else {
-            const strataRows = (cv.strata_table || []).map(s => `
-              <tr>
-                <td><strong>${s.stratum}</strong> <span style="font-size:10px; color:var(--text-muted);">(${s.name.includes('(') ? s.name.split('(')[1].replace(')', '') : s.name})</span></td>
-                <td>${s.mapped_area_km2.toFixed(1)}</td>
-                <td>${s.sample_size}</td>
-                <td>${s.c00}</td>
-                <td style="color:var(--accent-emerald); font-weight:600;">${s.c01_gain}</td>
-                <td style="color:var(--accent-amber); font-weight:600;">${s.c10_loss}</td>
-                <td>${s.c11_built}</td>
-                <td>${s.unclear || 0}</td>
-                <td style="color:var(--accent-cyan); font-weight:700;">${s.accuracy_pct.toFixed(1)}%</td>
-              </tr>
-            `).join('');
-
-            const lossStratum = (cv.strata_table || []).find(s => s.stratum === 'D' || (s.name && s.name.toLowerCase().includes('loss')));
-            let lossNoteHtml = '';
-            const n_never_built = cv.n_never_built ?? (lossStratum ? lossStratum.c00 : null);
-            const n_D = cv.n_D ?? (lossStratum ? lossStratum.sample_size : null);
-            const stratumD_area = cv.stratum_d_area_km2 ?? (lossStratum ? lossStratum.mapped_area_km2 : null);
-            if (n_never_built != null && n_D != null && n_D > 0 && stratumD_area != null) {
-              const false_km2 = cv.false_builtup_km2 ?? Math.round((n_never_built / n_D) * stratumD_area);
-              const noteText = `${n_never_built} of ${n_D} mapped-loss points were never built-up: the 2020 map falsely marks about ${false_km2} km² as built-up.`;
-              lossNoteHtml = `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; font-style: italic;">${noteText}</div>`;
-            }
-
-            changeContainer.innerHTML = `
-              <div style="font-size: 12px; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px;">
-                Stratified area-weighted estimator (Olofsson et al. 2014) on 300 visual inspection samples:
+              <div id="analysis-note-text">
+                2018-2019 excluded: too few clear scenes in the Nov-Feb window.
               </div>
-              <div style="overflow-x: auto;">
-                <table class="validation-table" style="font-size: 11px;">
+            </div>
+
+            <!-- Headline Metrics Grid -->
+            <div class="metrics-grid">
+              
+              <!-- 2020-2024 Change Range Card -->
+              <div class="metric-card metric-card-primary tooltip-container">
+                <div class="metric-header">
+                  <div class="metric-label">
+                    <span data-simple-title="Urban Expansion (2020–2024)" data-detailed-title="2020–2024 Expansion Range">Urban Expansion (2020–2024)</span>
+                    <button class="info-btn" data-calc-info="expansion-range" aria-label="How 2020-2024 expansion is calculated" title="How this is calculated">i</button>
+                  </div>
+                  <span class="depth-detailed-only" style="font-size: 11px; color: var(--color-text-muted);">Spread across methods</span>
+                </div>
+                <div id="metric-expansion-val" class="metric-value" style="color: var(--color-accent-primary);">12.6 to 21.9 %</div>
+                <div class="metric-delta">
+                  <span id="metric-expansion-sub">Range across methods</span>
+                </div>
+                <div class="card-meaning-line">
+                  Overall <span class="glossary-term" data-term="built-up">built-up</span> growth observed across all statistical models.
+                </div>
+                <div class="tooltip-popup" id="headline-methods-tooltip"></div>
+              </div>
+
+              <!-- WorldCover 2021 Reference Anchor -->
+              <div class="metric-card">
+                <div class="metric-header">
+                  <div class="metric-label">
+                    <span data-simple-title="ESA Benchmark (2021)" data-detailed-title="WorldCover 2021 Reference Anchor">ESA Benchmark (2021)</span>
+                    <button class="info-btn" data-calc-info="worldcover-anchor" aria-label="How WorldCover anchor is calculated" title="How this is calculated">i</button>
+                  </div>
+                </div>
+                <div id="metric-anchor-val" class="metric-value">393.7 km²</div>
+                <div id="metric-anchor-diff" class="metric-delta">
+                  <span>vs 2021 TLS Est</span>
+                </div>
+                <div class="card-meaning-line">
+                  Independent <span class="glossary-term" data-term="worldcover">WorldCover</span> map verifying our baseline scale.
+                </div>
+              </div>
+
+              <!-- Current Year Built-up (TLS Validated) -->
+              <div class="metric-card">
+                <div class="metric-header">
+                  <div class="metric-label">
+                    <span data-simple-title="Built-up Footprint" data-detailed-title="Built-up Footprint (TLS Validated)">Built-up Footprint</span> (<span id="metric-cur-year">2024</span>)
+                    <button class="info-btn" data-calc-info="builtup-footprint" aria-label="How built-up footprint is calculated" title="How this is calculated">i</button>
+                  </div>
+                </div>
+                <div id="metric-builtup-val" class="metric-value">474.9 km²</div>
+                <div id="metric-builtup-sub" class="metric-delta">
+                  <span>TLS Validated Series</span>
+                </div>
+                <div class="card-meaning-line">
+                  Total ground covered by buildings and concrete in <span class="glossary-term" data-term="km2">km²</span>.
+                </div>
+              </div>
+
+              <!-- Shannon Entropy -->
+              <div class="metric-card">
+                <div class="metric-header">
+                  <div class="metric-label">
+                    <span data-simple-title="Sprawl Dispersion Score" data-detailed-title="Shannon Entropy (Hn)">Sprawl Dispersion</span>
+                    <button class="info-btn" data-calc-info="shannon-entropy" aria-label="How Shannon Entropy is calculated" title="How this is calculated">i</button>
+                  </div>
+                </div>
+                <div id="metric-entropy-val" class="metric-value">0.9501</div>
+                <div class="metric-delta delta-up">
+                  <span>High Radial Dispersion</span>
+                </div>
+                <div class="card-meaning-line">
+                  <span class="glossary-term" data-term="shannon-entropy">Shannon Entropy</span> near 1.0 indicates leapfrog outward sprawl.
+                </div>
+              </div>
+
+              <!-- Core vs Periphery Distribution -->
+              <div class="metric-card">
+                <div class="metric-header" style="margin-bottom: 4px;">
+                  <div class="metric-label">
+                    <span data-simple-title="Center vs Outskirts" data-detailed-title="Core vs Periphery Distribution">Center vs Outskirts</span>
+                    <button class="info-btn" data-calc-info="core-periphery" aria-label="How Core vs Periphery is calculated" title="How this is calculated">i</button>
+                  </div>
+                </div>
+                <div style="margin-bottom: 6px;">
+                  <div class="metric-label" style="font-size: 11px;">Core (0–6 km)</div>
+                  <div id="metric-core-val" class="font-mono font-bold" style="font-size: 13px; margin-top: 2px;">-</div>
+                </div>
+                <div style="border-top: 1px solid var(--color-border-subtle); padding-top: 6px;">
+                  <div class="metric-label" style="font-size: 11px;">Periphery (&gt;12 km)</div>
+                  <div id="metric-periph-val" class="font-mono font-bold" style="font-size: 13px; color: var(--color-accent-primary); margin-top: 2px;">-</div>
+                </div>
+                <div class="card-meaning-line">
+                  Dense historical core vs rapidly expanding <span class="glossary-term" data-term="core-vs-periphery">outer periphery</span>.
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Time Series Growth Chart -->
+            <div class="chart-box">
+              <div class="chart-header">
+                <div class="chart-title">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
+                  <span data-simple-title="Built-up Growth Over Time" data-detailed-title="Multi-Series Built-up Footprint">Built-up Growth Over Time</span>
+                  <button class="info-btn" data-calc-info="growth-chart" aria-label="How growth chart is calculated" title="How to read this chart">i</button>
+                </div>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="timeSeriesChart"></canvas>
+              </div>
+              <div class="chart-legend-box">
+                <div class="legend-pill">
+                  <span class="legend-pill-dot" style="background: var(--color-accent-primary);"></span>
+                  <span style="font-weight: 600;"><span class="glossary-term" data-term="normalisation-tls">TLS Normalised</span> (Main)</span>
+                </div>
+                <div class="legend-pill depth-detailed-only">
+                  <span class="legend-pill-dot" style="background: #10b981;"></span>
+                  <span>Cleaned (sensitivity)</span>
+                </div>
+                <div class="legend-pill depth-detailed-only">
+                  <span class="legend-pill-dot" style="background: #f59e0b;"></span>
+                  <span>Raw</span>
+                </div>
+                <div class="legend-pill">
+                  <span class="legend-pill-dot" style="background: #a855f7;"></span>
+                  <span><span class="glossary-term" data-term="worldcover">WorldCover</span> 2021 Anchor</span>
+                </div>
+              </div>
+              <div class="chart-read-line">
+                <span><strong>How to read:</strong> Each point is an annual satellite measurement. Steeper upward slope indicates faster expansion. Example: steady green curve shows continuous growth from 2020 to 2024.</span>
+              </div>
+            </div>
+
+            <!-- Concentric Ring Density Profile -->
+            <div class="chart-box">
+              <div class="chart-header">
+                <div class="chart-title">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+                  <span data-simple-title="Urban Density by Distance" data-detailed-title="Concentric Ring Built-up Density (%)">Urban Density by Distance</span>
+                  <button class="info-btn" data-calc-info="ring-chart" aria-label="How ring chart is calculated" title="How to read this chart">i</button>
+                </div>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="ringDensityChart"></canvas>
+              </div>
+              <div class="chart-read-line">
+                <span><strong>How to read:</strong> Bars show built-up percentage across <span class="glossary-term" data-term="distance-ring">distance rings</span> from city center (left) outward. Example: inner 0–2 km is &gt;90% built-up, dropping to &lt;20% at 14 km.</span>
+              </div>
+            </div>
+
+            <!-- Land Cover Distribution Table -->
+            <div class="chart-box">
+              <div class="chart-header">
+                <div class="chart-title">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                  <span><span class="glossary-term" data-term="land-cover">Land Cover</span> Distribution (<span id="table-year-lbl">2024</span>)</span>
+                </div>
+              </div>
+              <div class="data-table-wrap" tabindex="0" role="region" aria-label="Land cover classification distribution table">
+                <table class="editorial-table">
                   <thead>
                     <tr>
-                      <th>Stratum</th>
-                      <th>Area (km²)</th>
-                      <th>N</th>
-                      <th>(0,0)</th>
-                      <th>(0,1)</th>
-                      <th>(1,0)</th>
-                      <th>(1,1)</th>
-                      <th>Unclear</th>
-                      <th>Matches mapped change</th>
+                      <th>Class</th>
+                      <th class="text-right">Area (<span class="glossary-term" data-term="km2">km²</span>)</th>
+                      <th class="text-right">Share (%)</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    ${strataRows}
-                  </tbody>
+                  <tbody id="class-table-body"></tbody>
                 </table>
               </div>
-              ${lossNoteHtml}
-              
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0;">
-                <div style="background: rgba(255,255,255,0.04); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-subtle);">
-                  <div style="font-size: 10px; color: var(--text-muted);">Adjusted Gain</div>
-                  <div style="font-size: 12px; font-weight: 700; color: var(--accent-emerald); font-family: var(--font-mono);">${cv.adjusted_gain_km2.toFixed(1)} ± ${cv.ci95_gain_km2.toFixed(1)} km²</div>
-                </div>
-                <div style="background: rgba(255,255,255,0.04); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-subtle);">
-                  <div style="font-size: 10px; color: var(--text-muted);">Adjusted Loss</div>
-                  <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); font-family: var(--font-mono);">${cv.adjusted_loss_km2.toFixed(1)} ± ${cv.ci95_loss_km2.toFixed(1)} km²</div>
-                </div>
-                <div style="background: rgba(255,255,255,0.04); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-subtle);">
-                  <div style="font-size: 10px; color: var(--text-muted);">Adjusted Net</div>
-                  <div style="font-size: 12px; font-weight: 700; color: var(--accent-cyan); font-family: var(--font-mono);">${cv.adjusted_net_km2 >= 0 ? '+' : ''}${cv.adjusted_net_km2.toFixed(1)} ± ${cv.ci95_net_km2.toFixed(1)} km²</div>
+            </div>
+
+            <!-- Validation: Leave-One-Year-Out -->
+            <div class="chart-box">
+              <div class="chart-header">
+                <div class="chart-title">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <span data-simple-title="Model Accuracy Audit" data-detailed-title="LOYO Cross-Validation (Held-Out Folds)">Model Accuracy Audit</span>
                 </div>
               </div>
+              <div style="font-size: 12px; color: var(--color-text-secondary); line-height: 1.45;">
+                Evaluated on held-out spatial block test points with <span class="glossary-term" data-term="olofsson-estimator">Olofsson et al. (2014)</span> area weighting and <span class="glossary-term" data-term="f1-score">F1 score</span> auditing.
+              </div>
+              <div class="data-table-wrap" tabindex="0" role="region" aria-label="Model cross-validation accuracy table">
+                <table class="editorial-table">
+                  <thead>
+                    <tr>
+                      <th>Fold</th>
+                      <th>Stage</th>
+                      <th><span class="glossary-term" data-term="f1-score">F1</span></th>
+                      <th class="text-right">Mapped</th>
+                      <th class="text-right">Adjusted (<span class="glossary-term" data-term="confidence-interval">95% CI</span>)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="validation-table-body"></tbody>
+                </table>
+              </div>
 
-              <!-- Sensitivity Comparison Row -->
-              <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 8px; margin: 8px 0; font-size: 11px;">
-                <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 4px;">Sensitivity &amp; Baseline Scenarios:</div>
-                <div style="display: flex; flex-direction: column; gap: 3px; color: var(--text-secondary);">
-                  <div>&bull; <strong>Pre-recheck Baseline:</strong> <span style="font-family:var(--font-mono); color:#cbd5e1;">+14.9 ± 83.6 km²</span></div>
-                  <div>&bull; <strong>Without Stratum C Gains (IDs 50 &amp; 172 as errors):</strong> <span style="font-family:var(--font-mono); color:#38bdf8;">+48.3 ± 23.1 km²</span></div>
-                  <div>&bull; <strong>Post-recheck Adjusted Net:</strong> <span style="font-family:var(--font-mono); color:#34d399;">+81.7 ± 51.6 km²</span></div>
+            </div>
+
+            <!-- Change Validation Box -->
+            <div class="chart-box" id="change-validation-card">
+              <div class="chart-header">
+                <div class="chart-title">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                  <span data-simple-title="Ground-Truth Audit (2020–2024)" data-detailed-title="4-Stratum Change Validation (2020–2024)">Ground-Truth Audit (2020–2024)</span>
                 </div>
               </div>
+              <div id="change-val-content"></div>
+            </div>
 
-              <div style="font-size: 12px; color: var(--text-primary); font-weight: 600; line-height: 1.4; border-left: 2px solid var(--accent-emerald); padding-left: 8px; margin-top: 6px;">
-                ${cv.summary_sentence}
+            <!-- Action & Download Buttons in panel footer -->
+            <div style="padding-top: 14px; border-top: 1px solid var(--color-border); font-size: 12px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button id="share-view-btn" class="hero-btn hero-btn-ghost" style="flex: 1; font-size: 11px; padding: 6px 8px; justify-content: center;" title="Copy shareable link with current view state" aria-label="Share view">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                  Share
+                </button>
+                <a id="download-data-btn" href="data/ahmedabad/stats.json" download="ahmedabad_urbanpulse_stats.json" class="hero-btn hero-btn-ghost" style="flex: 1; font-size: 11px; padding: 6px 8px; text-decoration: none; justify-content: center;" title="Download raw statistics as JSON">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  Data (JSON)
+                </a>
+                <a id="download-report-btn" href="./report/UrbanPulse_Report.pdf" target="_blank" rel="noopener" class="hero-btn hero-btn-ghost" style="flex: 1; font-size: 11px; padding: 6px 8px; text-decoration: none; justify-content: center;" title="Download comprehensive project report PDF">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  Report (PDF)
+                </a>
               </div>
-
-              <div style="font-size: 11px; color: #fde047; margin-top: 8px; line-height: 1.35; padding: 4px 8px; background: rgba(234, 179, 8, 0.08); border-radius: 4px; border: 1px solid rgba(234, 179, 8, 0.2);">
-                <strong>Disclaimer:</strong> Intervals reflect sampling error only; labelling inconsistency (about 9% between passes) is not included.
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <a href="./report/" target="_blank" rel="noopener" style="font-weight: 600; color: var(--color-accent-primary); text-decoration: none;">Interactive Technical Report &rarr;</a>
+                <span style="color: var(--color-text-muted); font-size: 11px;">Open Access (MIT)</span>
               </div>
-
-              <div style="font-size: 10px; color: var(--text-muted); margin-top: 8px; line-height: 1.35; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 6px;">
-                *Note: Strata were built from annual TLS-normalised classifications (3x3 majority filter, no temporal cleanup rules). Validation mapped areas (415.97 / 474.88 km²) match the dashboard TLS series (415.97 / 474.88 km²). 26 of 291 start labels (12 built&rarr;not built, 14 not built&rarr;built) changed between passes 1 and 2 (~9% labeller change rate). The 3rd pass rechecked 10 discordant points (apparent losses/gains) using Google Earth historical imagery; the 6 corrected labels persisted through pass 2, and concordant points were not rechecked. Gross loss standard error applies Laplace (add-one) smoothing for zero-count sample proportions.
+              <div style="color: var(--color-text-muted); font-size: 11px; text-align: center;">
+                UrbanPulse &copy; 2026 &bull; Open-Source Geospatial Analytics &bull; MIT License
               </div>
-            `;
-          }
-        }
-      } catch (err) {
-        showError("Validation Table", err);
-      }
-    }
-
-    function updateGateAndCIBadges() {
-      try {
-        const gateBadge = document.getElementById('quality-gate-badge');
-        const gateList = document.getElementById('gate-items-list');
-        const gateOverallStatus = document.getElementById('gate-overall-status');
-
-        if (statsData && statsData.quality_gate) {
-          const qg = statsData.quality_gate;
-          const gates = qg.gates || {};
-          const gateKeys = Object.keys(gates);
-          const passCount = qg.pass_count != null ? qg.pass_count : gateKeys.filter(k => gates[k].passed === true || (gates[k].status && gates[k].status.toUpperCase() === "PASS")).length;
-          const totalCount = qg.total_count || gateKeys.length || 5;
-          const passed = qg.passed ?? (passCount === totalCount);
-
-          if (gateBadge) {
-            gateBadge.textContent = `Gate: ${passCount}/${totalCount} PASS`;
-            gateBadge.style.color = passed ? "#34d399" : "#f87171";
-            gateBadge.style.borderColor = passed ? "rgba(16, 185, 129, 0.35)" : "rgba(239, 68, 68, 0.35)";
-            gateBadge.style.background = passed ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)";
-          }
-
-          if (gateOverallStatus) {
-            gateOverallStatus.textContent = passed ? `${passCount}/${totalCount} PASS` : `${passCount}/${totalCount} PASS`;
-            gateOverallStatus.style.color = passed ? "#34d399" : "#f87171";
-          }
-
-          if (gateList && gateKeys.length > 0) {
-            gateList.innerHTML = gateKeys.map(k => {
-              const g = gates[k];
-              const isPass = g.passed === true || (g.status && g.status.toUpperCase() === "PASS");
-              const title = g.name || k.replace(/_/g, ' ');
-              const valStr = g.value || g.actual || '';
-              const threshStr = g.threshold || '';
-              return `
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
-                  <div>
-                    <div style="color:#f8fafc; font-weight:600;">${title}</div>
-                    <div style="color:#94a3b8; font-size:12px;">Val: <span style="color:#e2e8f0; font-family:var(--font-mono);">${valStr}</span> (Limit: ${threshStr})</div>
-                  </div>
-                  <span style="padding:2px 7px; border-radius:4px; font-size:12px; font-weight:700; font-family:var(--font-mono); background:${isPass ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}; color:${isPass ? '#34d399' : '#f87171'}; border:1px solid ${isPass ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)'}; margin-left:8px;">
-                    ${isPass ? 'PASS' : 'FAIL'}
-                  </span>
-                </div>
-              `;
-            }).join('');
-          }
-        }
-      } catch (err) {
-        showError("Gate & CI Badges", err);
-      }
-    }
-
-    function updateClassTable(currentYear) {
-      try {
-        if (!statsData) return;
-        const classAreasArr = statsData.class_areas || [];
-        const curAreas = classAreasArr.find(a => a.year === currentYear) || classAreasArr[classAreasArr.length - 1] || {};
-        const tbody = document.getElementById('class-table-body');
-        if (!tbody) return;
-        tbody.innerHTML = '';
-
-        const aoiArea = curAreas.total_area_km2 || (statsData.city_metadata && statsData.city_metadata.aoi_area_km2) || 2167.83;
-
-        if (curAreas.classes) {
-          curAreas.classes.forEach(c => {
-            tbody.innerHTML += `
-              <tr>
-                <td>
-                  <div class="class-pill">
-                    <span class="class-color-dot" style="background: ${c.color}; color: ${c.color};"></span>
-                    <span>${c.name}</span>
-                  </div>
-                </td>
-                <td>${c.area_km2.toFixed(1)}</td>
-                <td>${c.share_pct.toFixed(1)}%</td>
-              </tr>
-            `;
-          });
-        } else if (curAreas.total_area_km2) {
-          const classMapping = [
-            { name: "Built-up", key: "built_up_km2", color: "#e41a1c" },
-            { name: "Vegetation", key: "vegetation_km2", color: "#238b45" },
-            { name: "Water", key: "water_km2", color: "#1f78b4" },
-            { name: "Agriculture", key: "agriculture_km2", color: "#ffd92f" },
-            { name: "Open land", key: "open_land_km2", color: "#d2b48c" }
-          ];
-
-          classMapping.forEach(c => {
-            const km2 = curAreas[c.key] || 0;
-            const pct = (km2 / aoiArea) * 100.0;
-            tbody.innerHTML += `
-              <tr>
-                <td>
-                  <div class="class-pill">
-                    <span class="class-color-dot" style="background: ${c.color}; color: ${c.color};"></span>
-                    <span>${c.name}</span>
-                  </div>
-                </td>
-                <td>${km2.toFixed(1)}</td>
-                <td>${pct.toFixed(1)}%</td>
-              </tr>
-            `;
-          });
-        }
-      } catch (err) {
-        showError("Class Table", err);
-      }
-    }
-
-    // 6. Chart.js Setup & Multi-Series Updates
-    function initCharts() {
-      try {
-        if (typeof Chart === 'undefined') {
-          console.warn("Chart.js not loaded. Skipping chart initialization.");
-          return;
-        }
-
-        if (timeSeriesChart) {
-          timeSeriesChart.destroy();
-          timeSeriesChart = null;
-        }
-        if (ringDensityChart) {
-          ringDensityChart.destroy();
-          ringDensityChart = null;
-        }
-
-        if (!statsData) return;
-
-        // 1. Time Series Chart with TLS-Norm as Main Line, Raw & Cleaned as Dashed Lines, Method Sensitivity Band
-        const tsCanvas = document.getElementById('timeSeriesChart');
-        if (tsCanvas) {
-          const tsCtx = tsCanvas.getContext('2d');
-          const gSeries = statsData.growth_series || [];
-          const labels = gSeries.map(g => g.display_year || (g.year === 2022 ? '2022 - partial season, no Jan-Feb' : String(g.year)));
-          const cleanData = gSeries.map(g => g.clean_builtup_km2);
-          const normData = gSeries.map(g => g.norm_builtup_km2);
-          const rawData = gSeries.map(g => g.raw_builtup_km2);
-          const maxData = gSeries.map(g => g.band_max_km2);
-          const minData = gSeries.map(g => g.band_min_km2);
-
-          const anchorVal = statsData.headline_2020_2024_expansion ? statsData.headline_2020_2024_expansion.worldcover_2021_anchor_km2 : null;
-          const anchorData = gSeries.map(g => g.year === 2021 ? anchorVal : null);
-
-          timeSeriesChart = new Chart(tsCtx, {
-            type: 'line',
-            data: {
-              labels: labels,
-              datasets: [
-                {
-                  label: 'Method Sensitivity',
-                  data: maxData,
-                  borderColor: 'transparent',
-                  backgroundColor: 'rgba(56, 189, 248, 0.14)',
-                  fill: '+1',
-                  pointRadius: 0,
-                  tension: 0.2
-                },
-                {
-                  label: 'Sensitivity Min',
-                  data: minData,
-                  borderColor: 'transparent',
-                  backgroundColor: 'transparent',
-                  fill: false,
-                  pointRadius: 0,
-                  tension: 0.2
-                },
-                {
-                  label: 'Raw',
-                  data: rawData,
-                  borderColor: '#f59e0b',
-                  borderDash: [4, 4],
-                  borderWidth: 1.5,
-                  pointBackgroundColor: '#f59e0b',
-                  pointRadius: 3,
-                  fill: false,
-                  tension: 0.2
-                },
-                {
-                  label: 'Cleaned',
-                  data: cleanData,
-                  borderColor: '#10b981',
-                  borderDash: [4, 4],
-                  borderWidth: 1.5,
-                  pointBackgroundColor: '#10b981',
-                  pointRadius: 3,
-                  fill: false,
-                  tension: 0.2
-                },
-                {
-                  label: 'TLS-Normalised (Main)',
-                  data: normData,
-                  borderColor: '#38bdf8',
-                  borderWidth: 3.0,
-                  pointBackgroundColor: labels.map((_, i) => i === selectedYearIndex ? '#ffffff' : '#38bdf8'),
-                  pointBorderColor: '#38bdf8',
-                  pointRadius: labels.map((_, i) => i === selectedYearIndex ? 6.5 : 4.5),
-                  fill: false,
-                  tension: 0.2
-                },
-                {
-                  label: 'WorldCover 2021 Reference',
-                  data: anchorData,
-                  borderColor: '#c084fc',
-                  backgroundColor: '#c084fc',
-                  pointStyle: 'rectRot',
-                  pointRadius: 6.5,
-                  pointHoverRadius: 8.5,
-                  showLine: false
-                }
-              ]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  backgroundColor: '#0f172a',
-                  titleColor: '#f8fafc',
-                  bodyColor: '#cbd5e1',
-                  borderColor: '#334155',
-                  borderWidth: 1,
-                  padding: 10,
-                  callbacks: {
-                    label: function(ctx) {
-                      if (ctx.dataset.label === 'Sensitivity Min') return null;
-                      if (ctx.dataset.label === 'Method Sensitivity') {
-                        return `Method Spread: ${ctx.parsed.y ? ctx.parsed.y.toFixed(1) : ''} km²`;
-                      }
-                      if (ctx.dataset.label === 'WorldCover 2021 Reference') {
-                        return `ESA WorldCover 2021 Reference: ${ctx.parsed.y ? ctx.parsed.y.toFixed(1) : ''} km²`;
-                      }
-                      return `${ctx.dataset.label}: ${ctx.parsed.y ? ctx.parsed.y.toFixed(1) : ''} km²`;
-                    }
-                  }
-                }
-              },
-              scales: {
-                x: {
-                  grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                  ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 12 } }
-                },
-                y: {
-                  grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                  ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 12 } }
-                }
-              }
-            }
-          });
-        }
-
-        // 2. Ring Density Profile Chart
-        const rdCanvas = document.getElementById('ringDensityChart');
-        if (rdCanvas) {
-          const rdCtx = rdCanvas.getContext('2d');
-          ringDensityChart = new Chart(rdCtx, {
-            type: 'bar',
-            data: {
-              labels: [],
-              datasets: [{
-                label: '% Built-up',
-                data: [],
-                backgroundColor: '#38bdf8',
-                borderRadius: 5,
-                borderSkipped: false
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: {
-                  backgroundColor: '#0f172a',
-                  titleColor: '#f8fafc',
-                  bodyColor: '#cbd5e1',
-                  borderColor: '#334155',
-                  borderWidth: 1,
-                  padding: 10,
-                  callbacks: {
-                    label: (ctx) => `${ctx.parsed.y.toFixed(1)}% Built-up density`
-                  }
-                }
-              },
-              scales: {
-                x: {
-                  grid: { display: false },
-                  ticks: { color: '#94a3b8', font: { size: 12 } }
-                },
-                y: {
-                  max: 100,
-                  grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                  ticks: {
-                    color: '#94a3b8',
-                    font: { family: "'JetBrains Mono', monospace", size: 12 },
-                    callback: (val) => `${val}%`
-                  }
-                }
-              }
-            }
-          });
-        }
-      } catch (err) {
-        showError("Charts Initialization", err);
-      }
-    }
-
-    function updateCharts(currentYear) {
-      try {
-        if (!statsData) return;
-
-        if (timeSeriesChart && timeSeriesChart.data.datasets.length >= 5) {
-          const gSeries = statsData.growth_series || [];
-          timeSeriesChart.data.datasets[4].pointBackgroundColor = gSeries.map((_, i) => i === selectedYearIndex ? '#ffffff' : '#38bdf8');
-          timeSeriesChart.data.datasets[4].pointRadius = gSeries.map((_, i) => i === selectedYearIndex ? 6.5 : 4.5);
-          timeSeriesChart.update();
-        }
-
-        if (ringDensityChart) {
-          const ringsForYear = (statsData.rings && statsData.rings[String(currentYear)]) || [];
-          ringDensityChart.data.labels = ringsForYear.map(r => r.ring_label);
-          ringDensityChart.data.datasets[0].data = ringsForYear.map(r => r.builtup_pct);
-          ringDensityChart.update();
-        }
-      } catch (err) {
-        showError("Charts Update", err);
-      }
-    }
-
-    // 7. Overlay Toggle (Classified Layer Visibility)
-    function toggleOverlay() {
-      try {
-        isOverlayVisible = !isOverlayVisible;
-        const overlayBtn = document.getElementById('toggle-overlay-btn');
-        if (overlayBtn) {
-          overlayBtn.classList.toggle('active', isOverlayVisible);
-          overlayBtn.setAttribute('aria-pressed', isOverlayVisible ? 'true' : 'false');
-        }
-
-        // Update single map layers
-        if (map && mapLoaded) {
-          if (isOverlayVisible) {
-            if (isChangeLayerActive) {
-              if (map.getLayer('change-overlay-layer')) map.setLayoutProperty('change-overlay-layer', 'visibility', 'visible');
-              if (map.getLayer('annual-overlay-layer')) map.setLayoutProperty('annual-overlay-layer', 'visibility', 'none');
-            } else {
-              if (map.getLayer('annual-overlay-layer')) map.setLayoutProperty('annual-overlay-layer', 'visibility', 'visible');
-              if (map.getLayer('change-overlay-layer')) map.setLayoutProperty('change-overlay-layer', 'visibility', 'none');
-            }
-          } else {
-            if (map.getLayer('annual-overlay-layer')) map.setLayoutProperty('annual-overlay-layer', 'visibility', 'none');
-            if (map.getLayer('change-overlay-layer')) map.setLayoutProperty('change-overlay-layer', 'visibility', 'none');
-          }
-        }
-
-        // Update compare maps layers
-        if (mapBefore && mapBeforeLoaded && mapBefore.getLayer('compare-overlay-layer-before')) {
-          mapBefore.setLayoutProperty('compare-overlay-layer-before', 'visibility', isOverlayVisible ? 'visible' : 'none');
-        }
-        if (mapAfter && mapAfterLoaded && mapAfter.getLayer('compare-overlay-layer-after')) {
-          mapAfter.setLayoutProperty('compare-overlay-layer-after', 'visibility', isOverlayVisible ? 'visible' : 'none');
-        }
-      } catch (err) {
-        showError("Toggle Overlay", err);
-      }
-    }
-
-    // 8. Basemap Switcher (OpenStreetMap <-> Esri World Imagery Satellite)
-    function switchBasemap() {
-      try {
-        currentBasemap = currentBasemap === 'osm' ? 'satellite' : 'osm';
-        const isSat = currentBasemap === 'satellite';
-        const basemapBtn = document.getElementById('toggle-basemap-btn');
-        if (basemapBtn) {
-          basemapBtn.classList.toggle('active', isSat);
-          basemapBtn.setAttribute('aria-pressed', isSat ? 'true' : 'false');
-          const btnText = basemapBtn.querySelector('.btn-text');
-          if (btnText) {
-            btnText.textContent = isSat ? 'Satellite' : 'Basemap';
-          }
-          basemapBtn.setAttribute('title', isSat ? 'Basemap: Satellite (Click for OSM)' : 'Basemap: OpenStreetMap (Click for Satellite)');
-        }
-
-        const updateMapBasemap = (m) => {
-          if (!m) return;
-          try {
-            if (m.getLayer('osm-basemap-layer')) {
-              m.setLayoutProperty('osm-basemap-layer', 'visibility', isSat ? 'none' : 'visible');
-            }
-            if (m.getLayer('satellite-basemap-layer')) {
-              m.setLayoutProperty('satellite-basemap-layer', 'visibility', isSat ? 'visible' : 'none');
-            }
-          } catch (e) {
-            console.warn("[Basemap Layer Update Warning]:", e);
-          }
-        };
-
-        updateMapBasemap(map);
-        updateMapBasemap(mapBefore);
-        updateMapBasemap(mapAfter);
-      } catch (err) {
-        showError("Switch Basemap", err);
-      }
-    }
-
-    // Dashboard Open / Close Controls
-    function openDashboard() {
-      const dashboard = document.getElementById('dashboard') || document.getElementById('sidebar');
-      const dashToggle = document.getElementById('dashToggle');
-      if (!dashboard) return;
-      dashboard.style.transform = '';
-      dashboard.style.transition = '';
-      dashboard.classList.add('open');
-      document.body.classList.add('sheet-open');
-      if (dashToggle) {
-        dashToggle.setAttribute('aria-expanded', 'true');
-        const iconHam = dashToggle.querySelector('.icon-hamburger');
-        const iconClose = dashToggle.querySelector('.icon-close');
-        if (iconHam) iconHam.style.display = 'none';
-        if (iconClose) iconClose.style.display = 'block';
-      }
-      // Resize Chart.js charts once the sheet animation completes
-      setTimeout(() => {
-        if (timeSeriesChart) {
-          try { timeSeriesChart.resize(); } catch (e) {}
-        }
-        if (ringDensityChart) {
-          try { ringDensityChart.resize(); } catch (e) {}
-        }
-      }, 320);
-    }
-
-    function closeDashboard() {
-      const dashboard = document.getElementById('dashboard') || document.getElementById('sidebar');
-      const dashToggle = document.getElementById('dashToggle');
-      if (!dashboard) return;
-      dashboard.classList.remove('open');
-      document.body.classList.remove('sheet-open');
-      dashboard.style.transform = '';
-      dashboard.style.transition = '';
-      if (dashToggle) {
-        dashToggle.setAttribute('aria-expanded', 'false');
-        const iconHam = dashToggle.querySelector('.icon-hamburger');
-        const iconClose = dashToggle.querySelector('.icon-close');
-        if (iconHam) iconHam.style.display = 'block';
-        if (iconClose) iconClose.style.display = 'none';
-      }
-    }
-
-    function toggleDashboard(e) {
-      if (e) {
-        e.stopPropagation();
-      }
-      const dashboard = document.getElementById('dashboard') || document.getElementById('sidebar');
-      if (dashboard && dashboard.classList.contains('open')) {
-        closeDashboard();
-      } else {
-        openDashboard();
-      }
-    }
-
-    // 9. Focus Mode Implementation (Full Map Focus)
-    function enterFocusMode() {
-      try {
-        isFocusModeActive = true;
-        document.body.classList.add('focus-mode');
-
-        // On mobile, close the bottom sheet
-        closeDashboard();
-
-        const focusBtn = document.getElementById('toggle-focus-btn');
-        if (focusBtn) {
-          focusBtn.classList.add('active');
-          focusBtn.setAttribute('aria-pressed', 'true');
-        }
-
-        const restoreBtn = document.getElementById('restore-focus-btn');
-        if (restoreBtn) {
-          restoreBtn.setAttribute('aria-pressed', 'true');
-        }
-
-        const focusYearDisplay = document.getElementById('focus-year-display');
-        if (focusYearDisplay) {
-          focusYearDisplay.textContent = availableYears[selectedYearIndex] || '2024';
-        }
-
-        // Trigger map resize after layout change
-        requestAnimationFrame(() => {
-          if (map) { try { map.resize(); } catch (e) {} }
-          if (isCompareModeActive) {
-            if (mapBefore) { try { mapBefore.resize(); } catch (e) {} }
-            if (mapAfter) { try { mapAfter.resize(); } catch (e) {} }
-          }
-        });
-      } catch (err) {
-        showError("Enter Focus Mode", err);
-      }
-    }
-
-    function exitFocusMode() {
-      try {
-        isFocusModeActive = false;
-        document.body.classList.remove('focus-mode');
-
-        const focusBtn = document.getElementById('toggle-focus-btn');
-        if (focusBtn) {
-          focusBtn.classList.remove('active');
-          focusBtn.setAttribute('aria-pressed', 'false');
-        }
-
-        const restoreBtn = document.getElementById('restore-focus-btn');
-        if (restoreBtn) {
-          restoreBtn.setAttribute('aria-pressed', 'false');
-        }
-
-        // Trigger map and chart resize
-        requestAnimationFrame(() => {
-          if (map) { try { map.resize(); } catch (e) {} }
-          if (isCompareModeActive) {
-            if (mapBefore) { try { mapBefore.resize(); } catch (e) {} }
-            if (mapAfter) { try { mapAfter.resize(); } catch (e) {} }
-          }
-          if (timeSeriesChart) { try { timeSeriesChart.resize(); } catch (e) {} }
-          if (ringDensityChart) { try { ringDensityChart.resize(); } catch (e) {} }
-        });
-      } catch (err) {
-        showError("Exit Focus Mode", err);
-      }
-    }
-
-    function toggleFocusMode() {
-      if (isFocusModeActive) exitFocusMode();
-      else enterFocusMode();
-    }
-
-    // 10. Change Layer Toggle
-    function toggleChangeLayer() {
-      try {
-        const changeBtn = document.getElementById('toggle-change-btn');
-        if (isCompareModeActive) exitCompareMode();
-
-        isChangeLayerActive = !isChangeLayerActive;
-        if (changeBtn) {
-          changeBtn.classList.toggle('active', isChangeLayerActive);
-          changeBtn.setAttribute('aria-pressed', isChangeLayerActive ? 'true' : 'false');
-        }
-
-        if (map && mapLoaded && map.getLayer('change-overlay-layer') && map.getLayer('annual-overlay-layer')) {
-          if (!isOverlayVisible) {
-            map.setLayoutProperty('change-overlay-layer', 'visibility', 'none');
-            map.setLayoutProperty('annual-overlay-layer', 'visibility', 'none');
-          } else if (isChangeLayerActive) {
-            map.setLayoutProperty('change-overlay-layer', 'visibility', 'visible');
-            map.setLayoutProperty('annual-overlay-layer', 'visibility', 'none');
-          } else {
-            map.setLayoutProperty('change-overlay-layer', 'visibility', 'none');
-            map.setLayoutProperty('annual-overlay-layer', 'visibility', 'visible');
-          }
-        }
-        renderLegend();
-      } catch (err) {
-        showError("Change Layer Toggle", err);
-      }
-    }
-
-    // 11. Dual Map Compare Mode Implementation
-    function initCompareMaps() {
-      try {
-        const MapLibreClass = window.maplibregl || window.maplibreGl || (typeof maplibregl !== 'undefined' ? maplibregl : null);
-        if (!MapLibreClass) throw new Error("MapLibre GL library not available for compare maps");
-
-        const curCenter = map ? map.getCenter() : [72.5714, 23.0225];
-        const curZoom = map ? map.getZoom() : 10.5;
-        const curBearing = map ? map.getBearing() : 0;
-        const curPitch = map ? map.getPitch() : 0;
-
-        // Map Before (Left - Bottom Container)
-        if (!mapBefore) {
-          mapBefore = new MapLibreClass.Map({
-            container: 'map-before',
-            style: getBasemapStyle(),
-            center: curCenter,
-            zoom: curZoom,
-            bearing: curBearing,
-            pitch: curPitch,
-            attributionControl: false
-          });
-
-          mapBefore.on('load', () => {
-            mapBeforeLoaded = true;
-            updateCompareMapLayers();
-          });
-
-          mapBefore.on('move', () => {
-            syncMaps(mapBefore, mapAfter);
-          });
-        }
-
-        // Map After (Right - Top Clipped Container)
-        if (!mapAfter) {
-          mapAfter = new MapLibreClass.Map({
-            container: 'map-after',
-            style: getBasemapStyle(),
-            center: curCenter,
-            zoom: curZoom,
-            bearing: curBearing,
-            pitch: curPitch,
-            attributionControl: false
-          });
-
-          mapAfter.on('load', () => {
-            mapAfterLoaded = true;
-            updateCompareMapLayers();
-          });
-
-          mapAfter.on('move', () => {
-            syncMaps(mapAfter, mapBefore);
-          });
-        }
-
-      } catch (err) {
-        showError("Init Compare Maps", err);
-      }
-    }
-
-    function updateCompareMapLayers() {
-      try {
-        if (!metaData || !metaData.bounds) return;
-
-        const compA = document.getElementById('compare-year-a');
-        const compB = document.getElementById('compare-year-b');
-        const yearA = compA ? compA.value : (availableYears[0] || 2018);
-        const yearB = compB ? compB.value : (availableYears[availableYears.length - 1] || 2024);
-
-        const tagLeft = document.getElementById('compare-tag-left');
-        const tagRight = document.getElementById('compare-tag-right');
-        if (tagLeft) tagLeft.textContent = `${yearA}`;
-        if (tagRight) tagRight.textContent = `${yearB}`;
-
-        // Bounds: [west, south, east, north]
-        const [west, south, east, north] = metaData.bounds;
-        const coordinates = [
-          [west, north], // NW
-          [east, north], // NE
-          [east, south], // SE
-          [west, south]  // SW
-        ];
-
-        // 1. Update mapBefore (Left Year A)
-        if (mapBefore && mapBeforeLoaded) {
-          const urlA = `${DATA_BASE}/${currentCity}/${yearA}.png`;
-          if (mapBefore.getSource('compare-overlay-source-before')) {
-            mapBefore.getSource('compare-overlay-source-before').updateImage({
-              url: urlA,
-              coordinates: coordinates
-            });
-          } else {
-            mapBefore.addSource('compare-overlay-source-before', {
-              type: 'image',
-              url: urlA,
-              coordinates: coordinates
-            });
-            mapBefore.addLayer({
-              id: 'compare-overlay-layer-before',
-              type: 'raster',
-              source: 'compare-overlay-source-before',
-              layout: {
-                visibility: isOverlayVisible ? 'visible' : 'none'
-              },
-              paint: { 'raster-opacity': currentOpacity, 'raster-resampling': 'nearest' }
-            });
-          }
-        }
-
-        // 2. Update mapAfter (Right Year B)
-        if (mapAfter && mapAfterLoaded) {
-          const urlB = `${DATA_BASE}/${currentCity}/${yearB}.png`;
-          if (mapAfter.getSource('compare-overlay-source-after')) {
-            mapAfter.getSource('compare-overlay-source-after').updateImage({
-              url: urlB,
-              coordinates: coordinates
-            });
-          } else {
-            mapAfter.addSource('compare-overlay-source-after', {
-              type: 'image',
-              url: urlB,
-              coordinates: coordinates
-            });
-            mapAfter.addLayer({
-              id: 'compare-overlay-layer-after',
-              type: 'raster',
-              source: 'compare-overlay-source-after',
-              layout: {
-                visibility: isOverlayVisible ? 'visible' : 'none'
-              },
-              paint: { 'raster-opacity': currentOpacity, 'raster-resampling': 'nearest' }
-            });
-          }
-        }
-
-      } catch (err) {
-        showError("Update Compare Layers", err);
-      }
-    }
-
-    function updateSwipeDivider(percent) {
-      try {
-        splitPercent = Math.max(0, Math.min(100, percent));
-        const divider = document.getElementById('swipe-divider');
-        const mapAfterEl = document.getElementById('map-after');
-        const tagLeft = document.getElementById('compare-tag-left');
-        const tagRight = document.getElementById('compare-tag-right');
-
-        if (divider) divider.style.left = `${splitPercent}%`;
-        if (mapAfterEl) {
-          mapAfterEl.style.clipPath = `inset(0 0 0 ${splitPercent}%)`;
-          mapAfterEl.style.webkitClipPath = `inset(0 0 0 ${splitPercent}%)`;
-        }
-        if (tagLeft) tagLeft.style.display = splitPercent > 12 ? 'block' : 'none';
-        if (tagRight) tagRight.style.display = splitPercent < 88 ? 'block' : 'none';
-      } catch (err) {
-        showError("Swipe Divider Update", err);
-      }
-    }
-
-    function enterCompareMode() {
-      try {
-        isCompareModeActive = true;
-
-        // 1. Turn off change layer if active
-        if (isChangeLayerActive) {
-          isChangeLayerActive = false;
-          const changeBtn = document.getElementById('toggle-change-btn');
-          if (changeBtn) {
-            changeBtn.classList.remove('active');
-            changeBtn.setAttribute('aria-pressed', 'false');
-          }
-          if (map && mapLoaded && map.getLayer('change-overlay-layer') && map.getLayer('annual-overlay-layer')) {
-            map.setLayoutProperty('change-overlay-layer', 'visibility', 'none');
-            if (isOverlayVisible) {
-              map.setLayoutProperty('annual-overlay-layer', 'visibility', 'visible');
-            }
-          }
-          renderLegend();
-        }
-
-        // 2. Hide single-year slider and single map
-        const timelineContainer = document.getElementById('timeline-container');
-        if (timelineContainer) timelineContainer.style.display = 'none';
-
-        const singleMapEl = document.getElementById('map');
-        if (singleMapEl) singleMapEl.style.display = 'none';
-
-        // 3. Show Compare controls & dual map container
-        const compareBtn = document.getElementById('toggle-compare-btn');
-        const compareBar = document.getElementById('compare-bar');
-        const compareContainer = document.getElementById('compare-container');
-
-        if (compareBtn) {
-          compareBtn.classList.add('active');
-          compareBtn.setAttribute('aria-pressed', 'true');
-        }
-        if (compareBar) compareBar.classList.add('active');
-        if (compareContainer) compareContainer.classList.add('active');
-
-        // 4. Initialize dual maps
-        initCompareMaps();
-        updateSwipeDivider(splitPercent);
-
-        // 5. Trigger resize and sync position after becoming visible
-        requestAnimationFrame(() => {
-          if (mapBefore) {
-            mapBefore.resize();
-            if (map) {
-              mapBefore.jumpTo({
-                center: map.getCenter(),
-                zoom: map.getZoom(),
-                bearing: map.getBearing(),
-                pitch: map.getPitch()
-              });
-            }
-          }
-          if (mapAfter) {
-            mapAfter.resize();
-            if (map) {
-              mapAfter.jumpTo({
-                center: map.getCenter(),
-                zoom: map.getZoom(),
-                bearing: map.getBearing(),
-                pitch: map.getPitch()
-              });
-            }
-          }
-          updateCompareMapLayers();
-        });
-
-      } catch (err) {
-        showError("Enter Compare Mode", err);
-      }
-    }
-
-    function exitCompareMode() {
-      try {
-        isCompareModeActive = false;
-
-        const compareBtn = document.getElementById('toggle-compare-btn');
-        const compareBar = document.getElementById('compare-bar');
-        const compareContainer = document.getElementById('compare-container');
-        const timelineContainer = document.getElementById('timeline-container');
-        const singleMapEl = document.getElementById('map');
-
-        if (compareBtn) {
-          compareBtn.classList.remove('active');
-          compareBtn.setAttribute('aria-pressed', 'false');
-        }
-        if (compareBar) compareBar.classList.remove('active');
-        if (compareContainer) compareContainer.classList.remove('active');
-        if (timelineContainer) timelineContainer.style.display = 'flex';
-        if (singleMapEl) singleMapEl.style.display = 'block';
-
-        // Sync view back to main single map and resize
-        if (map && mapBefore) {
-          map.resize();
-          map.jumpTo({
-            center: mapBefore.getCenter(),
-            zoom: mapBefore.getZoom(),
-            bearing: mapBefore.getBearing(),
-            pitch: mapBefore.getPitch()
-          });
-        }
-
-        updateDisplay();
-      } catch (err) {
-        showError("Exit Compare Mode", err);
-      }
-    }
-
-    function recenterAOI() {
-      try {
-        if (!metaData || !metaData.bounds) return;
-        const [west, south, east, north] = metaData.bounds;
-        const boundsQuad = [[west, south], [east, north]];
-
-        if (isCompareModeActive) {
-          if (mapBefore) mapBefore.fitBounds(boundsQuad, { padding: 40, duration: 1000 });
-          if (mapAfter) mapAfter.fitBounds(boundsQuad, { padding: 40, duration: 1000 });
-        } else if (map) {
-          map.fitBounds(boundsQuad, { padding: 40, duration: 1000 });
-        }
-      } catch (err) {
-        showError("Recenter AOI", err);
-      }
-    }
-
-    // 12. Attach UI Controls Event Listeners (Independent initialization)
-    function initControls() {
-      try {
-        // Error banner close button
-        const errorCloseBtn = document.getElementById('error-close-btn');
-        if (errorCloseBtn) {
-          errorCloseBtn.addEventListener('click', clearError);
-        }
-
-        // Overlay Toggle Button
-        const overlayBtn = document.getElementById('toggle-overlay-btn');
-        if (overlayBtn) {
-          overlayBtn.addEventListener('click', toggleOverlay);
-        }
-
-        // Basemap Switcher Button
-        const basemapBtn = document.getElementById('toggle-basemap-btn');
-        if (basemapBtn) {
-          basemapBtn.addEventListener('click', switchBasemap);
-        }
-
-        // Focus Mode Toggle Button & Restore Button
-        const focusBtn = document.getElementById('toggle-focus-btn');
-        if (focusBtn) {
-          focusBtn.addEventListener('click', toggleFocusMode);
-        }
-
-        const restoreFocusBtn = document.getElementById('restore-focus-btn');
-        if (restoreFocusBtn) {
-          restoreFocusBtn.addEventListener('click', exitFocusMode);
-        }
-
-        // Timeline Slider
-        const slider = document.getElementById('year-slider');
-        if (slider) {
-          slider.addEventListener('input', (e) => {
-            selectedYearIndex = parseInt(e.target.value, 10);
-            updateDisplay();
-          });
-        }
-
-        // Play / Pause Animation Button
-        const playBtn = document.getElementById('play-pause-btn');
-        const playIcon = document.getElementById('play-icon');
-        const pauseIcon = document.getElementById('pause-icon');
-
-        if (playBtn) {
-          playBtn.addEventListener('click', () => {
-            isPlaying = !isPlaying;
-            if (isPlaying) {
-              if (playIcon) playIcon.style.display = 'none';
-              if (pauseIcon) pauseIcon.style.display = 'block';
-              playInterval = setInterval(() => {
-                selectedYearIndex = (selectedYearIndex + 1) % availableYears.length;
-                if (slider) slider.value = selectedYearIndex;
-                updateDisplay();
-              }, 1400);
-            } else {
-              if (playIcon) playIcon.style.display = 'block';
-              if (pauseIcon) pauseIcon.style.display = 'none';
-              if (playInterval) clearInterval(playInterval);
-            }
-          });
-        }
-
-        // Opacity Slider (Keeps value even if overlay is hidden)
-        const opacitySlider = document.getElementById('opacity-slider');
-        const opacityVal = document.getElementById('opacity-val');
-        if (opacitySlider) {
-          opacitySlider.addEventListener('input', (e) => {
-            currentOpacity = parseFloat(e.target.value) / 100.0;
-            if (opacityVal) opacityVal.textContent = `${e.target.value}%`;
-            
-            // Update single map layers
-            if (map && mapLoaded) {
-              ['annual-overlay-layer', 'change-overlay-layer'].forEach(layerId => {
-                if (map.getLayer(layerId)) {
-                  map.setPaintProperty(layerId, 'raster-opacity', currentOpacity);
-                }
-              });
-            }
-            // Update compare maps layers
-            if (mapBefore && mapBeforeLoaded && mapBefore.getLayer('compare-overlay-layer-before')) {
-              mapBefore.setPaintProperty('compare-overlay-layer-before', 'raster-opacity', currentOpacity);
-            }
-            if (mapAfter && mapAfterLoaded && mapAfter.getLayer('compare-overlay-layer-after')) {
-              mapAfter.setPaintProperty('compare-overlay-layer-after', 'raster-opacity', currentOpacity);
-            }
-          });
-        }
-
-        // Change Layer Toggle Button
-        const changeBtn = document.getElementById('toggle-change-btn');
-        if (changeBtn) {
-          changeBtn.addEventListener('click', toggleChangeLayer);
-        }
-
-        // Compare Mode Toggle Button & Close
-        const compareBtn = document.getElementById('toggle-compare-btn');
-        if (compareBtn) {
-          compareBtn.addEventListener('click', () => {
-            if (!isCompareModeActive) enterCompareMode();
-            else exitCompareMode();
-          });
-        }
-
-        const closeCompBtn = document.getElementById('close-compare-btn');
-        if (closeCompBtn) {
-          closeCompBtn.addEventListener('click', exitCompareMode);
-        }
-
-        // Compare Year Selectors
-        const compA = document.getElementById('compare-year-a');
-        const compB = document.getElementById('compare-year-b');
-        if (compA) compA.addEventListener('change', updateCompareMapLayers);
-        if (compB) compB.addEventListener('change', updateCompareMapLayers);
-
-        // Swipe Divider Draggable Handling (Mouse, Touch, and Pointer)
-        const swipeDivider = document.getElementById('swipe-divider');
-        if (swipeDivider) {
-          function handleDrag(clientX) {
-            const wrapper = document.getElementById('map-wrapper');
-            if (!wrapper) return;
-            const wrapperRect = wrapper.getBoundingClientRect();
-            const x = clientX - wrapperRect.left;
-            const pct = (x / wrapperRect.width) * 100;
-            updateSwipeDivider(pct);
-          }
-
-          swipeDivider.addEventListener('mousedown', (e) => {
-            isDraggingDivider = true;
-            e.preventDefault();
-          });
-          window.addEventListener('mouseup', () => { isDraggingDivider = false; });
-          window.addEventListener('mousemove', (e) => {
-            if (isDraggingDivider) handleDrag(e.clientX);
-          });
-
-          swipeDivider.addEventListener('touchstart', () => {
-            isDraggingDivider = true;
-          }, { passive: true });
-          window.addEventListener('touchend', () => { isDraggingDivider = false; });
-          window.addEventListener('touchmove', (e) => {
-            if (isDraggingDivider && e.touches && e.touches[0]) {
-              handleDrag(e.touches[0].clientX);
-            }
-          }, { passive: true });
-        }
-
-        // Recenter AOI Button
-        const recenterBtn = document.getElementById('recenter-btn');
-        if (recenterBtn) {
-          recenterBtn.addEventListener('click', recenterAOI);
-        }
-
-        // City Selector Dropdown
-        const citySelect = document.getElementById('city-select');
-        if (citySelect) {
-          citySelect.addEventListener('change', (e) => {
-            loadCityData(e.target.value);
-          });
-        }
-
-        // Legend Card Toggle Header
-        const legendCard = document.getElementById('legend-card');
-        const legendHeader = document.getElementById('legend-header');
-        if (legendCard) {
-          if (window.innerWidth < 768) {
-            legendCard.classList.add('collapsed');
-          } else {
-            legendCard.classList.remove('collapsed');
-          }
-          if (legendHeader) {
-            legendHeader.addEventListener('click', () => {
-              legendCard.classList.toggle('collapsed');
-            });
-          }
-        }
-
-        // Urban Analytics Dashboard Bottom Sheet Toggle
-        const dashToggle = document.getElementById('dashToggle');
-        const dashboard = document.getElementById('dashboard') || document.getElementById('sidebar');
-        const closeDashBtn = document.getElementById('close-dashboard-btn') || document.getElementById('close-sidebar-btn');
-        const sheetHandleBar = document.getElementById('sheet-handle-bar');
-        const mapWrapper = document.getElementById('map-wrapper');
-
-        if (dashToggle) {
-          dashToggle.addEventListener('click', toggleDashboard);
-        }
-
-        if (closeDashBtn) {
-          closeDashBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            closeDashboard();
-          });
-        }
-
-        // Pointer Drag & Swipe Down Handling (Mobile Only)
-        const sidebarHeader = document.querySelector('.sidebar-header');
-        const sidebarContent = document.querySelector('.sidebar-content');
-        let isDraggingSheet = false;
-        let startY = 0;
-        let lastY = 0;
-        let lastTimestamp = 0;
-        let currentVelocity = 0; // px/ms
-        let activePointerId = null;
-        let dragTarget = null;
-
-        function onPointerDown(e) {
-          if (window.innerWidth >= 768) return;
-          if (!dashboard || !dashboard.classList.contains('open')) return;
-          // Ignore clicks on close button inside header
-          if (e.target.closest('#close-dashboard-btn, .sidebar-close-btn')) return;
-
-          // If starting from content, only allow drag if content is scrolled to top (scrollTop <= 0)
-          if (e.currentTarget === sidebarContent && sidebarContent.scrollTop > 0) {
-            return;
-          }
-
-          isDraggingSheet = true;
-          activePointerId = e.pointerId;
-          dragTarget = e.currentTarget;
-          startY = e.clientY;
-          lastY = e.clientY;
-          lastTimestamp = performance.now();
-          currentVelocity = 0;
-
-          dashboard.style.transition = 'none';
-
-          try {
-            e.currentTarget.setPointerCapture(e.pointerId);
-          } catch (err) {}
-        }
-
-        function onPointerMove(e) {
-          if (!isDraggingSheet || e.pointerId !== activePointerId) return;
-
-          const dy = e.clientY - startY;
-
-          // If dragging from content area, allow drag down only if dy > 0 and content is at top
-          if (dragTarget === sidebarContent) {
-            if (sidebarContent.scrollTop > 0) {
-              isDraggingSheet = false;
-              dashboard.style.transform = '';
-              return;
-            }
-          }
-
-          const clampedDy = Math.max(0, dy);
-          const now = performance.now();
-          const dt = now - lastTimestamp;
-          if (dt > 10) {
-            currentVelocity = (e.clientY - lastY) / dt;
-            lastY = e.clientY;
-            lastTimestamp = now;
-          }
-
-          dashboard.style.transform = `translateY(${clampedDy}px)`;
-        }
-
-        function onPointerEnd(e) {
-          if (!isDraggingSheet || e.pointerId !== activePointerId) return;
-          isDraggingSheet = false;
-
-          try {
-            if (dragTarget) {
-              dragTarget.releasePointerCapture(e.pointerId);
-            }
-          } catch (err) {}
-
-          activePointerId = null;
-          dragTarget = null;
-
-          const dy = Math.max(0, e.clientY - startY);
-          const sheetHeight = dashboard.offsetHeight || (window.innerHeight * 0.7);
-          const threshold = sheetHeight * 0.25;
-          const isFlick = currentVelocity > 0.5;
-
-          if (dy > threshold || isFlick) {
-            // Animate closed
-            dashboard.style.transition = 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
-            dashboard.style.transform = 'translateY(100%)';
-            setTimeout(() => {
-              closeDashboard();
-              dashboard.style.transform = '';
-              dashboard.style.transition = '';
-            }, 250);
-          } else {
-            // Snap back to open
-            dashboard.style.transition = 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
-            dashboard.style.transform = 'translateY(0)';
-            setTimeout(() => {
-              dashboard.style.transform = '';
-              dashboard.style.transition = '';
-            }, 250);
-          }
-        }
-
-        // Attach pointer listeners to handle bar and header
-        [sheetHandleBar, sidebarHeader].forEach(el => {
-          if (el) {
-            el.addEventListener('pointerdown', onPointerDown);
-            el.addEventListener('pointermove', onPointerMove);
-            el.addEventListener('pointerup', onPointerEnd);
-            el.addEventListener('pointercancel', onPointerEnd);
-          }
-        });
-
-        // Content area: start drag only when scrollTop === 0
-        if (sidebarContent) {
-          sidebarContent.addEventListener('pointerdown', onPointerDown);
-          sidebarContent.addEventListener('pointermove', onPointerMove);
-          sidebarContent.addEventListener('pointerup', onPointerEnd);
-          sidebarContent.addEventListener('pointercancel', onPointerEnd);
-        }
-
-        // Tapping map area closes dashboard on mobile
-        if (mapWrapper) {
-          mapWrapper.addEventListener('click', (e) => {
-            if (window.innerWidth < 768 && dashboard && dashboard.classList.contains('open')) {
-              if (!e.target.closest('#dashToggle') && !e.target.closest('#dashboard')) {
-                closeDashboard();
-              }
-            }
-          });
-        }
-
-        // Escape key handling: prioritizes Focus Mode exit -> Dashboard close -> Compare Mode exit
-        window.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' || e.key === 'Esc') {
-            if (isFocusModeActive) {
-              exitFocusMode();
-              return;
-            }
-            if (dashboard && dashboard.classList.contains('open')) {
-              closeDashboard();
-              return;
-            }
-            if (isCompareModeActive) {
-              exitCompareMode();
-              return;
-            }
-          }
-        });
-
-        // Responsive viewport adaptation for map and charts
-        function handleViewportResize() {
-          const isDesktop = window.innerWidth >= 768;
-          if (isDesktop) {
-            closeDashboard();
-            if (legendCard && !isFocusModeActive) legendCard.classList.remove('collapsed');
-          }
-          if (map) {
-            try { map.resize(); } catch (e) {}
-          }
-          if (isCompareModeActive) {
-            if (mapBefore) { try { mapBefore.resize(); } catch (e) {} }
-            if (mapAfter) { try { mapAfter.resize(); } catch (e) {} }
-          }
-          if (timeSeriesChart) {
-            try { timeSeriesChart.resize(); } catch (e) {}
-          }
-          if (ringDensityChart) {
-            try { ringDensityChart.resize(); } catch (e) {}
-          }
-        }
-
-        window.addEventListener('resize', handleViewportResize);
-        window.addEventListener('orientationchange', () => {
-          setTimeout(handleViewportResize, 200);
-        });
-        if (window.visualViewport) {
-          window.visualViewport.addEventListener('resize', handleViewportResize);
-        }
-
-      } catch (err) {
-        showError("Init Controls", err);
-      }
-    }
-
-    // Initialize application immediately
-    initControls();
-    initMap();
-  </script>
+            </div>
+
+          </div>
+        </aside>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 2: KEY FINDINGS (Phase 3 Content View)
+           ==================================================================== -->
+      <section id="view-findings" class="view-container" tabindex="0" role="tabpanel" aria-label="Key Findings">
+        <div class="page-container">
+          <header class="page-header">
+            <h1 class="page-title">Key Findings</h1>
+            <p class="page-lead">Rigorous multi-year urban growth findings synthesized from Sentinel-2 satellite observations and stratified ground-truth validation.</p>
+          </header>
+          <div id="findings-content-container" style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="chart-box">
+              <h2 style="font-size: var(--text-lg); margin-bottom: 8px;">Urban Footprint & Expansion</h2>
+              <p style="color: var(--color-text-secondary); line-height: 1.6;">Content will be dynamically rendered here from stats.json and content definitions in Phase 3.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 3: HOW IT'S MADE (Phase 3 Content View)
+           ==================================================================== -->
+      <section id="view-how" class="view-container" tabindex="0" role="tabpanel" aria-label="How It's Made">
+        <div class="page-container">
+          <header class="page-header">
+            <h1 class="page-title">How It's Made</h1>
+            <p class="page-lead">From raw Copernicus Sentinel-2 pixels to validated metropolitan sprawl metrics in six verifiable engineering stages.</p>
+          </header>
+          <!-- Visual Architecture & Methodology Diagram -->
+          <div id="how-diagram-root"></div>
+
+          <div id="how-content-container" style="display: flex; flex-direction: column; gap: 20px;"></div>
+        </div>
+      </section>
+
+
+      <!-- ====================================================================
+           VIEW 5: GLOSSARY (Phase 2 Component)
+           ==================================================================== -->
+      <section id="view-glossary" class="view-container" tabindex="0" role="tabpanel" aria-label="Glossary of Terms">
+        <div class="page-container">
+          <header class="page-header">
+            <h1 class="page-title">Glossary of Geospatial Terms</h1>
+            <p class="page-lead">Plain-English definitions for satellite remote sensing, machine learning, and spatial sprawl metrics.</p>
+            <div style="margin-top: 16px; max-width: 480px;">
+              <input id="glossary-search-input" type="search" placeholder="Search terms (e.g. built-up, NDVI, entropy)..." class="city-select" style="width: 100%; border-radius: var(--radius-md); padding: 10px 14px; background: var(--color-bg-surface); color: var(--color-text-main); border: 1px solid var(--color-border);" aria-label="Search glossary terms">
+            </div>
+          </header>
+          <div id="glossary-empty-msg" style="display: none; padding: 24px; text-align: center; color: var(--color-text-muted);">
+            No matching terms found. Try a different search keyword.
+          </div>
+          <div id="glossary-terms-container" class="glossary-grid">
+            <!-- Dynamically populated from web/data/glossary.json -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Mobile Bottom Tab Bar (390px Viewports) -->
+    <nav class="bottom-tab-bar" role="tablist" aria-label="Mobile Navigation">
+      <button class="bottom-tab-item active" data-nav-target="explore" role="tab" aria-selected="true" aria-label="Explore Tab">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        <span>Explore</span>
+      </button>
+      <button class="bottom-tab-item" data-nav-target="findings" role="tab" aria-selected="false" aria-label="Findings Tab">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M13 2v7h7"/></svg>
+        <span>Findings</span>
+      </button>
+      <button class="bottom-tab-item" data-nav-target="how" role="tab" aria-selected="false" aria-label="How It's Made Tab">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        <span>Process</span>
+      </button>
+
+      <button class="bottom-tab-item" data-nav-target="glossary" role="tab" aria-selected="false" aria-label="Glossary Tab">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        <span>Glossary</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- Application Entrypoint -->
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,60 @@
+{
+  "title": "Can I Trust This? Verification & Limitations",
+  "lead": "Every scientific assumption, validation protocol, error adjustment, and known constraint transparently disclosed.",
+  "why_a_range": {
+    "title": "Why a range, not one number?",
+    "sentence_1": "Satellite imaging is subject to atmospheric variations, soil moisture shifts, and model classification uncertainty across different seasons.",
+    "sentence_2": "Different filtering methods (raw, smoothed, and error-adjusted) yield slightly different estimates of expansion rather than a single absolute truth.",
+    "sentence_3": "Presenting the full spread between methods ensures transparency and prevents giving a false impression of decimal-point certainty."
+  },
+  "validation_summary": {
+    "what_was_checked": "An independent stratified random sample of 300 ground points across the entire 45x45 km metropolitan extent, auditing mapped gain, persistent built, persistent non-built, and mapped loss.",
+    "how_many_points": "297 points evaluated across 4 strata (3 points excluded due to unresolvable ambiguity on historical imagery).",
+    "what_was_found": "Net expansion is statistically distinguishable from zero post-recheck (+81.7 ± 51.6 km²). Crucially, 45 of 50 mapped-loss points were never built-up: the 2020 map falsely marked about 52 km² of bare ground as buildings. Only about 4 in 10 newly mapped built-up areas were real additions; the rest were dry fallow fields.",
+    "what_is_not_covered": "Pune has not been independently validated with ground-truth audit points; its figures are modelled estimates only. In addition, the 95% confidence intervals account for sampling uncertainty only, and do not reflect subjective human labelling disagreements."
+  },
+  "claims": [
+    {
+      "claim": "Ahmedabad 2020–2024 Net Built-up Expansion",
+      "status": "Validated",
+      "status_type": "validated",
+      "evidence": "Audited via Olofsson et al. (2014) stratified protocol across 297 points. Error-adjusted net expansion is +81.7 ± 51.6 km² (95% CI: 30.1 to 133.2 km²), statistically distinguishable from zero.",
+      "caveat": "Results depend on historical image recheck. Sampling error interval does not include ~9% labelling inconsistency between passes."
+    },
+    {
+      "claim": "Model Calibration Against International Standards",
+      "status": "Cross-checked",
+      "status_type": "cross-checked",
+      "evidence": "Calibrated against the European Space Agency (ESA) WorldCover 2021 global 10m map. UrbanPulse TLS 2021 built-up footprint (413.6 km²) aligns within +5.0% of WorldCover (393.7 km²).",
+      "caveat": "WorldCover is an independent modelled product with its own margins of error, used as a macroscopic anchor rather than ground-truth census."
+    },
+    {
+      "claim": "Pune Metropolitan Growth Trends",
+      "status": "Not validated",
+      "status_type": "not-validated",
+      "evidence": "Pune metrics are generated via the calibrated Random Forest pipeline and satisfy all 5 automated quality gates.",
+      "caveat": "Pune has not undergone human-audited stratified ground validation. Trends reflect machine classifications only and should be treated as unvalidated estimates."
+    },
+    {
+      "claim": "2022 Observation Season Measurements",
+      "status": "Partial season",
+      "status_type": "partial-season",
+      "evidence": "Observation uses 20 lowest-cloud scenes available during the winter cycle.",
+      "caveat": "2022 covers October–December 2021 only (no January–February 2022 scenes were cloud-free). Seasonal crop moisture differences may affect classification boundaries."
+    },
+    {
+      "claim": "Reported Confidence Intervals Scope",
+      "status": "Validated",
+      "status_type": "validated",
+      "evidence": "Mathematically calculated at 95% confidence using standard error propagation formulas for stratified random sampling (Olofsson 2014).",
+      "caveat": "Intervals reflect random sampling uncertainty only. Systematic human labelling disagreements (~9% between labelling passes) are not captured by the interval."
+    },
+    {
+      "claim": "Observation Window Uniformity",
+      "status": "Cross-checked",
+      "status_type": "cross-checked",
+      "evidence": "Composites prioritize the clearest dry-season winter scenes to minimize cloud and shadow interference.",
+      "caveat": "Ahmedabad's 2021, 2023, and 2024 composites use the 20 lowest-cloud scenes between October and March (11 of 20 in 2024 were Oct/Mar). Pune uses November–February only. Ahmedabad's 2020 composite was built earlier with a strict Dec 1–Feb 15 window; current code does not reproduce its exact scene list."
+    }
+  ]
+}

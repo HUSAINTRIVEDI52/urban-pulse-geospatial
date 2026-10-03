@@ -58,5 +58,7 @@ Thumbs.db
 .coverage
 htmlcov/
 data/**/control_rebuild/
-data/**/test_b_strict_uncapped/
+node_modules/
 
+data/**/test_b_strict_uncapped/
+scratch/
