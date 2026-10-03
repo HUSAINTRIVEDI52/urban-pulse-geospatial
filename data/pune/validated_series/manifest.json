@@ -1,0 +1,49 @@
+{
+  "city": "pune",
+  "pipeline": "TLS-normalised 8-band features + pooled RF (or single-year fallback) + 3x3 majority filter (no temporal cleanup)",
+  "generated_from": "get_tls_normalized_classified_raster",
+  "files": {
+    "2018": {
+      "filename": "pune_2018_classified.tif",
+      "sha256": "d0b64ac824118429e5f71070f3396441021163f4a4e5510c136062ada610593e",
+      "builtup_pixels": 113920,
+      "builtup_km2": 410.11
+    },
+    "2019": {
+      "filename": "pune_2019_classified.tif",
+      "sha256": "1d36dee965d368aefc3a334022a980ba745bab118a6abce4967bda0d475fdd55",
+      "builtup_pixels": 90560,
+      "builtup_km2": 326.02
+    },
+    "2020": {
+      "filename": "pune_2020_classified.tif",
+      "sha256": "174e7b48499211658359fa82b2eee2ebcf5e2d730e1d838f36925cc782c237a4",
+      "builtup_pixels": 113090,
+      "builtup_km2": 407.12
+    },
+    "2021": {
+      "filename": "pune_2021_classified.tif",
+      "sha256": "a545aa2cfddb4f8e74f34c2e511f4ed199c398891055a91cc1857b457b9b84b4",
+      "builtup_pixels": 107374,
+      "builtup_km2": 386.55
+    },
+    "2022": {
+      "filename": "pune_2022_classified.tif",
+      "sha256": "130aa74007516d5e44a1ac819ec33e52edc2d5e055e79a2c456f1fd34634d181",
+      "builtup_pixels": 109186,
+      "builtup_km2": 393.07
+    },
+    "2023": {
+      "filename": "pune_2023_classified.tif",
+      "sha256": "8081345053efd703c1e77768062abac3ff235b90022fa7be9ef022653ae7cfe3",
+      "builtup_pixels": 122263,
+      "builtup_km2": 440.15
+    },
+    "2024": {
+      "filename": "pune_2024_classified.tif",
+      "sha256": "6239c414e53afac409fc0579f24c62a52e82a20e071cf82a3eae5fd278dfb6d1",
+      "builtup_pixels": 130500,
+      "builtup_km2": 469.8
+    }
+  }
+}

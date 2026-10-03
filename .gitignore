@@ -31,8 +31,13 @@ infra/k8s/**/secret.yaml
 *.tar.gz
 
 # Data folder & large geospatial raster/vector outputs
+*.tif
+*.tiff
+**/*.tif
+**/*.tiff
 data/*.tif
 data/*.tiff
+data/**/*.tif
 data/*.nc
 data/*.parquet
 data/*.geojson

@@ -1,0 +1,49 @@
+{
+  "city": "ahmedabad",
+  "pipeline": "TLS-normalised 8-band features + pooled RF (or single-year fallback) + 3x3 majority filter (no temporal cleanup)",
+  "generated_from": "get_tls_normalized_classified_raster",
+  "files": {
+    "2018": {
+      "filename": "ahmedabad_2018_classified.tif",
+      "sha256": "e3d5984746ee70778777b21d2ed1cf5d9e9ce8058b112b0c2b2202b836f34e2a",
+      "builtup_pixels": 116470,
+      "builtup_km2": 419.29
+    },
+    "2019": {
+      "filename": "ahmedabad_2019_classified.tif",
+      "sha256": "b95c8f71ca0bfe6d3a93c39029ae91ad4d7011795b818a82c10ae451332f9a63",
+      "builtup_pixels": 88995,
+      "builtup_km2": 320.38
+    },
+    "2020": {
+      "filename": "ahmedabad_2020_classified.tif",
+      "sha256": "a70f5c9e42c6adfa27f9bc0cfc22cbbfd7860aa3874958a560612db39b3670b8",
+      "builtup_pixels": 115546,
+      "builtup_km2": 415.97
+    },
+    "2021": {
+      "filename": "ahmedabad_2021_classified.tif",
+      "sha256": "3255385cd3887d20893645fcbecf0001479647c887d298883a6fde7ad428cde3",
+      "builtup_pixels": 114891,
+      "builtup_km2": 413.61
+    },
+    "2022": {
+      "filename": "ahmedabad_2022_classified.tif",
+      "sha256": "317e7348f2fcb34b366afb76793be2f24298d1b59988bdc3a6882bd6351597d2",
+      "builtup_pixels": 118595,
+      "builtup_km2": 426.94
+    },
+    "2023": {
+      "filename": "ahmedabad_2023_classified.tif",
+      "sha256": "567374bbfd4e39127135f750a02bb17645b611b8f06d40a1aa85e9dd675c5de5",
+      "builtup_pixels": 125447,
+      "builtup_km2": 451.61
+    },
+    "2024": {
+      "filename": "ahmedabad_2024_classified.tif",
+      "sha256": "2413bc684447619f929898cbf971250218d7d99daef9a2c7836f56a48a736f19",
+      "builtup_pixels": 131910,
+      "builtup_km2": 474.88
+    }
+  }
+}
