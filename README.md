@@ -80,10 +80,10 @@ To rigorously test temporal generalization and prevent data leakage, spatial cla
 
 | City | Held-Out Year | Test Points ($N$) | Raw Built-up F1 | Raw Adjusted Area (95% CI) | TLS Norm Built-up F1 | Norm Adjusted Area (95% CI) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Ahmedabad** | 2018 | 400 | 0.7079 | 393.6 ± 64.9 km² | 0.7543 | 401.3 ± 61.2 km² |
-| **Ahmedabad** | 2021 | 400 | 0.7953 | 414.9 ± 65.3 km² | 0.7791 | 375.1 ± 56.0 km² |
-| **Ahmedabad** | 2024 | 400 | 0.7513 | 415.4 ± 67.8 km² | 0.7213 | 407.4 ± 71.4 km² |
-| **Pune** | 2018 | 414 | 0.3191 | 177.4 ± 61.0 km² | 0.3226 | 199.7 ± 65.0 km² |
+| **Ahmedabad** | 2018 *(outside window)* | 400 | 0.7079 | 393.6 ± 64.9 km² | 0.7543 | 403.8 ± 61.5 km² |
+| **Ahmedabad** | 2021 | 400 | 0.7953 | 414.9 ± 65.3 km² | 0.7791 | 378.3 ± 55.5 km² |
+| **Ahmedabad** | 2024 | 400 | 0.7513 | 415.4 ± 67.8 km² | 0.7213 | 407.3 ± 69.0 km² |
+| **Pune** | 2018 *(outside window)* | 414 | 0.3191 | 177.4 ± 61.0 km² | 0.3226 | 199.7 ± 65.0 km² |
 | **Pune** | 2021 | 414 | 0.6173 | 339.6 ± 77.4 km² | 0.6582 | 353.1 ± 76.0 km² |
 | **Pune** | 2024 | 414 | 0.5591 | 291.3 ± 72.9 km² | 0.5800 | 306.6 ± 74.6 km² |
 

@@ -263,15 +263,43 @@ def test_card_values_equal_series_values(city_stats):
 
 def test_validation_mapped_area_consistency(city_stats):
     """
-    Asserts that the validation table mapped areas match the series mapped areas.
+    Asserts that each validation row's mapped area matches the series value
+    for that fold year and method (Raw vs TLS Normalised).
     """
     city, data = city_stats
     val_table = data.get("validation_loyo", {}).get("table", [])
-    assert len(val_table) >= 4, f"Expected LOYO validation table rows for {city}"
+    assert len(val_table) >= 6, f"Expected 6 LOYO validation table rows for {city}"
+
+    # Expected series mapped areas
+    expected_mapped = {
+        "ahmedabad": {
+            (2018, "Raw (Before)"): 428.67,
+            (2018, "TLS Normalized (After)"): 415.61,
+            (2021, "Raw (Before)"): 413.61,
+            (2021, "TLS Normalized (After)"): 407.74,
+            (2024, "Raw (Before)"): 474.02,
+            (2024, "TLS Normalized (After)"): 466.19,
+        },
+        "pune": {
+            (2018, "Raw (Before)"): 410.11,
+            (2018, "TLS Normalized (After)"): 398.45,
+            (2021, "Raw (Before)"): 386.55,
+            (2021, "TLS Normalized (After)"): 377.92,
+            (2024, "Raw (Before)"): 406.65,
+            (2024, "TLS Normalized (After)"): 461.92,
+        },
+    }
 
     for row in val_table:
+        yr = row["year"]
+        stage = row["stage"]
         mapped_area = row["mapped_area_km2"]
-        assert mapped_area > 0, f"Invalid mapped area for {row['year']} in {city}"
+        exp_mapped = expected_mapped[city].get((yr, stage))
+        assert exp_mapped is not None, f"Unexpected fold ({yr}, {stage}) for {city}"
+        assert abs(mapped_area - exp_mapped) < 0.05, (
+            f"Validation mapped area ({mapped_area} km²) != expected series ({exp_mapped} km²) "
+            f"for {city} {yr} {stage}"
+        )
         adjusted_area = row["adjusted_area_km2"]
         ci_95 = row["ci_95_km2"]
         assert adjusted_area > 0 and ci_95 > 0

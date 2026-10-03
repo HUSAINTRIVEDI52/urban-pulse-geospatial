@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UrbanPulse Blind Change Validation Labeller - Ahmedabad (2020 -> 2024)</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --built-btn: #10b981;
+      --notbuilt-btn: #ef4444;
+      --unclear-btn: #f59e0b;
+      --highlight-box: #facc15;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    header { background: #0b1120; border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .header-title { font-size: 1.15rem; font-weight: 700; color: var(--accent); }
+    .progress-bar-container { width: 280px; background: var(--border); height: 10px; border-radius: 5px; overflow: hidden; margin-top: 4px; }
+    .progress-bar { background: var(--built-btn); height: 100%; width: 0%; transition: width 0.2s ease; }
+    .stats-badge { font-size: 0.85rem; color: var(--text-muted); }
+
+    main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 18px 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
+    
+    .nav-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .point-id-badge { font-size: 1.3rem; font-weight: 800; color: #fff; background: var(--card-bg); padding: 6px 16px; border-radius: 8px; border: 1px solid var(--border); }
+    .btn { background: var(--card-bg); color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease; text-decoration: none; }
+    .btn:hover { background: #334155; border-color: var(--accent); }
+    .btn-accent { background: #0284c7; color: white; border: none; }
+    .btn-accent:hover { background: #0369a1; }
+    .btn-success { background: #059669; color: white; border: none; }
+    .btn-success:hover { background: #047857; }
+
+    .chips-container { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; margin-bottom: 18px; }
+    .chip-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; align-items: center; }
+    .chip-header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-weight: 700; font-size: 1.05rem; }
+    .chip-img-wrapper { width: 512px; height: 512px; max-width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 8px; overflow: hidden; border: 2px solid var(--border); position: relative; }
+    .chip-img-wrapper img { width: 100%; height: 100%; object-fit: contain; image-rendering: auto; }
+    
+    .button-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; margin-top: 14px; }
+    .choice-btn { padding: 12px 8px; border-radius: 8px; font-size: 0.95rem; font-weight: 700; border: 2px solid transparent; cursor: pointer; background: #0f172a; color: var(--text-muted); transition: all 0.15s ease; text-align: center; }
+    .choice-btn:hover { border-color: var(--text-muted); color: #fff; }
+    
+    .choice-btn.built.active { background: rgba(16, 185, 129, 0.2); border-color: var(--built-btn); color: #34d399; }
+    .choice-btn.notbuilt.active { background: rgba(239, 68, 68, 0.2); border-color: var(--notbuilt-btn); color: #f87171; }
+    .choice-btn.unclear.active { background: rgba(245, 158, 11, 0.2); border-color: var(--unclear-btn); color: #fbbf24; }
+
+    .notes-section { width: 100%; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+    .notes-input { flex: 1; background: #0f172a; border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; outline: none; }
+    .notes-input:focus { border-color: var(--accent); }
+
+    .shortcuts-help { font-size: 0.82rem; color: var(--text-muted); text-align: center; line-height: 1.5; }
+    .kbd { background: #334155; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; border: 1px solid #475569; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="header-title">UrbanPulse Change Validation Labeller &mdash; Ahmedabad</div>
+      <div class="stats-badge" id="answeredStats">Answered: 0 / 0 (0%)</div>
+    </div>
+    <div>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn" onclick="jumpToFirstUnlabelled()">Jump to Unlabelled</button>
+      <button class="btn btn-success" onclick="downloadCSV()">Download CSV</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="nav-bar">
+      <button class="btn" onclick="prevPoint()">&larr; Previous (Left Arrow)</button>
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <span class="point-id-badge" id="pointBadge">Point #1</span>
+        <a id="gmapsLink" class="btn" target="_blank" href="#">Open in Google Maps &nearr;</a>
+      </div>
+      <button class="btn" onclick="nextPoint()">Next (Right Arrow) &rarr;</button>
+    </div>
+
+    <div class="chips-container">
+      <!-- Start Year Card -->
+      <div class="chip-card">
+        <div class="chip-header">
+          <span>Start Year (2020)</span>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">Shortcuts: Q / W / E</span>
+        </div>
+        <div class="chip-img-wrapper">
+          <img id="imgStart" src="" alt="Start Year Chip">
+        </div>
+        <div class="button-group">
+          <button class="choice-btn built" id="btnStartBuilt" onclick="setLabel('start', 'Y')">Built (Q)</button>
+          <button class="choice-btn notbuilt" id="btnStartNotBuilt" onclick="setLabel('start', 'N')">Not Built (W)</button>
+          <button class="choice-btn unclear" id="btnStartUnclear" onclick="setLabel('start', 'unclear')">Unclear (E)</button>
+        </div>
+      </div>
+
+      <!-- End Year Card -->
+      <div class="chip-card">
+        <div class="chip-header">
+          <span>End Year (2024)</span>
+          <span style="font-size: 0.85rem; color: var(--text-muted);">Shortcuts: I / O / P</span>
+        </div>
+        <div class="chip-img-wrapper">
+          <img id="imgEnd" src="" alt="End Year Chip">
+        </div>
+        <div class="button-group">
+          <button class="choice-btn built" id="btnEndBuilt" onclick="setLabel('end', 'Y')">Built (I)</button>
+          <button class="choice-btn notbuilt" id="btnEndNotBuilt" onclick="setLabel('end', 'N')">Not Built (O)</button>
+          <button class="choice-btn unclear" id="btnEndUnclear" onclick="setLabel('end', 'unclear')">Unclear (P)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes-section">
+      <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted);">Notes (S):</span>
+      <input type="text" id="notesInput" class="notes-input" placeholder="Optional notes for this sample point..." onchange="saveNote()">
+    </div>
+
+    <div class="shortcuts-help">
+      <b>Keyboard Shortcuts:</b> 
+      <span class="kbd">&larr;</span> / <span class="kbd">&rarr;</span> = Prev / Next Point &nbsp;|&nbsp;
+      <span class="kbd">Q</span> / <span class="kbd">W</span> / <span class="kbd">E</span> = Start Built / Not Built / Unclear &nbsp;|&nbsp;
+      <span class="kbd">I</span> / <span class="kbd">O</span> / <span class="kbd">P</span> = End Built / Not Built / Unclear &nbsp;|&nbsp;
+      <span class="kbd">S</span> = Focus Notes
+    </div>
+  </main>
+
+  <script>
+    const CITY_NAME = "Ahmedabad";
+    const STORAGE_KEY = `urbanpulse_labels_${CITY_NAME.toLowerCase()}`;
+    const points = [{"id": 1, "lon": 72.6026, "lat": 23.142736}, {"id": 2, "lon": 72.67374, "lat": 22.819868}, {"id": 3, "lon": 72.763729, "lat": 22.998301}, {"id": 4, "lon": 72.728416, "lat": 22.975588}, {"id": 5, "lon": 72.403584, "lat": 23.136332}, {"id": 6, "lon": 72.706283, "lat": 23.176781}, {"id": 7, "lon": 72.746697, "lat": 23.212576}, {"id": 8, "lon": 72.58117, "lat": 22.998325}, {"id": 9, "lon": 72.436791, "lat": 23.145542}, {"id": 10, "lon": 72.740524, "lat": 23.056476}, {"id": 11, "lon": 72.391874, "lat": 23.166469}, {"id": 12, "lon": 72.657315, "lat": 23.162518}, {"id": 13, "lon": 72.794427, "lat": 22.945642}, {"id": 14, "lon": 72.636013, "lat": 22.94011}, {"id": 15, "lon": 72.601982, "lat": 23.177393}, {"id": 16, "lon": 72.384762, "lat": 23.170684}, {"id": 17, "lon": 72.464432, "lat": 22.920669}, {"id": 18, "lon": 72.672015, "lat": 22.989395}, {"id": 19, "lon": 72.524533, "lat": 23.055948}, {"id": 20, "lon": 72.79778, "lat": 23.02749}, {"id": 21, "lon": 72.648606, "lat": 23.158055}, {"id": 22, "lon": 72.666404, "lat": 23.043482}, {"id": 23, "lon": 72.73258, "lat": 23.215623}, {"id": 24, "lon": 72.382493, "lat": 23.076407}, {"id": 25, "lon": 72.511435, "lat": 23.004286}, {"id": 26, "lon": 72.707158, "lat": 22.95253}, {"id": 27, "lon": 72.538272, "lat": 22.94404}, {"id": 28, "lon": 72.363937, "lat": 22.886535}, {"id": 29, "lon": 72.381708, "lat": 23.086684}, {"id": 30, "lon": 72.389415, "lat": 22.929744}, {"id": 31, "lon": 72.779365, "lat": 23.008272}, {"id": 32, "lon": 72.384138, "lat": 23.14251}, {"id": 33, "lon": 72.588757, "lat": 22.93344}, {"id": 34, "lon": 72.702476, "lat": 23.0218}, {"id": 35, "lon": 72.720983, "lat": 23.139076}, {"id": 36, "lon": 72.626086, "lat": 23.205925}, {"id": 37, "lon": 72.457855, "lat": 22.990977}, {"id": 38, "lon": 72.572024, "lat": 22.986269}, {"id": 39, "lon": 72.416193, "lat": 22.905268}, {"id": 40, "lon": 72.60089, "lat": 22.908707}, {"id": 41, "lon": 72.617058, "lat": 23.219331}, {"id": 42, "lon": 72.547608, "lat": 22.912768}, {"id": 43, "lon": 72.395689, "lat": 22.937971}, {"id": 44, "lon": 72.42842, "lat": 22.845886}, {"id": 45, "lon": 72.731617, "lat": 22.994052}, {"id": 46, "lon": 72.728039, "lat": 22.963123}, {"id": 47, "lon": 72.698501, "lat": 23.186418}, {"id": 48, "lon": 72.56133, "lat": 22.864771}, {"id": 49, "lon": 72.59562, "lat": 23.008296}, {"id": 50, "lon": 72.744262, "lat": 22.972564}, {"id": 51, "lon": 72.706984, "lat": 22.928151}, {"id": 52, "lon": 72.644885, "lat": 23.035579}, {"id": 53, "lon": 72.374027, "lat": 22.969569}, {"id": 54, "lon": 72.490032, "lat": 23.085736}, {"id": 55, "lon": 72.356495, "lat": 22.908618}, {"id": 56, "lon": 72.36214, "lat": 22.919002}, {"id": 57, "lon": 72.687347, "lat": 23.016705}, {"id": 58, "lon": 72.576765, "lat": 22.950049}, {"id": 59, "lon": 72.779447, "lat": 23.216834}, {"id": 60, "lon": 72.400313, "lat": 22.879552}, {"id": 61, "lon": 72.370056, "lat": 23.083782}, {"id": 62, "lon": 72.52708, "lat": 23.204399}, {"id": 63, "lon": 72.478675, "lat": 22.940937}, {"id": 64, "lon": 72.754327, "lat": 23.071299}, {"id": 65, "lon": 72.785832, "lat": 22.862638}, {"id": 66, "lon": 72.55928, "lat": 22.914031}, {"id": 67, "lon": 72.414696, "lat": 22.891702}, {"id": 68, "lon": 72.383043, "lat": 23.198818}, {"id": 69, "lon": 72.572865, "lat": 22.939156}, {"id": 70, "lon": 72.639776, "lat": 23.127047}, {"id": 71, "lon": 72.602362, "lat": 22.991064}, {"id": 72, "lon": 72.451244, "lat": 23.031493}, {"id": 73, "lon": 72.659923, "lat": 22.91013}, {"id": 74, "lon": 72.777554, "lat": 23.083004}, {"id": 75, "lon": 72.620471, "lat": 23.026005}, {"id": 76, "lon": 72.416982, "lat": 22.925321}, {"id": 77, "lon": 72.529087, "lat": 23.158933}, {"id": 78, "lon": 72.671791, "lat": 23.036519}, {"id": 79, "lon": 72.7646, "lat": 22.980978}, {"id": 80, "lon": 72.583926, "lat": 22.942034}, {"id": 81, "lon": 72.579797, "lat": 22.911095}, {"id": 82, "lon": 72.400689, "lat": 23.16499}, {"id": 83, "lon": 72.72881, "lat": 22.98697}, {"id": 84, "lon": 72.538755, "lat": 23.046421}, {"id": 85, "lon": 72.485072, "lat": 22.911248}, {"id": 86, "lon": 72.614327, "lat": 22.976078}, {"id": 87, "lon": 72.640361, "lat": 22.959134}, {"id": 88, "lon": 72.575224, "lat": 23.134192}, {"id": 89, "lon": 72.506182, "lat": 22.971704}, {"id": 90, "lon": 72.521934, "lat": 23.101948}, {"id": 91, "lon": 72.793612, "lat": 22.887666}, {"id": 92, "lon": 72.655502, "lat": 23.199325}, {"id": 93, "lon": 72.676268, "lat": 23.014376}, {"id": 94, "lon": 72.431557, "lat": 23.082087}, {"id": 95, "lon": 72.352802, "lat": 23.008212}, {"id": 96, "lon": 72.600708, "lat": 22.918996}, {"id": 97, "lon": 72.694059, "lat": 22.897086}, {"id": 98, "lon": 72.521211, "lat": 23.077562}, {"id": 99, "lon": 72.678539, "lat": 22.847024}, {"id": 100, "lon": 72.477903, "lat": 23.045461}, {"id": 101, "lon": 72.70719, "lat": 23.08904}, {"id": 102, "lon": 72.568463, "lat": 22.956422}, {"id": 103, "lon": 72.536222, "lat": 23.121129}, {"id": 104, "lon": 72.646608, "lat": 22.902349}, {"id": 105, "lon": 72.674996, "lat": 23.020316}, {"id": 106, "lon": 72.606229, "lat": 23.136291}, {"id": 107, "lon": 72.503574, "lat": 22.986288}, {"id": 108, "lon": 72.498484, "lat": 22.945042}, {"id": 109, "lon": 72.394092, "lat": 23.082015}, {"id": 110, "lon": 72.494231, "lat": 23.111801}, {"id": 111, "lon": 72.599801, "lat": 22.970442}, {"id": 112, "lon": 72.515925, "lat": 22.950733}, {"id": 113, "lon": 72.432065, "lat": 22.90065}, {"id": 114, "lon": 72.800098, "lat": 22.992851}, {"id": 115, "lon": 72.551128, "lat": 23.203151}, {"id": 116, "lon": 72.574774, "lat": 22.996061}, {"id": 117, "lon": 72.389567, "lat": 22.891292}, {"id": 118, "lon": 72.63348, "lat": 22.850152}, {"id": 119, "lon": 72.678017, "lat": 22.91202}, {"id": 120, "lon": 72.764642, "lat": 22.871551}, {"id": 121, "lon": 72.586272, "lat": 23.138695}, {"id": 122, "lon": 72.78019, "lat": 23.029411}, {"id": 123, "lon": 72.423278, "lat": 23.17836}, {"id": 124, "lon": 72.600546, "lat": 22.928202}, {"id": 125, "lon": 72.749666, "lat": 23.175241}, {"id": 126, "lon": 72.490558, "lat": 22.930834}, {"id": 127, "lon": 72.43127, "lat": 22.849724}, {"id": 128, "lon": 72.663248, "lat": 23.022851}, {"id": 129, "lon": 72.427631, "lat": 23.195763}, {"id": 130, "lon": 72.465823, "lat": 22.940191}, {"id": 131, "lon": 72.596424, "lat": 23.061933}, {"id": 132, "lon": 72.590394, "lat": 23.006049}, {"id": 133, "lon": 72.66277, "lat": 22.948632}, {"id": 134, "lon": 72.607117, "lat": 22.986803}, {"id": 135, "lon": 72.379661, "lat": 23.071485}, {"id": 136, "lon": 72.367922, "lat": 22.922348}, {"id": 137, "lon": 72.578893, "lat": 23.125582}, {"id": 138, "lon": 72.521671, "lat": 22.924282}, {"id": 139, "lon": 72.801074, "lat": 23.184635}, {"id": 140, "lon": 72.636097, "lat": 22.935236}, {"id": 141, "lon": 72.473239, "lat": 23.107133}, {"id": 142, "lon": 72.609548, "lat": 23.048049}, {"id": 143, "lon": 72.351288, "lat": 23.174998}, {"id": 144, "lon": 72.657692, "lat": 23.039561}, {"id": 145, "lon": 72.374185, "lat": 22.900787}, {"id": 146, "lon": 72.5221, "lat": 22.868498}, {"id": 147, "lon": 72.626682, "lat": 23.005514}, {"id": 148, "lon": 72.748699, "lat": 22.987254}, {"id": 149, "lon": 72.525743, "lat": 22.860971}, {"id": 150, "lon": 72.636611, "lat": 23.140541}, {"id": 151, "lon": 72.54636, "lat": 22.949582}, {"id": 152, "lon": 72.645962, "lat": 23.074596}, {"id": 153, "lon": 72.360221, "lat": 23.167566}, {"id": 154, "lon": 72.775163, "lat": 23.192396}, {"id": 155, "lon": 72.371053, "lat": 22.941898}, {"id": 156, "lon": 72.767998, "lat": 23.20042}, {"id": 157, "lon": 72.76202, "lat": 22.888849}, {"id": 158, "lon": 72.574873, "lat": 22.892062}, {"id": 159, "lon": 72.771596, "lat": 23.053667}, {"id": 160, "lon": 72.540105, "lat": 23.165063}, {"id": 161, "lon": 72.494002, "lat": 22.966096}, {"id": 162, "lon": 72.417769, "lat": 22.976246}, {"id": 163, "lon": 72.476844, "lat": 23.039486}, {"id": 164, "lon": 72.501375, "lat": 22.97867}, {"id": 165, "lon": 72.67936, "lat": 23.00467}, {"id": 166, "lon": 72.632475, "lat": 23.008851}, {"id": 167, "lon": 72.485731, "lat": 22.938883}, {"id": 168, "lon": 72.463374, "lat": 22.914694}, {"id": 169, "lon": 72.419226, "lat": 23.084052}, {"id": 170, "lon": 72.595007, "lat": 22.943827}, {"id": 171, "lon": 72.730906, "lat": 23.001626}, {"id": 172, "lon": 72.358526, "lat": 23.1345}, {"id": 173, "lon": 72.775084, "lat": 22.983834}, {"id": 174, "lon": 72.406239, "lat": 22.875316}, {"id": 175, "lon": 72.462927, "lat": 23.001349}, {"id": 176, "lon": 72.776793, "lat": 23.058074}, {"id": 177, "lon": 72.578917, "lat": 22.993416}, {"id": 178, "lon": 72.624711, "lat": 23.184238}, {"id": 179, "lon": 72.5352, "lat": 22.85516}, {"id": 180, "lon": 72.513841, "lat": 23.064447}, {"id": 181, "lon": 72.614619, "lat": 23.158627}, {"id": 182, "lon": 72.535378, "lat": 23.103242}, {"id": 183, "lon": 72.660517, "lat": 22.841343}, {"id": 184, "lon": 72.600549, "lat": 23.093413}, {"id": 185, "lon": 72.51039, "lat": 23.061143}, {"id": 186, "lon": 72.402667, "lat": 22.90938}, {"id": 187, "lon": 72.375338, "lat": 22.810356}, {"id": 188, "lon": 72.458618, "lat": 22.824706}, {"id": 189, "lon": 72.510077, "lat": 22.982599}, {"id": 190, "lon": 72.485491, "lat": 22.888506}, {"id": 191, "lon": 72.590041, "lat": 23.157169}, {"id": 192, "lon": 72.767863, "lat": 22.960439}, {"id": 193, "lon": 72.59399, "lat": 23.198396}, {"id": 194, "lon": 72.759423, "lat": 23.046453}, {"id": 195, "lon": 72.664487, "lat": 22.848443}, {"id": 196, "lon": 72.674271, "lat": 23.062557}, {"id": 197, "lon": 72.36229, "lat": 22.850762}, {"id": 198, "lon": 72.458074, "lat": 23.135054}, {"id": 199, "lon": 72.679157, "lat": 23.050712}, {"id": 200, "lon": 72.746769, "lat": 22.820918}, {"id": 201, "lon": 72.466697, "lat": 23.018742}, {"id": 202, "lon": 72.589088, "lat": 23.112197}, {"id": 203, "lon": 72.642863, "lat": 23.151469}, {"id": 204, "lon": 72.53153, "lat": 22.928769}, {"id": 205, "lon": 72.704973, "lat": 23.012628}, {"id": 206, "lon": 72.687937, "lat": 23.221473}, {"id": 207, "lon": 72.432615, "lat": 22.871411}, {"id": 208, "lon": 72.58321, "lat": 23.015148}, {"id": 209, "lon": 72.489535, "lat": 23.049438}, {"id": 210, "lon": 72.684833, "lat": 23.163467}, {"id": 211, "lon": 72.592782, "lat": 22.904251}, {"id": 212, "lon": 72.370417, "lat": 22.914265}, {"id": 213, "lon": 72.541172, "lat": 23.106582}, {"id": 214, "lon": 72.482469, "lat": 22.893874}, {"id": 215, "lon": 72.399057, "lat": 22.914737}, {"id": 216, "lon": 72.614991, "lat": 23.104465}, {"id": 217, "lon": 72.470651, "lat": 22.932143}, {"id": 218, "lon": 72.515034, "lat": 22.96751}, {"id": 219, "lon": 72.438084, "lat": 23.169936}, {"id": 220, "lon": 72.676416, "lat": 22.971584}, {"id": 221, "lon": 72.516668, "lat": 23.069908}, {"id": 222, "lon": 72.400304, "lat": 22.941297}, {"id": 223, "lon": 72.373637, "lat": 23.110381}, {"id": 224, "lon": 72.468474, "lat": 22.923442}, {"id": 225, "lon": 72.533529, "lat": 22.915258}, {"id": 226, "lon": 72.550363, "lat": 22.857019}, {"id": 227, "lon": 72.520367, "lat": 22.99576}, {"id": 228, "lon": 72.469472, "lat": 22.995496}, {"id": 229, "lon": 72.401083, "lat": 23.083755}, {"id": 230, "lon": 72.734498, "lat": 23.136562}, {"id": 231, "lon": 72.803807, "lat": 23.160837}, {"id": 232, "lon": 72.761039, "lat": 23.195988}, {"id": 233, "lon": 72.378908, "lat": 23.080138}, {"id": 234, "lon": 72.690088, "lat": 22.855317}, {"id": 235, "lon": 72.542017, "lat": 22.866099}, {"id": 236, "lon": 72.784596, "lat": 23.010512}, {"id": 237, "lon": 72.412213, "lat": 23.083396}, {"id": 238, "lon": 72.551055, "lat": 23.110527}, {"id": 239, "lon": 72.353318, "lat": 23.071587}, {"id": 240, "lon": 72.783389, "lat": 22.976908}, {"id": 241, "lon": 72.382263, "lat": 22.906337}, {"id": 242, "lon": 72.696631, "lat": 23.158764}, {"id": 243, "lon": 72.797342, "lat": 23.090323}, {"id": 244, "lon": 72.771308, "lat": 23.000033}, {"id": 245, "lon": 72.70088, "lat": 22.839222}, {"id": 246, "lon": 72.670675, "lat": 23.067379}, {"id": 247, "lon": 72.520789, "lat": 23.164219}, {"id": 248, "lon": 72.667159, "lat": 23.169164}, {"id": 249, "lon": 72.550637, "lat": 23.165769}, {"id": 250, "lon": 72.639741, "lat": 23.195839}, {"id": 251, "lon": 72.43548, "lat": 22.90558}, {"id": 252, "lon": 72.702814, "lat": 23.036431}, {"id": 253, "lon": 72.644638, "lat": 23.016075}, {"id": 254, "lon": 72.424918, "lat": 23.031066}, {"id": 255, "lon": 72.462904, "lat": 23.033847}, {"id": 256, "lon": 72.634966, "lat": 23.033806}, {"id": 257, "lon": 72.499043, "lat": 22.850804}, {"id": 258, "lon": 72.449331, "lat": 23.101874}, {"id": 259, "lon": 72.61579, "lat": 22.859096}, {"id": 260, "lon": 72.562519, "lat": 23.124246}, {"id": 261, "lon": 72.576627, "lat": 23.088714}, {"id": 262, "lon": 72.601448, "lat": 22.943383}, {"id": 263, "lon": 72.681307, "lat": 23.198083}, {"id": 264, "lon": 72.732784, "lat": 22.888976}, {"id": 265, "lon": 72.500547, "lat": 23.086986}, {"id": 266, "lon": 72.466909, "lat": 22.850295}, {"id": 267, "lon": 72.650635, "lat": 22.973912}, {"id": 268, "lon": 72.656681, "lat": 23.030337}, {"id": 269, "lon": 72.661398, "lat": 22.892275}, {"id": 270, "lon": 72.473696, "lat": 22.830904}, {"id": 271, "lon": 72.769413, "lat": 22.97292}, {"id": 272, "lon": 72.543029, "lat": 22.907281}, {"id": 273, "lon": 72.587799, "lat": 23.184218}, {"id": 274, "lon": 72.728006, "lat": 23.069839}, {"id": 275, "lon": 72.376252, "lat": 22.914903}, {"id": 276, "lon": 72.791551, "lat": 23.122204}, {"id": 277, "lon": 72.486142, "lat": 23.011469}, {"id": 278, "lon": 72.552967, "lat": 22.939934}, {"id": 279, "lon": 72.735452, "lat": 22.974605}, {"id": 280, "lon": 72.564283, "lat": 23.156231}, {"id": 281, "lon": 72.367329, "lat": 23.013328}, {"id": 282, "lon": 72.411027, "lat": 22.838563}, {"id": 283, "lon": 72.505679, "lat": 22.871491}, {"id": 284, "lon": 72.797319, "lat": 22.911553}, {"id": 285, "lon": 72.405672, "lat": 22.905096}, {"id": 286, "lon": 72.361969, "lat": 22.957995}, {"id": 287, "lon": 72.578414, "lat": 23.119616}, {"id": 288, "lon": 72.556758, "lat": 22.956784}, {"id": 289, "lon": 72.617124, "lat": 23.149456}, {"id": 290, "lon": 72.535185, "lat": 22.920701}, {"id": 291, "lon": 72.664413, "lat": 22.955157}, {"id": 292, "lon": 72.533465, "lat": 23.175792}, {"id": 293, "lon": 72.629183, "lat": 22.996343}, {"id": 294, "lon": 72.483546, "lat": 22.962139}, {"id": 295, "lon": 72.612409, "lat": 22.818419}, {"id": 296, "lon": 72.373715, "lat": 22.894822}, {"id": 297, "lon": 72.569631, "lat": 23.18448}, {"id": 298, "lon": 72.648893, "lat": 23.006929}, {"id": 299, "lon": 72.444298, "lat": 22.903014}, {"id": 300, "lon": 72.424508, "lat": 22.898361}];
+    let currentIndex = 0;
+    let annotations = {};
+
+    function init() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try { annotations = JSON.parse(stored); } catch(e) {}
+      }
+      renderPoint(0);
+      updateStats();
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(annotations));
+      updateStats();
+    }
+
+    function renderPoint(index) {
+      if (index < 0 || index >= points.length) return;
+      currentIndex = index;
+      const pt = points[currentIndex];
+      const ptId = pt.id;
+
+      document.getElementById('pointBadge').textContent = `Point #${ptId} (${currentIndex + 1} of ${points.length})`;
+      document.getElementById('imgStart').src = `chips/${ptId}_start.jpg`;
+      document.getElementById('imgEnd').src = `chips/${ptId}_end.jpg`;
+
+      const gmapsUrl = `https://www.google.com/maps/@${pt.lat},${pt.lon},17z/data=!3m1!1e3`;
+      document.getElementById('gmapsLink').href = gmapsUrl;
+
+      const cur = annotations[ptId] || { built_start: '', built_end: '', notes: '' };
+      
+      ['btnStartBuilt', 'btnStartNotBuilt', 'btnStartUnclear'].forEach(id => document.getElementById(id).classList.remove('active'));
+      ['btnEndBuilt', 'btnEndNotBuilt', 'btnEndUnclear'].forEach(id => document.getElementById(id).classList.remove('active'));
+
+      if (cur.built_start === 'Y' || cur.built_start === '1') document.getElementById('btnStartBuilt').classList.add('active');
+      if (cur.built_start === 'N' || cur.built_start === '0') document.getElementById('btnStartNotBuilt').classList.add('active');
+      if (cur.built_start === 'unclear') document.getElementById('btnStartUnclear').classList.add('active');
+
+      if (cur.built_end === 'Y' || cur.built_end === '1') document.getElementById('btnEndBuilt').classList.add('active');
+      if (cur.built_end === 'N' || cur.built_end === '0') document.getElementById('btnEndNotBuilt').classList.add('active');
+      if (cur.built_end === 'unclear') document.getElementById('btnEndUnclear').classList.add('active');
+
+      document.getElementById('notesInput').value = cur.notes || '';
+    }
+
+    function setLabel(period, val) {
+      const ptId = points[currentIndex].id;
+      if (!annotations[ptId]) {
+        annotations[ptId] = { built_start: '', built_end: '', notes: '' };
+      }
+      if (period === 'start') {
+        annotations[ptId].built_start = val;
+      } else if (period === 'end') {
+        annotations[ptId].built_end = val;
+      }
+      saveState();
+      renderPoint(currentIndex);
+
+      if (annotations[ptId].built_start && annotations[ptId].built_end && currentIndex < points.length - 1) {
+        setTimeout(() => nextPoint(), 120);
+      }
+    }
+
+    function saveNote() {
+      const ptId = points[currentIndex].id;
+      if (!annotations[ptId]) annotations[ptId] = { built_start: '', built_end: '', notes: '' };
+      annotations[ptId].notes = document.getElementById('notesInput').value.trim();
+      saveState();
+    }
+
+    function prevPoint() {
+      if (currentIndex > 0) renderPoint(currentIndex - 1);
+    }
+
+    function nextPoint() {
+      if (currentIndex < points.length - 1) renderPoint(currentIndex + 1);
+    }
+
+    function jumpToFirstUnlabelled() {
+      for (let i = 0; i < points.length; i++) {
+        const ptId = points[i].id;
+        const ann = annotations[ptId];
+        if (!ann || !ann.built_start || !ann.built_end) {
+          renderPoint(i);
+          return;
+        }
+      }
+      alert('All points are labelled!');
+    }
+
+    function updateStats() {
+      let answered = 0;
+      for (let i = 0; i < points.length; i++) {
+        const ann = annotations[points[i].id];
+        if (ann && ann.built_start && ann.built_end) answered++;
+      }
+      const pct = Math.round((answered / points.length) * 100);
+      document.getElementById('answeredStats').textContent = `Answered: ${answered} / ${points.length} (${pct}%)`;
+      document.getElementById('progressBar').style.width = `${pct}%`;
+    }
+
+    function downloadCSV() {
+      let csvContent = 'id,lon,lat,built_start,built_end,notes\n';
+      for (const pt of points) {
+        const ann = annotations[pt.id] || { built_start: '', built_end: '', notes: '' };
+        const notesEsc = `"${(ann.notes || '').replace(/"/g, '""')}"`;
+        csvContent += `${pt.id},${pt.lon},${pt.lat},${ann.built_start || ''},${ann.built_end || ''},${notesEsc}\n`;
+      }
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `change_sample_labelled_${CITY_NAME.toLowerCase()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement === document.getElementById('notesInput')) {
+        if (e.key === 'Escape' || e.key === 'Enter') {
+          document.getElementById('notesInput').blur();
+        }
+        return;
+      }
+
+      const key = e.key.toUpperCase();
+      if (key === 'ARROWLEFT') prevPoint();
+      else if (key === 'ARROWRIGHT') nextPoint();
+      else if (key === 'Q') setLabel('start', 'Y');
+      else if (key === 'W') setLabel('start', 'N');
+      else if (key === 'E') setLabel('start', 'unclear');
+      else if (key === 'I') setLabel('end', 'Y');
+      else if (key === 'O') setLabel('end', 'N');
+      else if (key === 'P') setLabel('end', 'unclear');
+      else if (key === 'S') {
+        e.preventDefault();
+        document.getElementById('notesInput').focus();
+      }
+    });
+
+    window.onload = init;
+  </script>
+</body>
+</html>

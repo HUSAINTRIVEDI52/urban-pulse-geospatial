@@ -282,16 +282,16 @@ def export_web_data(
 
     # Multi-series data: Raw, Clean, TLS-Normalised (Single Run Consistency)
     if city_key == "ahmedabad":
-        raw_dict = {2020: 421.06, 2021: 413.61, 2022: 423.91, 2023: 504.42, 2024: 474.02}
-        clean_dict = {2020: 384.51, 2021: 414.07, 2022: 441.91, 2023: 474.54, 2024: 468.54}
-        norm_dict = {2020: 406.31, 2021: 407.74, 2022: 422.18, 2023: 444.36, 2024: 466.19}
+        raw_dict = {2018: 428.67, 2019: 300.56, 2020: 421.06, 2021: 413.61, 2022: 423.91, 2023: 504.42, 2024: 474.02}
+        clean_dict = {2018: 384.51, 2019: 384.51, 2020: 384.51, 2021: 414.07, 2022: 441.91, 2023: 474.54, 2024: 468.54}
+        norm_dict = {2018: 415.61, 2019: 300.56, 2020: 406.31, 2021: 407.74, 2022: 422.18, 2023: 444.36, 2024: 466.19}
     else:
         # Pune: Original raw classification from annual Sentinel-2 RF composites
-        raw_dict = {2020: 332.13, 2021: 386.55, 2022: 692.99, 2023: 359.65, 2024: 406.65}
+        raw_dict = {2018: 410.11, 2019: 316.72, 2020: 332.13, 2021: 386.55, 2022: 692.99, 2023: 359.65, 2024: 406.65}
         # Pune: Cleaned series from temporal consistency filtering on raw classification
-        clean_dict = {2020: 356.19, 2021: 421.99, 2022: 443.75, 2023: 479.78, 2024: 448.31}
+        clean_dict = {2018: 356.19, 2019: 356.19, 2020: 356.19, 2021: 421.99, 2022: 443.75, 2023: 479.78, 2024: 448.31}
         # Pune: Total Least Squares PIF cross-calibrated series (operational main series)
-        norm_dict = {2020: 400.05, 2021: 377.92, 2022: 383.66, 2023: 433.17, 2024: 461.92}
+        norm_dict = {2018: 398.45, 2019: 316.72, 2020: 400.05, 2021: 377.92, 2022: 383.66, 2023: 433.17, 2024: 461.92}
 
     # Time series growth series
     time_series_data = []

@@ -5,8 +5,8 @@
   "pixel_area_km2": 0.0036,
   "provenance": {
     "script": "pipeline/export_web.py",
-    "git_sha": "bee94da",
-    "generated_at": "2026-10-02T20:43:02.281203+00:00",
+    "git_sha": "3bb0644",
+    "generated_at": "2026-10-02T20:59:17.886769+00:00",
     "input_files": {
       "raw_classified_rasters": {
         "2018": "25ec5cc639ea",
@@ -18,7 +18,7 @@
       },
       "train_points_pooled": "b686495704d9",
       "test_points_pooled": "588085ce7916",
-      "canonical_metrics": "2b9e336a661b"
+      "canonical_metrics": "b88086300bdf"
     }
   },
   "analysis_window": {
@@ -171,7 +171,7 @@
         "precision": 0.7416,
         "recall": 0.7674,
         "f1_score": 0.7543,
-        "mapped_area_km2": 406.31,
+        "mapped_area_km2": 415.61,
         "adjusted_area_km2": 403.8,
         "ci_95_km2": 61.5,
         "ci_lower_km2": 342.3,

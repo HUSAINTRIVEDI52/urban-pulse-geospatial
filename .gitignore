@@ -40,6 +40,11 @@ data/*.gpkg
 data/raw/
 data/processed/
 data/outputs/
+data/**/chips/
+data/**/cache/
+**/chips/
+**/cache/
+
 
 # OS & testing
 .DS_Store
