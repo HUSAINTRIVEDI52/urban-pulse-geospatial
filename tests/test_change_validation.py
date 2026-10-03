@@ -163,13 +163,13 @@ def test_calculate_proportion_variance_continuity_correction():
     v_mid = calculate_proportion_variance(x=25, n=50)
     assert pytest.approx(v_mid, 1e-5) == (0.5 * 0.5) / 49
 
-    # Edge case: x=0, n=50 (p=0) -> Laplace/Wilson adj: p_adj = 1 / 52 -> var = p_adj*(1-p_adj)/50 > 0
+    # Edge case: x=0, n=50 (p=0) -> Laplace (add-one) smoothing: p_adj = 1 / 52 -> var = p_adj*(1-p_adj)/50 > 0
     v_zero = calculate_proportion_variance(x=0, n=50)
     assert v_zero > 0.0
     p_adj_zero = 1.0 / 52.0
     assert pytest.approx(v_zero, 1e-6) == (p_adj_zero * (1.0 - p_adj_zero)) / 50.0
 
-    # Edge case: x=50, n=50 (p=1) -> Laplace/Wilson adj: p_adj = 51 / 52 -> var > 0
+    # Edge case: x=50, n=50 (p=1) -> Laplace (add-one) smoothing: p_adj = 51 / 52 -> var > 0
     v_one = calculate_proportion_variance(x=50, n=50)
     assert v_one > 0.0
     assert pytest.approx(v_one, 1e-6) == v_zero
@@ -365,4 +365,61 @@ def test_generate_standalone_labeller_html(tmp_path):
 
     # Must NEVER mention stratum
     assert "stratum" not in content.lower()
+
+
+def test_dashboard_change_validation_matches_scorer():
+    """
+    Verifies that the change validation statistics published to web/data/ahmedabad/stats.json
+    and displayed in the dashboard exactly match the authoritative output of score_change_validation().
+    """
+    import json
+    from pipeline.score_change_validation import score_change_validation
+
+    stats_path = Path("web/data/ahmedabad/stats.json")
+    val_csv = Path("data/ahmedabad/validation/change_sample_labelled.csv")
+    if not val_csv.exists():
+        val_csv = Path("data/ahmedabad/validation/change_sample_labelled_ahmedabad.csv")
+
+    assert stats_path.exists(), "web/data/ahmedabad/stats.json must exist"
+    assert val_csv.exists(), "Labelled validation CSV must exist"
+
+    with open(stats_path, "r", encoding="utf-8") as f:
+        stats_json = json.load(f)
+
+    assert "change_validation" in stats_json, "stats.json must contain 'change_validation' key"
+    cv_dash = stats_json["change_validation"]
+    assert cv_dash["status"] == "validated"
+
+    # Run authoritative scorer
+    scorer_res = score_change_validation(val_csv)
+
+    # Verify gross gain, loss, net, and CIs
+    assert pytest.approx(cv_dash["adjusted_gain_km2"], rel=1e-4) == scorer_res["adjusted_gain_km2"]
+    assert pytest.approx(cv_dash["ci95_gain_km2"], rel=1e-4) == scorer_res["ci95_gain_km2"]
+    assert pytest.approx(cv_dash["adjusted_loss_km2"], rel=1e-4) == scorer_res["adjusted_loss_km2"]
+    assert pytest.approx(cv_dash["ci95_loss_km2"], rel=1e-4) == scorer_res["ci95_loss_km2"]
+    assert pytest.approx(cv_dash["adjusted_net_km2"], rel=1e-4) == scorer_res["adjusted_net_km2"]
+    assert pytest.approx(cv_dash["ci95_net_km2"], rel=1e-4) == scorer_res["ci95_net_km2"]
+    assert pytest.approx(cv_dash["mapped_gain_km2"], rel=1e-4) == scorer_res["mapped_gain_km2"]
+    assert pytest.approx(cv_dash["mapped_loss_km2"], rel=1e-4) == scorer_res["mapped_loss_km2"]
+    assert pytest.approx(cv_dash["mapped_net_km2"], rel=1e-4) == scorer_res["mapped_net_km2"]
+    assert cv_dash["sample_points_evaluated"] == scorer_res["total_evaluated_points"]
+    assert cv_dash["excluded_unclear"] == scorer_res["excluded_unclear_count"]
+
+    # Verify data-driven summary sentence
+    is_dist = (scorer_res["ci_lower_net_km2"] > 0) or (scorer_res["ci_upper_net_km2"] < 0)
+    expected_sentence = f"Validated on {scorer_res['total_evaluated_points']} points (Ahmedabad only); net change {'is' if is_dist else 'is not'} distinguishable from zero post-recheck (+{scorer_res['adjusted_net_km2']:.1f} ± {scorer_res['ci95_net_km2']:.1f} km²), but depends on the recheck (pre-recheck: +14.9 ± 83.6 km²; without Stratum C gains: +48.3 ± 23.1 km²)."
+    assert cv_dash["summary_sentence"] == expected_sentence
+    assert "sensitivities" in cv_dash
+    assert cv_dash["sensitivities"]["no_stratum_c_gains"]["net_km2"] == 48.31
+    assert cv_dash["sensitivities"]["pre_recheck"]["net_km2"] == 14.90
+
+    # Verify Pune is marked as not independently validated
+    pune_stats_path = Path("web/data/pune/stats.json")
+    if pune_stats_path.exists():
+        with open(pune_stats_path, "r", encoding="utf-8") as f:
+            pune_stats = json.load(f)
+        assert pune_stats.get("change_validation", {}).get("status") == "not_independently_validated"
+        assert "not independently validated" in pune_stats.get("change_validation", {}).get("summary_sentence", "").lower()
+
 

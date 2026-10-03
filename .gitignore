@@ -57,4 +57,6 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+data/**/control_rebuild/
+data/**/test_b_strict_uncapped/
 

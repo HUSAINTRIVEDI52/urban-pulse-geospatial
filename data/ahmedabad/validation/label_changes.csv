@@ -1,0 +1,7 @@
+id,stratum,built_start_old,built_end_old,built_start_new,built_end_new,change_transition,notes
+81,C,Y,N,N,N,"(Y, N) -> (N, N)",Label changed after Google Earth recheck (reviewer's note not recorded)
+91,C,Y,N,N,N,"(Y, N) -> (N, N)",Label changed after Google Earth recheck (reviewer's note not recorded)
+94,C,Y,N,N,N,"(Y, N) -> (N, N)",Label changed after Google Earth recheck (reviewer's note not recorded)
+123,C,Y,N,Y,Y,"(Y, N) -> (Y, Y)",Label changed after Google Earth recheck (reviewer's note not recorded)
+151,D,N,Y,N,N,"(N, Y) -> (N, N)",Label changed after Google Earth recheck (reviewer's note not recorded)
+226,D,Y,N,N,N,"(Y, N) -> (N, N)",Label changed after Google Earth recheck (reviewer's note not recorded)
