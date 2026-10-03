@@ -30,7 +30,21 @@
 
 ## 📊 Key Results (2020–2024 Analysis Window)
 
-> **Framing Note**: All core analytics are evaluated strictly over the **2020–2024** window. Pre-2020 years (2018–2019) are omitted from primary series due to cloud coverage and early calibration baseline artifacts. The year **2022** is designated **Provisional\*** due to the European Space Agency Sentinel-2 Processing Baseline 04.00 radiometric transition.
+> **Framing Note**: All core analytics are evaluated strictly over the **2020–2024** window. Pre-2020 years (2018–2019) are excluded due to too few in-window cloud-free Sentinel-2 scenes. The year **2022** is designated **Oct-Dec 2021, Collection 1** (query window Oct 1, 2021 – Mar 31, 2022; last acquisition date Dec 23, 2021 for Ahmedabad; query window Nov 1, 2021 – Feb 28, 2022; last acquisition date Dec 25, 2021 for Pune; scale and offset are derived directly from STAC item metadata).
+> 
+> **Real Composite Observation Windows & Scene Counts**:
+> - **Ahmedabad**:
+>   - **2020**: Dec 1, 2019 – Feb 15, 2020 (9 dates, 14 scenes, 0 outside Nov–Feb).
+>   - **2021**: Oct 1, 2020 – Mar 31, 2021 (12 dates [9 in-window], 20-scene cap, 5 scenes outside Nov–Feb on Oct 29, Mar 23, Mar 28).
+>   - **2022**: Oct 1, 2021 – Mar 31, 2022 (query window; last scene Dec 23, 2021; 9 dates [6 in-window], 18 scenes, 6 scenes outside Nov–Feb on Oct 14, Oct 19, Oct 29).
+>   - **2023**: Oct 1, 2022 – Mar 31, 2023 (12 dates [9 in-window], 20-scene cap, 5 scenes outside Nov–Feb on Mar 3, Mar 18, Mar 28).
+>   - **2024**: Oct 1, 2023 – Mar 31, 2024 (11 dates [5 in-window], 20-scene cap, 11 scenes outside Nov–Feb on Oct 4, Oct 29, Mar 7, Mar 12, Mar 17, Mar 22).
+> - **Pune**:
+>   - **2020**: Nov 1, 2019 – Feb 29, 2020 (12 dates, 20-scene cap, 0 outside Nov–Feb).
+>   - **2021**: Nov 1, 2020 – Feb 28, 2021 (12 dates, 20-scene cap, 0 outside Nov–Feb).
+>   - **2022**: Nov 1, 2021 – Feb 28, 2022 (query window; last scene Dec 25, 2021, Nov-Dec 2021, Collection 1; 5 dates, 10 scenes, 0 outside Nov–Feb).
+>   - **2023**: Nov 1, 2022 – Feb 28, 2023 (12 dates, 20-scene cap, 0 outside Nov–Feb).
+>   - **2024**: Nov 1, 2023 – Feb 29, 2024 (12 dates, 20-scene cap, 0 outside Nov–Feb).
 
 ---
 
@@ -47,7 +61,7 @@
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **2020** | 384.51 | 421.06 | 406.31 | [384.5 – 421.1 km²] | — |
 | **2021** | 414.07 | 413.61 | 387.97 | [388.0 – 414.1 km²] | **393.73 km²** |
-| **2022 (Provisional\*)** | 441.91 | 423.91 | 415.53 | [415.5 – 441.9 km²] | — |
+| **2022 (Oct-Dec 2021, Collection 1)** | 441.91 | 423.91 | 415.53 | [415.5 – 441.9 km²] | — |
 | **2023** | 474.54 | 504.42 | 471.18 | [471.2 – 504.4 km²] | — |
 | **2024** | **468.54** | **474.02** | **466.19** | **[466.2 – 474.0 km²]** | — |
 
@@ -66,7 +80,7 @@
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **2020** | 356.19 | 332.13 | 400.05 | [332.1 – 400.1 km²] | — |
 | **2021** | 396.15 | 394.82 | 416.32 | [394.8 – 416.3 km²] | **378.08 km²** |
-| **2022 (Provisional\*)** | 420.40 | 380.99 | 433.80 | [381.0 – 433.8 km²] | — |
+| **2022 (Oct-Dec 2021, Collection 1)** | 420.40 | 380.99 | 433.80 | [381.0 – 433.8 km²] | — |
 | **2023** | 438.40 | 382.26 | 457.21 | [382.3 – 457.2 km²] | — |
 | **2024** | **448.31** | **406.65** | **461.92** | **[406.7 – 461.9 km²]** | — |
 
@@ -86,6 +100,49 @@ To rigorously test temporal generalization and prevent data leakage, spatial cla
 | **Pune** | 2018 *(outside window)* | 414 | 0.3191 | 177.4 ± 61.0 km² | 0.3226 | 199.7 ± 65.0 km² |
 | **Pune** | 2021 | 414 | 0.6173 | 339.6 ± 77.4 km² | 0.6582 | 353.1 ± 76.0 km² |
 | **Pune** | 2024 | 414 | 0.5591 | 291.3 ± 72.9 km² | 0.5800 | 306.6 ± 74.6 km² |
+
+### 🔍 4-Stratum Change Validation (2020–2024) & Area Adjustment
+
+To independently validate multi-temporal land cover transitions and compute rigorous error-adjusted area estimates, a probability sample of $N=300$ verification points across 4 spatial strata was visually audited following Olofsson et al. (2014).
+
+#### Labelling Protocol & History
+- **Interpreter**: Single independent human interpreter conducting blind verification.
+- **Imagery Sources**: Paired Sentinel-2 10m dry-season RGB surface reflectance chips (2020 vs 2024) corroborated against high-resolution Google Earth Pro historical satellite imagery.
+- **Ambiguity Rule**: Points exhibiting mixed-pixel ambiguity or low visual contrast were flagged as `unclear` (3 points) and excluded from primary estimation; sensitivity bounds were evaluated treating all unclear points as built vs. non-built.
+- **Labelling History**:
+  1. *First Pass*: Conducted on initial 2024 Sentinel-2 chips.
+  2. *Second Pass*: Conducted with corrected reflectance stretch chips (26 of 291 start labels changed: 12 built to not built, 14 not built to built, establishing the labeller's change rate at ~9%, and 30 end labels changed from not built to built).
+  3. *Third Pass (Google Earth Pro Recheck)*: Rechecked 10 discordant points (apparent losses and gains) using Google Earth Pro historical timeline imagery, updating 6 labels (IDs 81, 91, 94, 123 in Stratum C; IDs 151, 226 in Stratum D). The 6 corrected labels persisted through the second pass, and concordant points were not rechecked. These initial discrepancies were labelling errors in the first pass (bare or ploughed soil read as built-up on 2020 Sentinel-2 chips), corrected using Google Earth historical imagery (not classifier errors).
+
+> **Disclaimer**: *Intervals reflect sampling error only; labelling inconsistency (about 9% between passes) is not included.*
+
+#### Per-Stratum Evaluation & Area Adjustment (Ahmedabad)
+
+| Stratum | Mapped Area (km²) | Evaluated ($N$) | $(0,0)$ Persistent Non-built | $(0,1)$ True Gain | $(1,0)$ True Loss | $(1,1)$ Persistent Built | Unclear | Stratum Accuracy |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Stratum A (Mapped Gain)** | 116.65 | 99 | 40 | 41 | 0 | 18 | 1 | **41.41%** |
+| **Stratum B (Persistent Built)** | 358.23 | 50 | 2 | 1 | 1 | 46 | 0 | **92.00%** |
+| **Stratum C (Persistent Non-built)** | 1635.22 | 98 | 94 | 2 | 0 | 2 | 2 | **95.92%** |
+| **Stratum D (Mapped Loss)** | 57.74 | 50 | 45 | 0 | 0 | 5 | 0 | **0.00%** |
+
+#### Olofsson Adjusted Change & Extent Estimates (95% Confidence Intervals)
+
+| Metric | Mapped (km²) | Area-Adjusted Estimate (km²) | Standard Error (SE) | 95% Confidence Interval |
+| :--- | :---: | :---: | :---: | :---: |
+| **Gross Built-up Gain** | 116.65 | **88.85** | ±25.25 | **[39.36, 138.33] km²** |
+| **Gross Built-up Loss** | 57.74 | **7.16** | ±18.00 | **[0.00, 42.45] km²** |
+| **Net Built-up Change** | +58.91 | **+81.68** | ±26.31 | **[+30.12, +133.24] km²** |
+| **Built-up Footprint (2020)** | 415.97 | **397.09** | ±26.94 | **[344.29, 449.88] km²** |
+| **Built-up Footprint (2024)** | 474.88 | **478.77** | ±35.59 | **[409.02, 548.52] km²** |
+
+#### Sensitivity & Baseline Scenarios
+- **Pre-recheck Baseline**: Net Change = `+14.9 ± 83.6 km²` (dominated by apparent loss variance in Stratum C).
+- **Without Stratum C Gains (IDs 50 & 172 as errors)**: Net Change = `+48.3 ± 23.1 km²`.
+- **Post-recheck Adjusted Net (Primary)**: Net Change = `+81.7 ± 51.6 km²` ($95\%\text{ CI}: [+30.12, +133.24]\text{ km}^2$).
+
+> **Conclusion**: *Validated on 297 points (Ahmedabad only); net change is distinguishable from zero post-recheck (+81.7 ± 51.6 km²), but depends on the recheck (pre-recheck: +14.9 ± 83.6 km²; without Stratum C gains: +48.3 ± 23.1 km²).* (Pune: *not independently validated*).
+
+*Methodology Notes*: Strata were built from annual TLS-normalised classifications (`ahmedabad_2020_classified.tif` and `ahmedabad_2024_classified.tif`) with a 3x3 majority filter (no temporal consistency cleanup rules). Validation mapped areas (415.97 and 474.88 km²) match the dashboard TLS series (415.97 and 474.88 km²), both produced by the 3x3 majority filtered TLS classification pipeline without temporal filtering. Gross loss standard error applies Laplace (add-one) smoothing for zero-count sample proportions. Validated series is the TLS-normalised classification.
 
 ### ⚠️ Negative Result: Cross-Year Radiometric Normalisation
 
