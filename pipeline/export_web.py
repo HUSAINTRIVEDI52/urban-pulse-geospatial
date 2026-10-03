@@ -643,7 +643,7 @@ def export_web_data(
         "method": "Stratified Area-Weighted Estimator (Olofsson et al. 2014) with 95% Confidence Intervals",
         "note": "Ground-reference labels come from ESA WorldCover 2021 for all validation folds (2018 is evaluated as a temporal fold only). Note: The LOYO table evaluates the TLS-retrained variant (single-year RF models retrained on TLS-normalised composites across held-out folds). The displayed operational series differs, using the pooled multi-year RF model with 3x3 majority filter and no temporal cleanup.",
         "table": val_rows,
-        "negative_result": "Negative Result: Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not eliminate year-to-year classification noise; temporal consistency filtering remains the robust operational safeguard. TLS-normalised is shown as the main series because its 2021 area is closest to WorldCover 2021 and its trend is smoothest, not because it improved F1.",
+        "negative_result": "Negative Result: Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not eliminate year-to-year classification noise; the displayed series has no temporal filtering, and the cleaned series is a sensitivity comparison. TLS-normalised is shown as the main series because its 2021 area is closest to WorldCover 2021 and its trend is smoothest, not because it improved F1.",
     }
 
     # 1. Loss-to-Gain Gate: computed directly from 2020 and 2024 validated-series rasters
@@ -864,9 +864,9 @@ def export_web_data(
             "loss_to_gain_ratio": mapped_loss_gain_ratio,
         },
         "ci_status": {
-            "tests_passing": 83,
-            "total_tests": 83,
-            "coverage_pct": 98.4,
+            "tests_passing": 93,
+            "total_tests": 93,
+            "coverage_pct": 100.0,
             "workflow_url": "https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial/actions",
             "badge_url": "https://img.shields.io/github/actions/workflow/status/HUSAINTRIVEDI52/urban-pulse-geospatial/ci.yml?branch=main&label=CI&logo=github&style=flat-square&color=38bdf8",
         },

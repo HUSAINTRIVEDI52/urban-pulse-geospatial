@@ -8,7 +8,7 @@ Thank you for your interest in contributing to **UrbanPulse**! We welcome contri
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/husaintrivedi/UrbanPulse.git
+   git clone https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial.git
    cd UrbanPulse
    ```
 

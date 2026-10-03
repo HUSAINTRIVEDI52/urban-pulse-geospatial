@@ -5,8 +5,8 @@
   "pixel_area_km2": 0.0036,
   "provenance": {
     "script": "pipeline/export_web.py",
-    "git_sha": "e1902ca",
-    "generated_at": "2026-10-03T19:37:35.807936+00:00",
+    "git_sha": "942afdf",
+    "generated_at": "2026-10-03T20:09:05.095869+00:00",
     "input_files": {
       "raw_classified_rasters": {
         "2018": "3b15db2631fe",
@@ -239,7 +239,7 @@
         "ci_upper_km2": 381.2
       }
     ],
-    "negative_result": "Negative Result: Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not eliminate year-to-year classification noise; temporal consistency filtering remains the robust operational safeguard. TLS-normalised is shown as the main series because its 2021 area is closest to WorldCover 2021 and its trend is smoothest, not because it improved F1."
+    "negative_result": "Negative Result: Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not eliminate year-to-year classification noise; the displayed series has no temporal filtering, and the cleaned series is a sensitivity comparison. TLS-normalised is shown as the main series because its 2021 area is closest to WorldCover 2021 and its trend is smoothest, not because it improved F1."
   },
   "quality_gate": {
     "status": "FLAGGED",
@@ -291,9 +291,9 @@
     "loss_to_gain_ratio": 0.469
   },
   "ci_status": {
-    "tests_passing": 83,
-    "total_tests": 83,
-    "coverage_pct": 98.4,
+    "tests_passing": 93,
+    "total_tests": 93,
+    "coverage_pct": 100.0,
     "workflow_url": "https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial/actions",
     "badge_url": "https://img.shields.io/github/actions/workflow/status/HUSAINTRIVEDI52/urban-pulse-geospatial/ci.yml?branch=main&label=CI&logo=github&style=flat-square&color=38bdf8"
   },

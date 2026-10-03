@@ -1,7 +1,7 @@
 # UrbanPulse 🛰️🏙️
 
-[![UrbanPulse CI](https://github.com/husaintrivedi/UrbanPulse/actions/workflows/ci.yml/badge.svg)](https://github.com/husaintrivedi/UrbanPulse/actions/workflows/ci.yml)
-[![UrbanPulse CD](https://github.com/husaintrivedi/UrbanPulse/actions/workflows/cd.yml/badge.svg)](https://github.com/husaintrivedi/UrbanPulse/actions/workflows/cd.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/HUSAINTRIVEDI52/urban-pulse-geospatial/ci.yml?branch=main&label=CI&logo=github&style=flat-square)](https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial/actions/workflows/ci.yml)
+[![CD](https://img.shields.io/github/actions/workflow/status/HUSAINTRIVEDI52/urban-pulse-geospatial/cd.yml?branch=main&label=CD&logo=github&style=flat-square)](https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial/actions/workflows/cd.yml)
 [![Quality Gate: Passing](https://img.shields.io/badge/Quality%20Gate-Passing-brightgreen.svg)](#-data-quality-gate--ci-status)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -13,8 +13,8 @@
 
 ## 🌐 Live Demo & Interactive App
 
-- **Interactive Web Application**: [https://husaintrivedi.github.io/UrbanPulse/](https://husaintrivedi.github.io/UrbanPulse/)
-- **Comprehensive Project Report**: [https://husaintrivedi.github.io/UrbanPulse/report/](https://husaintrivedi.github.io/UrbanPulse/report/)
+- **Interactive Web Application**: [https://HUSAINTRIVEDI52.github.io/urban-pulse-geospatial/](https://HUSAINTRIVEDI52.github.io/urban-pulse-geospatial/)
+- **Comprehensive Project Report**: [https://HUSAINTRIVEDI52.github.io/urban-pulse-geospatial/report/](https://HUSAINTRIVEDI52.github.io/urban-pulse-geospatial/report/)
 - **FastAPI Documentation**: `http://localhost:8000/docs` (local deployment)
 - **Grafana Monitoring**: `http://localhost:3000` (provisioned with Prometheus metrics)
 
@@ -50,39 +50,39 @@
 
 ### 1. Ahmedabad (Gujarat, India) — 45 × 45 km AOI (2,167.83 km²)
 
-- **Headline 2020–2024 Expansion Range**: **+53.0 to +84.0 km²** across processing methods.
-- **2021 Benchmark Anchor**: ESA WorldCover 2021 built-up ground truth = **393.73 km²** (18.19% of AOI) vs. 2021 Cleaned Estimate of **414.07 km²**.
-- **2024 Footprint**: Cleaned built-up area of **468.54 km²** (21.61% of AOI).
-- **Radial Dispersion & Entropy**: Core (0–6 km) built-up share: **22.92%**, Peripheral (>12 km) share: **30.94%**. Shannon spatial entropy: **0.9469**.
+- **Headline 2020–2024 Expansion Range**: **+53.0 to +84.0 km²** across processing methods (TLS: **+58.91 km²** / +14.2%).
+- **2021 Benchmark Anchor**: ESA WorldCover 2021 built-up ground truth = **393.73 km²** (18.19% of AOI) vs. 2021 TLS Normalised Estimate of **413.61 km²**.
+- **2024 Footprint**: Validated TLS built-up area of **474.88 km²** (21.91% of AOI; Cleaned sensitivity: 468.54 km²).
+- **Radial Dispersion & Entropy**: Core (0–6 km) built-up share: **21.9%**, Peripheral (>12 km) share: **32.7%**. Shannon spatial entropy: **0.9501**.
 
 #### Multi-Series Growth & Method Sensitivity Band (Ahmedabad)
 
-| Year | Cleaned Series (km²) | Raw Classified (km²) | TLS Normalised (km²) | Method Sensitivity Spread | WorldCover 2021 Anchor |
+| Year | Cleaned (sensitivity, km²) | Raw Classified (km²) | TLS Normalised (km²) | Method Sensitivity Spread | WorldCover 2021 Anchor |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **2020** | 384.51 | 421.06 | 406.31 | [384.5 – 421.1 km²] | — |
-| **2021** | 414.07 | 413.61 | 387.97 | [388.0 – 414.1 km²] | **393.73 km²** |
-| **2022 (Oct-Dec 2021, Collection 1)** | 441.91 | 423.91 | 415.53 | [415.5 – 441.9 km²] | — |
-| **2023** | 474.54 | 504.42 | 471.18 | [471.2 – 504.4 km²] | — |
-| **2024** | **468.54** | **474.02** | **466.19** | **[466.2 – 474.0 km²]** | — |
+| **2020** | 384.51 | 421.06 | 415.97 | [384.5 – 421.1 km²] | — |
+| **2021** | 414.07 | 413.61 | 413.61 | [413.6 – 414.1 km²] | **393.73 km²** |
+| **2022 (partial season)** | 441.91 | 423.91 | 426.94 | [423.9 – 441.9 km²] | — |
+| **2023** | 474.54 | 504.42 | 451.61 | [451.6 – 504.4 km²] | — |
+| **2024** | **468.54** | **474.02** | **474.88** | **[468.5 – 474.9 km²]** | — |
 
 ---
 
 ### 2. Pune (Maharashtra, India) — 45 × 45 km AOI (2,057.53 km²)
 
-- **Headline 2020–2024 Expansion Range**: **+61.9 to +92.1 km²** across processing methods.
-- **2021 Benchmark Anchor**: ESA WorldCover 2021 built-up ground truth = **378.08 km²** (18.43% of AOI) vs. 2021 Cleaned Estimate of **396.15 km²**.
-- **2024 Footprint**: Cleaned built-up area of **448.31 km²** (21.79% of AOI).
-- **Radial Dispersion & Entropy**: Core (0–6 km) built-up share: **26.63%**, Peripheral (>12 km) share: **36.31%**. Shannon spatial entropy: **0.9377**.
+- **Headline 2020–2024 Expansion Range**: **+62.7 to +92.1 km²** across processing methods (TLS: **+62.68 km²** / +15.4%).
+- **2021 Benchmark Anchor**: ESA WorldCover 2021 built-up ground truth = **378.08 km²** (18.43% of AOI) vs. 2021 TLS Normalised Estimate of **386.55 km²**.
+- **2024 Footprint**: Validated TLS built-up area of **469.80 km²** (22.83% of AOI; Cleaned sensitivity: 448.31 km²).
+- **Radial Dispersion & Entropy**: Core (0–6 km) built-up share: **24.5%**, Peripheral (>12 km) share: **37.0%**. Shannon spatial entropy: **0.9548**.
 
 #### Multi-Series Growth & Method Sensitivity Band (Pune)
 
-| Year | Cleaned Series (km²) | Raw Classified (km²) | TLS Normalised (km²) | Method Sensitivity Spread | WorldCover 2021 Anchor |
+| Year | Cleaned (sensitivity, km²) | Raw Classified (km²) | TLS Normalised (km²) | Method Sensitivity Spread | WorldCover 2021 Anchor |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **2020** | 356.19 | 332.13 | 400.05 | [332.1 – 400.1 km²] | — |
-| **2021** | 396.15 | 394.82 | 416.32 | [394.8 – 416.3 km²] | **378.08 km²** |
-| **2022 (Oct-Dec 2021, Collection 1)** | 420.40 | 380.99 | 433.80 | [381.0 – 433.8 km²] | — |
-| **2023** | 438.40 | 382.26 | 457.21 | [382.3 – 457.2 km²] | — |
-| **2024** | **448.31** | **406.65** | **461.92** | **[406.7 – 461.9 km²]** | — |
+| **2020** | 356.19 | 332.13 | 407.12 | [332.1 – 407.1 km²] | — |
+| **2021** | 421.99 | 386.55 | 386.55 | [386.6 – 422.0 km²] | **378.08 km²** |
+| **2022 (partial season)** | 443.75 | 692.99 | 393.07 | [393.1 – 693.0 km²] | — |
+| **2023** | 479.78 | 359.65 | 440.15 | [359.7 – 479.8 km²] | — |
+| **2024** | **448.31** | **406.65** | **469.80** | **[406.7 – 469.8 km²]** | — |
 
 ---
 
@@ -148,7 +148,7 @@ To independently validate multi-temporal land cover transitions and compute rigo
 
 Cross-year Total Least Squares (TLS) pseudo-invariant feature (PIF) radiometric normalisation was implemented and systematically benchmarked against raw surface reflectance composites. 
 
-**Finding**: Radiometric normalisation **did not reduce year-to-year classification drift** across held-out evaluation folds. Consequently, rule-based temporal consistency filtering (3-year majority smoothing and urban persistence constraints) remains the authoritative operational defense against spurious classification noise in UrbanPulse. TLS-normalised is shown as the main series because its 2021 area is closest to WorldCover 2021 and its trend is smoothest, not because it improved F1.
+**Finding**: Radiometric normalisation **did not reduce year-to-year classification drift** across held-out evaluation folds; the displayed series has no temporal filtering, and the cleaned series is a sensitivity comparison. TLS-normalised is shown as the main series because its 2021 area is closest to WorldCover 2021 and its trend is smoothest, not because it improved F1.
 
 > **Methodological Disclosure**: Ahmedabad's 2021, 2023 and 2024 composites use the 20 lowest-cloud scenes between October and March, so they include October and March scenes (11 of 20 in 2024). Pune's composites use November-February only. Ahmedabad's 2020 composite was built earlier with a strict Dec 1-Feb 15 window; current code does not reproduce its exact scene list. How much the window affects Ahmedabad's built-up area has not been tested.
 
@@ -162,7 +162,7 @@ Quality gates and CI health are computed dynamically from pipeline execution out
 - **YoY Area Volatility**: PASS (Monotonic expansion enforced under temporal cleanup).
 - **Model Agreement**: PASS (Overall test accuracy $\ge 70\%$ on spatial validation blocks).
 - **Loss-to-Gain Ratio**: PASS (Spurious de-urbanization $\le 30\%$).
-- **Continuous Integration**: 28/28 automated unit and integration tests passing.
+- **Continuous Integration**: 93/93 automated unit and integration tests passing (18% unit line coverage across analytical modules).
 
 ---
 
@@ -172,8 +172,8 @@ Start the entire local application stack (Web frontend, FastAPI backend, and Pos
 
 ```bash
 # Clone the repository
-git clone https://github.com/husaintrivedi/UrbanPulse.git
-cd UrbanPulse
+git clone https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial.git
+cd urban-pulse-geospatial
 
 # Spin up services
 make up
@@ -289,10 +289,15 @@ UrbanPulse requires **zero code changes** to onboard a new metropolitan area:
      analysis_years:
        start_year: 2020
        end_year: 2024
+     strict_window:
+       start_month: 11
+       start_day: 11-01
+       end_month: 2
+       end_day: 02-28
      dry_season:
        start_month: 11
-       end_month: 2
        start_day: 11-01
+       end_month: 2
        end_day: 02-28
    ```
 2. Execute the pipeline:
@@ -305,12 +310,14 @@ UrbanPulse requires **zero code changes** to onboard a new metropolitan area:
 
 ## ⚠️ Limitations
 
-- accuracy is agreement with ESA WorldCover, not field-verified ground truth;
-- Sentinel-2 covers 2017 onward only;
-- dry-season composites confuse fallow farmland with built-up land;
-- the model is not transferable across sensors;
-- the persistence rule forces non-decreasing built-up area and is a documented assumption;
-- 10-60 m resolution limits small features.
+- **Fallow & Bare Land Confusion (Stratum A)**: About 40% of mapped gain is fallow or bare land (computed from Stratum A: 40 of 99 sampled gain points were persistent non-built).
+- **2020 Commission Errors (Stratum D)**: The 2020 map falsely marks about 52 km² as built-up (45 of 50 mapped-loss points were never built-up, yielding a 90% false-loss rate across the 57.74 km² mapped loss stratum).
+- **Ahmedabad Observation Windows**: Ahmedabad's windows differ between 2020 (built earlier with strict Dec 1–Feb 15) and 2021–2024 (Oct 1–Mar 31).
+- **Partial 2022 Season**: 2022 covers October–December 2021 only (partial season with no January–February scenes).
+- **Pune Validation Status**: Pune is not independently validated with reference stratified points; metrics reflect WorldCover agreement only.
+- **Pune 2021 Trajectory Dip**: Pune's validated series dips in 2021 (from 407.12 km² in 2020 to 386.55 km² in 2021) due to sensor viewing geometry and inter-annual reflectance shifts before recovering to 469.80 km² in 2024.
+- **Sensor Resolution**: 10–60 m Sentinel-2 pixel resolution limits detection of narrow roads, informal settlements, and sub-pixel urban canopy.
+- **Model Transferability**: Machine learning classifiers are sensor-specific and trained on Sentinel-2 MSI surface reflectance; cross-sensor transfer (e.g. Landsat) requires separate radiometric harmonisation.
 
 ---
 
