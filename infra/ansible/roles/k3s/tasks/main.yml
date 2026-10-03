@@ -6,7 +6,9 @@
 
 - name: Download and execute official k3s installer
   ansible.builtin.shell:
-    cmd: "curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC=\"{{ k3s_install_args }}\" sh -"
+    cmd: >-
+      curl -sfL https://get.k3s.io |
+      INSTALL_K3S_EXEC="{{ k3s_install_args }}" sh -
   when: not k3s_binary.stat.exists
   changed_when: true
 

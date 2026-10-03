@@ -21,7 +21,9 @@
   environment:
     KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
   register: kubectl_apply
-  changed_when: "'configured' in kubectl_apply.stdout or 'created' in kubectl_apply.stdout"
+  changed_when: >-
+    'configured' in kubectl_apply.stdout or
+    'created' in kubectl_apply.stdout
 
 - name: Wait for API deployment rollout to complete
   ansible.builtin.command:

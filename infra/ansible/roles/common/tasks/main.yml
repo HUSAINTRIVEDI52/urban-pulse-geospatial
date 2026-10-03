@@ -31,7 +31,8 @@
     user: "{{ deploy_user }}"
     key: >-
       {{ lookup('file', ssh_public_key_file, errors='ignore')
-         | default(lookup('file', '/root/.ssh/authorized_keys', errors='ignore'))
+         | default(lookup('file',
+                   '/root/.ssh/authorized_keys', errors='ignore'))
          | default(omit) }}
     state: present
 
