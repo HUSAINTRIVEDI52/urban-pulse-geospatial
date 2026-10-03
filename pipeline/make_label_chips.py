@@ -2,12 +2,14 @@
 UrbanPulse - Sentinel-2 10m True Colour Chip Generator for Visual Change Validation
 Builds 10 m true colour (RGB) composites for start and end years (e.g. 2020 and 2024)
 from Sentinel-2 L2A via STAC, using Dec-Feb strict window scenes and SCL cloud mask,
-applies a fixed 2%-98% percentile stretch, cuts 128x128 chips centered on validation points,
-upscales 4x with bicubic resampling, and draws the 60m classifier pixel boundary.
+applies per-year separate 2%-98% percentile stretch with gamma 0.8, cuts 128x128 chips
+centered on validation points, upscales 4x with bicubic resampling, and draws the 60m
+classifier pixel boundary.
 
 Outputs:
   - data/{city}/validation/chips/{id}_start.jpg
   - data/{city}/validation/chips/{id}_end.jpg
+  - data/{city}/validation/contact_sheet_12.jpg
   - data/{city}/validation/labeller.html (Interactive standalone visual labelling application)
 """
 
@@ -15,6 +17,7 @@ import argparse
 import csv
 import json
 import os
+import random
 import sys
 import time
 from pathlib import Path
@@ -82,9 +85,11 @@ def fetch_and_composite_10m_rgb(
     data_dir: Path,
     cache_dir: Path | None = None,
     max_scenes_per_tile: int = 8,
+    force: bool = False,
 ) -> tuple[np.ndarray, Affine, Any]:
     """
     Builds a 10m true colour (B04, B03, B02) surface reflectance composite for the city AOI.
+    Applies reflectance scale and offset exactly ONCE per item from STAC raster:bands metadata.
     Processes tile-by-tile in chunked Dask streaming to keep memory footprint low (< 200MB).
 
     Returns:
@@ -97,7 +102,7 @@ def fetch_and_composite_10m_rgb(
     cached_tif = cache_dir / f"{city_key}_rgb_10m_{year}.tif"
 
     # Check cache
-    if cached_tif.exists():
+    if not force and cached_tif.exists():
         print(f"[+] Found cached 10m RGB composite for {city.capitalize()} ({year}): {cached_tif.name}")
         with rasterio.open(cached_tif) as src:
             rgb_arr = src.read()  # (3, H, W)
@@ -197,37 +202,53 @@ def fetch_and_composite_10m_rgb(
             ref_transform = stack.rio.transform()
             ref_crs = stack.rio.crs
 
-        # Dask-native SCL cloud masking & scaling
-        scl = stack.sel(band="scl")
-        cloud_mask = (
-            (scl == 0)
-            | (scl == 1)
-            | (scl == 3)
-            | (scl == 8)
-            | (scl == 9)
-            | (scl == 10)
-            | (scl == 11)
-            | np.isnan(scl)
-        )
+        # Dask-native SCL cloud masking & exact metadata scale/offset per item
+        band_layers: dict[str, list[xr.DataArray]] = {"red": [], "green": [], "blue": []}
 
-        r = stack.sel(band="red").where(~cloud_mask)
-        g = stack.sel(band="green").where(~cloud_mask)
-        b = stack.sel(band="blue").where(~cloud_mask)
+        for t_idx, item in enumerate(t_scenes):
+            item_dt = item.datetime or str(item.properties.get("datetime"))[:10]
+            date_str = item_dt.strftime("%Y-%m-%d") if hasattr(item_dt, "strftime") else str(item_dt)[:10]
 
-        # Baseline 04.00 offset / scaling
-        if year >= 2022:
-            r = ((r - 1000.0) / 10000.0).clip(0.0, 1.0)
-            g = ((g - 1000.0) / 10000.0).clip(0.0, 1.0)
-            b = ((b - 1000.0) / 10000.0).clip(0.0, 1.0)
-        else:
-            r = (r / 10000.0).clip(0.0, 1.0)
-            g = (g / 10000.0).clip(0.0, 1.0)
-            b = (b / 10000.0).clip(0.0, 1.0)
+            scl = stack.sel(band="scl").isel(time=t_idx)
+            cloud_mask = (
+                (scl == 0)
+                | (scl == 1)
+                | (scl == 3)
+                | (scl == 8)
+                | (scl == 9)
+                | (scl == 10)
+                | (scl == 11)
+                | np.isnan(scl)
+            )
+
+            for b_name in ["red", "green", "blue"]:
+                scale = None
+                offset = None
+                if b_name in item.assets:
+                    extra = item.assets[b_name].extra_fields
+                    raster_bands = extra.get("raster:bands", [])
+                    if raster_bands and isinstance(raster_bands, list) and len(raster_bands) > 0:
+                        scale = raster_bands[0].get("scale")
+                        offset = raster_bands[0].get("offset")
+
+                raw_band = stack.sel(band=b_name).isel(time=t_idx)
+
+                if scale is not None and offset is not None:
+                    scaled = raw_band * scale + offset
+                else:
+                    if date_str >= "2022-01-25":
+                        scaled = (raw_band - 1000.0) / 10000.0
+                    else:
+                        scaled = raw_band / 10000.0
+
+                scaled = scaled.where(~cloud_mask & (raw_band > 0) & np.isfinite(raw_band))
+                scaled = scaled.clip(0.0, 1.0)
+                band_layers[b_name].append(scaled)
 
         # Compute median across scenes in Dask chunk-by-chunk (low memory)
-        r_med = r.median(dim="time")
-        g_med = g.median(dim="time")
-        b_med = b.median(dim="time")
+        r_med = xr.concat(band_layers["red"], dim="time").median(dim="time")
+        g_med = xr.concat(band_layers["green"], dim="time").median(dim="time")
+        b_med = xr.concat(band_layers["blue"], dim="time").median(dim="time")
 
         tile_rgb_dask = xr.concat([r_med, g_med, b_med], dim="band")
 
@@ -263,6 +284,93 @@ def fetch_and_composite_10m_rgb(
         dst.write(full_rgb)
 
     return full_rgb, ref_transform, ref_crs
+
+
+def compute_percentile_stretch(rgb_arr: np.ndarray, gamma: float = 0.8) -> np.ndarray:
+    """
+    Computes 2nd to 98th percentile display stretch SEPARATELY per band
+    over the AOI composite, with gamma correction (default 0.8).
+
+    Returns uint8 RGB array of shape (H, W, 3).
+    """
+    stretched_channels = []
+    for c in range(3):
+        channel = rgb_arr[c]
+        valid = channel[np.isfinite(channel) & (channel > 0.0)]
+        if len(valid) == 0:
+            p2, p98 = 0.0, 1.0
+        else:
+            p2 = float(np.percentile(valid, 2))
+            p98 = float(np.percentile(valid, 98))
+        norm = np.clip((channel - p2) / max(1e-5, p98 - p2), 0.0, 1.0)
+        gamma_corrected = np.power(norm, gamma)
+        stretched_channels.append((gamma_corrected * 255.0).astype(np.uint8))
+    return np.dstack(stretched_channels)
+
+
+def validate_composite_brightness(
+    city_name: str,
+    year_label: str,
+    rgb_arr: np.ndarray,
+    min_median: float = 0.03,
+    max_median: float = 0.60,
+) -> dict[str, Any]:
+    """
+    Computes and prints per-year composite/chip statistics and validates that the
+    median overall brightness is within [min_median, max_median] reflectance.
+    Fails the run with ValueError if outside bounds.
+    """
+    band_names = ["Red", "Green", "Blue"]
+    stats = {}
+    valid_mask = (
+        np.isfinite(rgb_arr[0])
+        & (rgb_arr[0] > 0)
+        & np.isfinite(rgb_arr[1])
+        & (rgb_arr[1] > 0)
+        & np.isfinite(rgb_arr[2])
+        & (rgb_arr[2] > 0)
+    )
+
+    print(f"\n--- Reflectance Statistics: {city_name} {year_label} ---")
+    print(f"{'Band':<12} | {'Min':>8} | {'2%':>8} | {'Median':>8} | {'98%':>8} | {'Max':>8}")
+    print("-" * 62)
+
+    for c, b_name in enumerate(band_names):
+        valid = rgb_arr[c][valid_mask]
+        if len(valid) == 0:
+            raise ValueError(f"No valid pixels found in composite for {city_name} {year_label} band {b_name}.")
+        p_min = float(np.min(valid))
+        p2 = float(np.percentile(valid, 2))
+        p50 = float(np.percentile(valid, 50))
+        p98 = float(np.percentile(valid, 98))
+        p_max = float(np.max(valid))
+        stats[b_name.lower()] = {"min": p_min, "p2": p2, "median": p50, "p98": p98, "max": p_max}
+        print(f"{b_name:<12} | {p_min:8.4f} | {p2:8.4f} | {p50:8.4f} | {p98:8.4f} | {p_max:8.4f}")
+
+    # Brightness (mean across R, G, B)
+    brightness_arr = (rgb_arr[0][valid_mask] + rgb_arr[1][valid_mask] + rgb_arr[2][valid_mask]) / 3.0
+    med_brightness = float(np.median(brightness_arr))
+    p2_b = float(np.percentile(brightness_arr, 2))
+    p98_b = float(np.percentile(brightness_arr, 98))
+    min_b = float(np.min(brightness_arr))
+    max_b = float(np.max(brightness_arr))
+    print(f"{'Brightness':<12} | {min_b:8.4f} | {p2_b:8.4f} | {med_brightness:8.4f} | {p98_b:8.4f} | {max_b:8.4f}")
+    print("-" * 62)
+
+    if med_brightness < min_median or med_brightness > max_median:
+        raise ValueError(
+            f"Quality check failed: median composite brightness ({med_brightness:.4f}) for {year_label} "
+            f"is outside acceptable reflectance range [{min_median:.2f}, {max_median:.2f}]."
+        )
+
+    stats["brightness"] = {
+        "min": min_b,
+        "p2": p2_b,
+        "median": med_brightness,
+        "p98": p98_b,
+        "max": max_b,
+    }
+    return stats
 
 
 def extract_and_draw_chip(
@@ -326,6 +434,81 @@ def extract_and_draw_chip(
     return upscaled
 
 
+def generate_contact_sheet(
+    chips_dir: Path,
+    point_ids: list[int],
+    output_path: Path,
+    start_year: int = 2020,
+    end_year: int = 2024,
+    num_samples: int = 12,
+    seed: int = 42,
+) -> Path:
+    """
+    Creates a visual contact sheet of sample points showing start-year and end-year chips side by side.
+    """
+    rng = random.Random(seed)
+    valid_pts = [
+        pid for pid in point_ids
+        if (chips_dir / f"{pid}_start.jpg").exists() and (chips_dir / f"{pid}_end.jpg").exists()
+    ]
+    if not valid_pts:
+        raise FileNotFoundError(f"No valid chips found in {chips_dir.resolve()} to build contact sheet.")
+
+    chosen_pids = rng.sample(valid_pts, min(num_samples, len(valid_pts)))
+
+    chip_display_size = 256
+    pair_w = chip_display_size * 2 + 10  # 10px gutter between start and end
+    pair_h = chip_display_size + 36      # 36px for labels
+    cols = 3
+    rows = (len(chosen_pids) + cols - 1) // cols
+
+    sheet_w = cols * (pair_w + 20) + 20
+    sheet_h = rows * (pair_h + 20) + 60  # 60px header
+
+    sheet = Image.new("RGB", (sheet_w, sheet_h), color=(15, 23, 42))  # Slate dark background
+    draw = ImageDraw.Draw(sheet)
+
+    # Header title
+    title = f"UrbanPulse Validation Contact Sheet: {start_year} (Start) vs {end_year} (End) Chips"
+    draw.text((25, 20), title, fill=(56, 189, 248))
+
+    for idx, pid in enumerate(chosen_pids):
+        r = idx // cols
+        c = idx % cols
+
+        x_pair = 20 + c * (pair_w + 20)
+        y_pair = 60 + r * (pair_h + 20)
+
+        # Draw pair background box
+        draw.rectangle(
+            [x_pair - 5, y_pair - 5, x_pair + pair_w + 5, y_pair + pair_h - 5],
+            fill=(30, 41, 59),
+            outline=(51, 65, 85),
+            width=1,
+        )
+
+        img_start = Image.open(chips_dir / f"{pid}_start.jpg").resize(
+            (chip_display_size, chip_display_size), Image.Resampling.BILINEAR
+        )
+        img_end = Image.open(chips_dir / f"{pid}_end.jpg").resize(
+            (chip_display_size, chip_display_size), Image.Resampling.BILINEAR
+        )
+
+        # Paste images
+        sheet.paste(img_start, (x_pair, y_pair + 24))
+        sheet.paste(img_end, (x_pair + chip_display_size + 10, y_pair + 24))
+
+        # Labels
+        draw.text((x_pair + 5, y_pair + 5), f"Point #{pid} ({start_year})", fill=(148, 163, 184))
+        draw.text((x_pair + chip_display_size + 15, y_pair + 5), f"{end_year} (Regenerated)", fill=(52, 211, 153))
+
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    sheet.save(output_path, "JPEG", quality=92)
+    print(f"[+] Saved validation contact sheet ({len(chosen_pids)} points): {output_path.resolve()}")
+    return output_path
+
+
 def generate_standalone_labeller_html(
     city_name: str,
     start_year: int,
@@ -334,7 +517,7 @@ def generate_standalone_labeller_html(
     output_html_path: Path,
 ) -> None:
     """
-    Generates a single self-contained interactive labelling tool (no external CDN / internet dependencies).
+    Generates a single self-contained interactive labelling tool with CSV Import and Export.
     """
     points_json = json.dumps(points_data)
 
@@ -409,7 +592,9 @@ def generate_standalone_labeller_html(
         <div class="progress-bar" id="progressBar"></div>
       </div>
     </div>
-    <div style="display: flex; gap: 10px;">
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="handleCSVImport(event)">
+      <button class="btn" onclick="document.getElementById('csvFileInput').click()">Import CSV</button>
       <button class="btn" onclick="jumpToFirstUnlabelled()">Jump to Unlabelled</button>
       <button class="btn btn-success" onclick="downloadCSV()">Download CSV</button>
     </div>
@@ -507,7 +692,7 @@ def generate_standalone_labeller_html(
       const gmapsUrl = `https://www.google.com/maps/@${{pt.lat}},${{pt.lon}},17z/data=!3m1!1e3`;
       document.getElementById('gmapsLink').href = gmapsUrl;
 
-      const cur = annotations[ptId] || {{ built_start: '', built_end: '', notes: '' }};
+      const cur = annotations[ptId] || {{ built_start: '', built_end: '', notes: '', built_end_old: '' }};
       
       ['btnStartBuilt', 'btnStartNotBuilt', 'btnStartUnclear'].forEach(id => document.getElementById(id).classList.remove('active'));
       ['btnEndBuilt', 'btnEndNotBuilt', 'btnEndUnclear'].forEach(id => document.getElementById(id).classList.remove('active'));
@@ -526,7 +711,7 @@ def generate_standalone_labeller_html(
     function setLabel(period, val) {{
       const ptId = points[currentIndex].id;
       if (!annotations[ptId]) {{
-        annotations[ptId] = {{ built_start: '', built_end: '', notes: '' }};
+        annotations[ptId] = {{ built_start: '', built_end: '', notes: '', built_end_old: '' }};
       }}
       if (period === 'start') {{
         annotations[ptId].built_start = val;
@@ -543,7 +728,7 @@ def generate_standalone_labeller_html(
 
     function saveNote() {{
       const ptId = points[currentIndex].id;
-      if (!annotations[ptId]) annotations[ptId] = {{ built_start: '', built_end: '', notes: '' }};
+      if (!annotations[ptId]) annotations[ptId] = {{ built_start: '', built_end: '', notes: '', built_end_old: '' }};
       annotations[ptId].notes = document.getElementById('notesInput').value.trim();
       saveState();
     }}
@@ -579,12 +764,106 @@ def generate_standalone_labeller_html(
       document.getElementById('progressBar').style.width = `${{pct}}%`;
     }}
 
+    function handleCSVImport(event) {{
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {{
+        const text = e.target.result;
+        const lines = text.split(/\\r?\\n/).filter(line => line.trim().length > 0);
+        if (lines.length < 2) {{
+          alert('CSV file is empty or invalid.');
+          return;
+        }}
+
+        const headers = parseCSVLine(lines[0]);
+        const idIdx = headers.indexOf('id');
+        const builtStartIdx = headers.indexOf('built_start');
+        const builtEndIdx = headers.indexOf('built_end');
+        const builtEndOldIdx = headers.indexOf('built_end_old');
+        const notesIdx = headers.indexOf('notes');
+
+        if (idIdx === -1) {{
+          alert("Invalid CSV format: 'id' column not found.");
+          return;
+        }}
+
+        let importedCount = 0;
+        for (let i = 1; i < lines.length; i++) {{
+          const cols = parseCSVLine(lines[i]);
+          if (!cols || cols.length <= idIdx) continue;
+          const ptId = parseInt(cols[idIdx], 10);
+          if (isNaN(ptId)) continue;
+
+          if (!annotations[ptId]) {{
+            annotations[ptId] = {{ built_start: '', built_end: '', notes: '', built_end_old: '' }};
+          }}
+
+          // Keep existing or imported built_start
+          if (builtStartIdx !== -1 && cols[builtStartIdx] !== undefined && cols[builtStartIdx].trim() !== '') {{
+            annotations[ptId].built_start = cols[builtStartIdx].trim();
+          }}
+
+          // Move old built_end into built_end_old and clear built_end for fresh labelling
+          let oldEndVal = '';
+          if (builtEndIdx !== -1 && cols[builtEndIdx] !== undefined && cols[builtEndIdx].trim() !== '') {{
+            oldEndVal = cols[builtEndIdx].trim();
+          }} else if (builtEndOldIdx !== -1 && cols[builtEndOldIdx] !== undefined && cols[builtEndOldIdx].trim() !== '') {{
+            oldEndVal = cols[builtEndOldIdx].trim();
+          }}
+
+          if (oldEndVal) {{
+            annotations[ptId].built_end_old = oldEndVal;
+          }}
+          annotations[ptId].built_end = '';
+
+          // Keep notes if present
+          if (notesIdx !== -1 && cols[notesIdx] !== undefined && cols[notesIdx].trim() !== '') {{
+            annotations[ptId].notes = cols[notesIdx].trim();
+          }}
+
+          importedCount++;
+        }}
+
+        saveState();
+        renderPoint(currentIndex);
+        updateStats();
+        alert(`Successfully imported ${{importedCount}} points! built_start kept, built_end reset (saved into built_end_old) for re-labelling.`);
+      }};
+      reader.readAsText(file);
+    }}
+
+    function parseCSVLine(line) {{
+      const result = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {{
+        const char = line[i];
+        if (char === '"' || char === "'") {{
+          if (inQuotes && line[i + 1] === char) {{
+            cur += char;
+            i++;
+          }} else {{
+            inQuotes = !inQuotes;
+          }}
+        }} else if (char === ',' && !inQuotes) {{
+          result.push(cur.trim());
+          cur = '';
+        }} else {{
+          cur += char;
+        }}
+      }}
+      result.push(cur.trim());
+      return result;
+    }}
+
     function downloadCSV() {{
-      let csvContent = 'id,lon,lat,built_start,built_end,notes\\n';
+      let csvContent = 'id,lon,lat,built_start,built_end,notes,built_end_old\\n';
       for (const pt of points) {{
-        const ann = annotations[pt.id] || {{ built_start: '', built_end: '', notes: '' }};
+        const ann = annotations[pt.id] || {{ built_start: '', built_end: '', notes: '', built_end_old: '' }};
         const notesEsc = `"${{(ann.notes || '').replace(/"/g, '""')}}"`;
-        csvContent += `${{pt.id}},${{pt.lon}},${{pt.lat}},${{ann.built_start || ''}},${{ann.built_end || ''}},${{notesEsc}}\\n`;
+        csvContent += `${{pt.id}},${{pt.lon}},${{pt.lat}},${{ann.built_start || ''}},${{ann.built_end || ''}},${{notesEsc}},${{ann.built_end_old || ''}}\\n`;
       }}
       const blob = new Blob([csvContent], {{ type: 'text/csv;charset=utf-8;' }});
       const url = URL.createObjectURL(blob);
@@ -635,6 +914,8 @@ def make_label_chips(
     start_year: int = 2020,
     end_year: int = 2024,
     data_dir: Path | str = PROJECT_ROOT / "data",
+    regenerate_end_only: bool = False,
+    force_composite: bool = False,
 ) -> dict[str, Any]:
     """
     Main entry point for generating validation image chips and labeller.html.
@@ -660,51 +941,39 @@ def make_label_chips(
     print(f"    - Baseline Year (Start) : {start_year}")
     print(f"    - Target Year (End)     : {end_year}")
     print(f"    - Total Validation Points: {len(df_blind)}")
+    print(f"    - Regenerate Mode       : {'END-Year Chips Only' if regenerate_end_only else 'Both Start and End'}")
     print(f"    - Output Chips Directory: {chips_dir.resolve()}")
     print("=" * 86)
 
     config = load_city_config(city=city_key)
 
     # 1. Build 10m RGB Composites for Start and End years
-    print(f"\n[Step 1/3] Building 10m true colour composite for start year ({start_year})...")
+    print(f"\n[Step 1/3] Fetching/verifying 10m true colour composite for start year ({start_year})...")
     rgb_start, transform_start, crs_start = fetch_and_composite_10m_rgb(
-        city=city_key, year=start_year, config=config, data_dir=data_path
+        city=city_key, year=start_year, config=config, data_dir=data_path, force=force_composite
     )
 
-    print(f"\n[Step 2/3] Building 10m true colour composite for end year ({end_year})...")
+    print(f"\n[Step 2/3] Fetching/verifying 10m true colour composite for end year ({end_year})...")
     rgb_end, transform_end, crs_end = fetch_and_composite_10m_rgb(
-        city=city_key, year=end_year, config=config, data_dir=data_path
+        city=city_key, year=end_year, config=config, data_dir=data_path, force=force_composite
     )
 
-    # 2. Compute fixed 2%-98% percentile stretch identical across both years
-    print("\n[*] Computing 2% - 98% fixed percentile stretch across both years...")
-    valid_r = rgb_start[0][np.isfinite(rgb_start[0]) & (rgb_start[0] > 0.0)]
-    valid_g = rgb_start[1][np.isfinite(rgb_start[1]) & (rgb_start[1] > 0.0)]
-    valid_b = rgb_start[2][np.isfinite(rgb_start[2]) & (rgb_start[2] > 0.0)]
+    # 2. Quality Gate: Per-Year Reflectance Statistics & Brightness Check [0.03, 0.60]
+    stats_start = validate_composite_brightness(city_name, f"Start Year ({start_year})", rgb_start)
+    stats_end = validate_composite_brightness(city_name, f"End Year ({end_year})", rgb_end)
 
-    p2_r, p98_r = float(np.percentile(valid_r, 2)), float(np.percentile(valid_r, 98))
-    p2_g, p98_g = float(np.percentile(valid_g, 2)), float(np.percentile(valid_g, 98))
-    p2_b, p98_b = float(np.percentile(valid_b, 2)), float(np.percentile(valid_b, 98))
+    # 3. Compute Display Stretch SEPARATELY for each year (2nd-98th percentile, gamma 0.8)
+    print("\n[*] Applying SEPARATE 2%-98% percentile display stretch per band with gamma 0.8...")
+    rgb_start_uint8 = compute_percentile_stretch(rgb_start, gamma=0.8)
+    rgb_end_uint8 = compute_percentile_stretch(rgb_end, gamma=0.8)
 
-    print(f"    - Red   (2%-98%): [{p2_r:.4f}, {p98_r:.4f}]")
-    print(f"    - Green (2%-98%): [{p2_g:.4f}, {p98_g:.4f}]")
-    print(f"    - Blue  (2%-98%): [{p2_b:.4f}, {p98_b:.4f}]")
-
-    def apply_stretch(rgb_arr: np.ndarray) -> np.ndarray:
-        r = np.clip((rgb_arr[0] - p2_r) / max(1e-5, p98_r - p2_r), 0.0, 1.0) * 255.0
-        g = np.clip((rgb_arr[1] - p2_g) / max(1e-5, p98_g - p2_g), 0.0, 1.0) * 255.0
-        b = np.clip((rgb_arr[2] - p2_b) / max(1e-5, p98_b - p2_b), 0.0, 1.0) * 255.0
-        return np.dstack([r, g, b]).astype(np.uint8)
-
-    rgb_start_uint8 = apply_stretch(rgb_start)
-    rgb_end_uint8 = apply_stretch(rgb_end)
-
-    # 3. Extract chips for each sample point
-    print(f"\n[Step 3/3] Cutting {len(df_blind)} 128x128 chips (4x upscaled with 60m pixel outline)...")
+    # 4. Extract chips for each sample point
+    print(f"\n[Step 3/3] Generating 128x128 chips (4x upscaled with 60m pixel boundary)...")
     transformer = Transformer.from_crs("EPSG:4326", crs_start, always_xy=True)
 
     chips_created = 0
     points_data = []
+    point_ids = []
 
     for idx, row in df_blind.iterrows():
         pt_id = int(row["id"])
@@ -716,23 +985,40 @@ def make_label_chips(
         r_start, c_start = rasterio.transform.rowcol(transform_start, x_proj, y_proj)
         r_end, c_end = rasterio.transform.rowcol(transform_end, x_proj, y_proj)
 
-        chip_start_img = extract_and_draw_chip(rgb_start_uint8, r_start, c_start)
-        chip_end_img = extract_and_draw_chip(rgb_end_uint8, r_end, c_end)
-
         chip_start_path = chips_dir / f"{pt_id}_start.jpg"
         chip_end_path = chips_dir / f"{pt_id}_end.jpg"
 
-        chip_start_img.save(chip_start_path, "JPEG", quality=95)
-        chip_end_img.save(chip_end_path, "JPEG", quality=95)
+        # Generate start chip if not present or not in end-only mode
+        if not regenerate_end_only or not chip_start_path.exists():
+            chip_start_img = extract_and_draw_chip(rgb_start_uint8, r_start, c_start)
+            chip_start_img.save(chip_start_path, "JPEG", quality=95)
+            chips_created += 1
 
-        chips_created += 2
+        # Always generate end chip
+        chip_end_img = extract_and_draw_chip(rgb_end_uint8, r_end, c_end)
+        chip_end_img.save(chip_end_path, "JPEG", quality=95)
+        chips_created += 1
+
         points_data.append({
             "id": pt_id,
             "lon": lon,
             "lat": lat,
         })
+        point_ids.append(pt_id)
 
-    # 4. Generate Labeller HTML
+    # 5. Generate Visual Contact Sheet (12 random samples)
+    contact_sheet_path = val_dir / "contact_sheet_12.jpg"
+    generate_contact_sheet(
+        chips_dir=chips_dir,
+        point_ids=point_ids,
+        output_path=contact_sheet_path,
+        start_year=start_year,
+        end_year=end_year,
+        num_samples=12,
+        seed=42,
+    )
+
+    # 6. Generate/Update Labeller HTML
     labeller_path = val_dir / "labeller.html"
     generate_standalone_labeller_html(
         city_name=city_name,
@@ -745,8 +1031,8 @@ def make_label_chips(
     elapsed = time.time() - start_time
     print("=" * 86)
     print(f"[+] Finished chip generation for {city_name} in {elapsed:.2f} seconds.")
-    print(f"    - Total chips created: {chips_created} ({len(df_blind)} start + {len(df_blind)} end)")
-    print(f"    - Chips location: {chips_dir.resolve()}")
+    print(f"    - Total chips written/updated: {chips_created}")
+    print(f"    - Contact sheet: {contact_sheet_path.resolve()}")
     print(f"    - Labeller tool: {labeller_path.resolve()}")
     print("=" * 86)
 
@@ -754,7 +1040,10 @@ def make_label_chips(
         "city": city_name,
         "chips_created": chips_created,
         "elapsed_seconds": elapsed,
+        "contact_sheet": str(contact_sheet_path.resolve()),
         "labeller_html": str(labeller_path.resolve()),
+        "stats_start": stats_start,
+        "stats_end": stats_end,
     }
 
 
@@ -766,6 +1055,8 @@ def main():
     parser.add_argument("--start", type=int, default=2020, help="Baseline start year (default: 2020)")
     parser.add_argument("--end", type=int, default=2024, help="Target end year (default: 2024)")
     parser.add_argument("--data-dir", type=Path, default=PROJECT_ROOT / "data", help="Data directory")
+    parser.add_argument("--end-only", action="store_true", help="Regenerate only end-year chips, keeping start chips")
+    parser.add_argument("--force", action="store_true", help="Force rebuild 10m composites from STAC")
 
     args = parser.parse_args()
     make_label_chips(
@@ -773,6 +1064,8 @@ def main():
         start_year=args.start,
         end_year=args.end,
         data_dir=args.data_dir,
+        regenerate_end_only=args.end_only,
+        force_composite=args.force,
     )
 
 

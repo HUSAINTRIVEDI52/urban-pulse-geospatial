@@ -53,6 +53,37 @@ def test_stac_raster_bands_metadata_scaling():
     np.testing.assert_allclose(scaled, expected, atol=1e-5)
 
 
+def test_synthetic_raster_dn_1500_offset_reflectance():
+    """
+    Test with a small synthetic raster using DN values around 1500 and offset -0.1
+    that checks the output reflectance is about 0.05.
+    Calculation: 1500 * 0.0001 + (-0.1) = 0.15 - 0.10 = 0.05.
+    """
+    synthetic_dn = np.array([
+        [1480.0, 1500.0, 1520.0],
+        [1500.0, 1510.0, 1490.0],
+        [1530.0, 1470.0, 1500.0]
+    ], dtype=np.float32)
+
+    scale = 0.0001
+    offset = -0.1
+
+    reflectance = scale_and_harmonize_dn(
+        synthetic_dn,
+        item_datetime="2024-01-15",
+        scale=scale,
+        offset=offset,
+    )
+
+    # Exact check for DN=1500: 1500 * 0.0001 - 0.1 = 0.05
+    assert np.isclose(reflectance[0, 1], 0.05, atol=1e-5)
+    assert np.isclose(reflectance[1, 0], 0.05, atol=1e-5)
+    assert np.isclose(reflectance[2, 2], 0.05, atol=1e-5)
+    # Entire raster around 1500 DN should be around 0.05 reflectance
+    assert np.all(reflectance >= 0.04) and np.all(reflectance <= 0.06)
+
+
+
 def test_scl_cloud_mask_and_1_pixel_dilation():
     """Verify that SCL cloud classes are masked and dilated by 1 pixel in 8-connectivity."""
     # 5x5 grid with clear pixels (4=Vegetation) and one central cloud pixel (9=High Cloud) at (2,2)

@@ -69,7 +69,9 @@
         <div class="progress-bar" id="progressBar"></div>
       </div>
     </div>
-    <div style="display: flex; gap: 10px;">
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="handleCSVImport(event)">
+      <button class="btn" onclick="document.getElementById('csvFileInput').click()">Import CSV</button>
       <button class="btn" onclick="jumpToFirstUnlabelled()">Jump to Unlabelled</button>
       <button class="btn btn-success" onclick="downloadCSV()">Download CSV</button>
     </div>
@@ -167,7 +169,7 @@
       const gmapsUrl = `https://www.google.com/maps/@${pt.lat},${pt.lon},17z/data=!3m1!1e3`;
       document.getElementById('gmapsLink').href = gmapsUrl;
 
-      const cur = annotations[ptId] || { built_start: '', built_end: '', notes: '' };
+      const cur = annotations[ptId] || { built_start: '', built_end: '', notes: '', built_end_old: '' };
       
       ['btnStartBuilt', 'btnStartNotBuilt', 'btnStartUnclear'].forEach(id => document.getElementById(id).classList.remove('active'));
       ['btnEndBuilt', 'btnEndNotBuilt', 'btnEndUnclear'].forEach(id => document.getElementById(id).classList.remove('active'));
@@ -186,7 +188,7 @@
     function setLabel(period, val) {
       const ptId = points[currentIndex].id;
       if (!annotations[ptId]) {
-        annotations[ptId] = { built_start: '', built_end: '', notes: '' };
+        annotations[ptId] = { built_start: '', built_end: '', notes: '', built_end_old: '' };
       }
       if (period === 'start') {
         annotations[ptId].built_start = val;
@@ -203,7 +205,7 @@
 
     function saveNote() {
       const ptId = points[currentIndex].id;
-      if (!annotations[ptId]) annotations[ptId] = { built_start: '', built_end: '', notes: '' };
+      if (!annotations[ptId]) annotations[ptId] = { built_start: '', built_end: '', notes: '', built_end_old: '' };
       annotations[ptId].notes = document.getElementById('notesInput').value.trim();
       saveState();
     }
@@ -239,12 +241,106 @@
       document.getElementById('progressBar').style.width = `${pct}%`;
     }
 
+    function handleCSVImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
+        if (lines.length < 2) {
+          alert('CSV file is empty or invalid.');
+          return;
+        }
+
+        const headers = parseCSVLine(lines[0]);
+        const idIdx = headers.indexOf('id');
+        const builtStartIdx = headers.indexOf('built_start');
+        const builtEndIdx = headers.indexOf('built_end');
+        const builtEndOldIdx = headers.indexOf('built_end_old');
+        const notesIdx = headers.indexOf('notes');
+
+        if (idIdx === -1) {
+          alert("Invalid CSV format: 'id' column not found.");
+          return;
+        }
+
+        let importedCount = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const cols = parseCSVLine(lines[i]);
+          if (!cols || cols.length <= idIdx) continue;
+          const ptId = parseInt(cols[idIdx], 10);
+          if (isNaN(ptId)) continue;
+
+          if (!annotations[ptId]) {
+            annotations[ptId] = { built_start: '', built_end: '', notes: '', built_end_old: '' };
+          }
+
+          // Keep existing or imported built_start
+          if (builtStartIdx !== -1 && cols[builtStartIdx] !== undefined && cols[builtStartIdx].trim() !== '') {
+            annotations[ptId].built_start = cols[builtStartIdx].trim();
+          }
+
+          // Move old built_end into built_end_old and clear built_end for fresh labelling
+          let oldEndVal = '';
+          if (builtEndIdx !== -1 && cols[builtEndIdx] !== undefined && cols[builtEndIdx].trim() !== '') {
+            oldEndVal = cols[builtEndIdx].trim();
+          } else if (builtEndOldIdx !== -1 && cols[builtEndOldIdx] !== undefined && cols[builtEndOldIdx].trim() !== '') {
+            oldEndVal = cols[builtEndOldIdx].trim();
+          }
+
+          if (oldEndVal) {
+            annotations[ptId].built_end_old = oldEndVal;
+          }
+          annotations[ptId].built_end = '';
+
+          // Keep notes if present
+          if (notesIdx !== -1 && cols[notesIdx] !== undefined && cols[notesIdx].trim() !== '') {
+            annotations[ptId].notes = cols[notesIdx].trim();
+          }
+
+          importedCount++;
+        }
+
+        saveState();
+        renderPoint(currentIndex);
+        updateStats();
+        alert(`Successfully imported ${importedCount} points! built_start kept, built_end reset (saved into built_end_old) for re-labelling.`);
+      };
+      reader.readAsText(file);
+    }
+
+    function parseCSVLine(line) {
+      const result = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"' || char === "'") {
+          if (inQuotes && line[i + 1] === char) {
+            cur += char;
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          result.push(cur.trim());
+          cur = '';
+        } else {
+          cur += char;
+        }
+      }
+      result.push(cur.trim());
+      return result;
+    }
+
     function downloadCSV() {
-      let csvContent = 'id,lon,lat,built_start,built_end,notes\n';
+      let csvContent = 'id,lon,lat,built_start,built_end,notes,built_end_old\n';
       for (const pt of points) {
-        const ann = annotations[pt.id] || { built_start: '', built_end: '', notes: '' };
+        const ann = annotations[pt.id] || { built_start: '', built_end: '', notes: '', built_end_old: '' };
         const notesEsc = `"${(ann.notes || '').replace(/"/g, '""')}"`;
-        csvContent += `${pt.id},${pt.lon},${pt.lat},${ann.built_start || ''},${ann.built_end || ''},${notesEsc}\n`;
+        csvContent += `${pt.id},${pt.lon},${pt.lat},${ann.built_start || ''},${ann.built_end || ''},${notesEsc},${ann.built_end_old || ''}\n`;
       }
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
