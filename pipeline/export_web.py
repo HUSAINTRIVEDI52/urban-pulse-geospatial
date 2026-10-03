@@ -13,7 +13,7 @@ import json
 import re
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -314,9 +314,25 @@ def export_web_data(
     # Fallbacks if any year raster missing
     if not norm_dict:
         if city_key == "ahmedabad":
-            norm_dict = {2018: 419.29, 2019: 320.38, 2020: 415.97, 2021: 413.61, 2022: 426.94, 2023: 451.61, 2024: 474.88}
+            norm_dict = {
+                2018: 419.29,
+                2019: 320.38,
+                2020: 415.97,
+                2021: 413.61,
+                2022: 426.94,
+                2023: 451.61,
+                2024: 474.88,
+            }
         else:
-            norm_dict = {2018: 410.11, 2019: 326.02, 2020: 407.12, 2021: 386.55, 2022: 393.07, 2023: 440.15, 2024: 469.80}
+            norm_dict = {
+                2018: 410.11,
+                2019: 326.02,
+                2020: 407.12,
+                2021: 386.55,
+                2022: 393.07,
+                2023: 440.15,
+                2024: 469.80,
+            }
 
     # 2. Raw series (from data/{city}/{city}_{year}_classified.tif or data/{city}_{year}_classified.tif)
     raw_dict = {}
@@ -335,9 +351,25 @@ def export_web_data(
 
     if len(raw_dict) < 5:
         if city_key == "ahmedabad":
-            raw_dict = {2018: 428.67, 2019: 300.56, 2020: 421.06, 2021: 413.61, 2022: 423.91, 2023: 504.42, 2024: 474.02}
+            raw_dict = {
+                2018: 428.67,
+                2019: 300.56,
+                2020: 421.06,
+                2021: 413.61,
+                2022: 423.91,
+                2023: 504.42,
+                2024: 474.02,
+            }
         else:
-            raw_dict = {2018: 410.11, 2019: 316.72, 2020: 332.13, 2021: 386.55, 2022: 692.99, 2023: 359.65, 2024: 406.65}
+            raw_dict = {
+                2018: 410.11,
+                2019: 316.72,
+                2020: 332.13,
+                2021: 386.55,
+                2022: 692.99,
+                2023: 359.65,
+                2024: 406.65,
+            }
 
     # 3. Cleaned series (from data/{city}/clean/ or data/clean/)
     clean_dict = {}
@@ -357,9 +389,25 @@ def export_web_data(
 
     if len(clean_dict) < 5:
         if city_key == "ahmedabad":
-            clean_dict = {2018: 384.51, 2019: 384.51, 2020: 384.51, 2021: 414.07, 2022: 441.91, 2023: 474.54, 2024: 468.54}
+            clean_dict = {
+                2018: 384.51,
+                2019: 384.51,
+                2020: 384.51,
+                2021: 414.07,
+                2022: 441.91,
+                2023: 474.54,
+                2024: 468.54,
+            }
         else:
-            clean_dict = {2018: 356.19, 2019: 356.19, 2020: 356.19, 2021: 421.99, 2022: 443.75, 2023: 479.78, 2024: 448.31}
+            clean_dict = {
+                2018: 356.19,
+                2019: 356.19,
+                2020: 356.19,
+                2021: 421.99,
+                2022: 443.75,
+                2023: 479.78,
+                2024: 448.31,
+            }
 
     # Time series growth series
     time_series_data = []
@@ -369,18 +417,20 @@ def export_web_data(
         n_val = norm_dict.get(y, 400.0)
         min_v = min(r_val, c_val, n_val)
         max_v = max(r_val, c_val, n_val)
-        time_series_data.append({
-            "year": y,
-            "display_year": "2022 (partial season (no Jan-Feb))" if y == 2022 else str(y),
-            "raw_builtup_km2": round(r_val, 2),
-            "clean_builtup_km2": round(c_val, 2),
-            "norm_builtup_km2": round(n_val, 2),
-            "band_min_km2": round(min_v, 2),
-            "band_max_km2": round(max_v, 2),
-            "band_spread_km2": round(max_v - min_v, 2),
-            "is_provisional": False,
-            "is_reference": y == 2021,
-        })
+        time_series_data.append(
+            {
+                "year": y,
+                "display_year": "2022 - partial season, no Jan-Feb" if y == 2022 else str(y),
+                "raw_builtup_km2": round(r_val, 2),
+                "clean_builtup_km2": round(c_val, 2),
+                "norm_builtup_km2": round(n_val, 2),
+                "band_min_km2": round(min_v, 2),
+                "band_max_km2": round(max_v, 2),
+                "band_spread_km2": round(max_v - min_v, 2),
+                "is_provisional": False,
+                "is_reference": y == 2021,
+            }
+        )
 
     # Percentage and km2 changes across methods (2020 to 2024)
     delta_raw_km2 = round(raw_dict[2024] - raw_dict[2020], 2)
@@ -412,32 +462,42 @@ def export_web_data(
         else:
             b_val = norm_dict.get(yr, 400.0)
             rem = aoi_km2 - b_val
-            v_val, w_val, a_val, o_val, nodata_v = round(rem * 0.25, 2), round(rem * 0.02, 2), round(rem * 0.65, 2), round(rem * 0.08, 2), 0.0
+            v_val, w_val, a_val, o_val, nodata_v = (
+                round(rem * 0.25, 2),
+                round(rem * 0.02, 2),
+                round(rem * 0.65, 2),
+                round(rem * 0.08, 2),
+                0.0,
+            )
 
         tot_val = round(b_val + v_val + w_val + a_val + o_val + nodata_v, 2)
 
         # Assert areas sum to AOI within 0.5%
         diff_pct = abs(tot_val - aoi_km2) / aoi_km2 * 100.0
-        assert diff_pct < 0.5, f"Class areas for {city_key} {yr} do not sum to AOI ({tot_val} vs {aoi_km2}, diff={diff_pct:.2f}%)"
+        assert (
+            diff_pct < 0.5
+        ), f"Class areas for {city_key} {yr} do not sum to AOI ({tot_val} vs {aoi_km2}, diff={diff_pct:.2f}%)"
 
-        class_areas_list.append({
-            "year": yr,
-            "built_up_km2": round(b_val, 2),
-            "vegetation_km2": round(v_val, 2),
-            "water_km2": round(w_val, 2),
-            "agriculture_km2": round(a_val, 2),
-            "open_land_km2": round(o_val, 2),
-            "nodata_km2": round(nodata_v, 2),
-            "total_area_km2": tot_val,
-            "shares_pct": {
-                "built_up": round((b_val / aoi_km2) * 100.0, 2),
-                "vegetation": round((v_val / aoi_km2) * 100.0, 2),
-                "water": round((w_val / aoi_km2) * 100.0, 2),
-                "agriculture": round((a_val / aoi_km2) * 100.0, 2),
-                "open_land": round((o_val / aoi_km2) * 100.0, 2),
-                "nodata": round((nodata_v / aoi_km2) * 100.0, 2),
-            },
-        })
+        class_areas_list.append(
+            {
+                "year": yr,
+                "built_up_km2": round(b_val, 2),
+                "vegetation_km2": round(v_val, 2),
+                "water_km2": round(w_val, 2),
+                "agriculture_km2": round(a_val, 2),
+                "open_land_km2": round(o_val, 2),
+                "nodata_km2": round(nodata_v, 2),
+                "total_area_km2": tot_val,
+                "shares_pct": {
+                    "built_up": round((b_val / aoi_km2) * 100.0, 2),
+                    "vegetation": round((v_val / aoi_km2) * 100.0, 2),
+                    "water": round((w_val / aoi_km2) * 100.0, 2),
+                    "agriculture": round((a_val / aoi_km2) * 100.0, 2),
+                    "open_land": round((o_val / aoi_km2) * 100.0, 2),
+                    "nodata": round((nodata_v / aoi_km2) * 100.0, 2),
+                },
+            }
+        )
 
     # Rings & Sprawl Metrics: Recomputed directly from validated series rasters (2020-2024)
     rings_dict: dict[str, list[dict[str, Any]]] = {}
@@ -454,57 +514,77 @@ def export_web_data(
         if not df_rings_base.empty:
             sub = df_rings_base[df_rings_base["year"] == yr].sort_values("ring_start_km").copy()
             if sub.empty:
-                sub = df_rings_base[df_rings_base["year"] == 2024].sort_values("ring_start_km").copy()
+                sub = (
+                    df_rings_base[df_rings_base["year"] == 2024].sort_values("ring_start_km").copy()
+                )
             base_tot = sub["builtup_km2"].sum()
             scale = target_built / base_tot if base_tot > 0 else 1.0
             sub["tls_builtup_km2"] = np.round(sub["builtup_km2"] * scale, 2)
             diff = round(target_built - sub["tls_builtup_km2"].sum(), 2)
             # Add small rounding adjustment to largest ring index
             if len(sub) > 4:
-                sub.iloc[4, sub.columns.get_loc("tls_builtup_km2")] = round(sub.iloc[4]["tls_builtup_km2"] + diff, 2)
+                sub.iloc[4, sub.columns.get_loc("tls_builtup_km2")] = round(
+                    sub.iloc[4]["tls_builtup_km2"] + diff, 2
+                )
 
-            sub["tls_builtup_pct"] = np.round((sub["tls_builtup_km2"] / sub["valid_km2"]) * 100.0, 2)
+            sub["tls_builtup_pct"] = np.round(
+                (sub["tls_builtup_km2"] / sub["valid_km2"]) * 100.0, 2
+            )
 
             ring_entries = []
             for _, r in sub.iterrows():
-                ring_entries.append({
-                    "ring_start_km": float(r["ring_start_km"]),
-                    "ring_end_km": float(r["ring_end_km"]),
-                    "ring_label": f"{int(r['ring_start_km'])}-{int(r['ring_end_km'])} km",
-                    "builtup_km2": float(r["tls_builtup_km2"]),
-                    "valid_km2": float(r["valid_km2"]),
-                    "builtup_pct": float(r["tls_builtup_pct"]),
-                })
+                ring_entries.append(
+                    {
+                        "ring_start_km": float(r["ring_start_km"]),
+                        "ring_end_km": float(r["ring_end_km"]),
+                        "ring_label": f"{int(r['ring_start_km'])}-{int(r['ring_end_km'])} km",
+                        "builtup_km2": float(r["tls_builtup_km2"]),
+                        "valid_km2": float(r["valid_km2"]),
+                        "builtup_pct": float(r["tls_builtup_pct"]),
+                    }
+                )
             rings_dict[str(yr)] = ring_entries
 
             # Sprawl metrics from TLS rings
             tot_r = sum(re["builtup_km2"] for re in ring_entries)
             core_r = sum(re["builtup_km2"] for re in ring_entries if re["ring_end_km"] <= 6.0)
             periph_r = sum(re["builtup_km2"] for re in ring_entries if re["ring_start_km"] >= 12.0)
-            core_sh = round((core_r / tot_r) * 100.0, 2) if tot_r > 0 else (22.9 if city_key == "ahmedabad" else 13.0)
-            periph_sh = round((periph_r / tot_r) * 100.0, 2) if tot_r > 0 else (30.9 if city_key == "ahmedabad" else 47.1)
+            core_sh = (
+                round((core_r / tot_r) * 100.0, 2)
+                if tot_r > 0
+                else (22.9 if city_key == "ahmedabad" else 13.0)
+            )
+            periph_sh = (
+                round((periph_r / tot_r) * 100.0, 2)
+                if tot_r > 0
+                else (30.9 if city_key == "ahmedabad" else 47.1)
+            )
 
             p_vals = np.array([re["builtup_km2"] for re in ring_entries]) / tot_r
             p_vals = p_vals[p_vals > 0]
             entropy_val = round(float(-np.sum(p_vals * np.log(p_vals)) / np.log(len(p_vals))), 4)
 
-            metrics_list.append({
-                "year": yr,
-                "builtup_km2": target_built,
-                "shannon_entropy": entropy_val,
-                "core_builtup_km2": round(core_r, 2),
-                "core_share_pct": core_sh,
-                "periphery_builtup_km2": round(periph_r, 2),
-                "periphery_share_pct": periph_sh,
-            })
+            metrics_list.append(
+                {
+                    "year": yr,
+                    "builtup_km2": target_built,
+                    "shannon_entropy": entropy_val,
+                    "core_builtup_km2": round(core_r, 2),
+                    "core_share_pct": core_sh,
+                    "periphery_builtup_km2": round(periph_r, 2),
+                    "periphery_share_pct": periph_sh,
+                }
+            )
         else:
-            metrics_list.append({
-                "year": yr,
-                "builtup_km2": target_built,
-                "shannon_entropy": 0.9469 if city_key == "ahmedabad" else 0.9565,
-                "core_share_pct": 22.9 if city_key == "ahmedabad" else 13.0,
-                "periphery_share_pct": 30.9 if city_key == "ahmedabad" else 47.1,
-            })
+            metrics_list.append(
+                {
+                    "year": yr,
+                    "builtup_km2": target_built,
+                    "shannon_entropy": 0.9469 if city_key == "ahmedabad" else 0.9565,
+                    "core_share_pct": 22.9 if city_key == "ahmedabad" else 13.0,
+                    "periphery_share_pct": 30.9 if city_key == "ahmedabad" else 47.1,
+                }
+            )
 
     # Transitions
     transitions_dict = {}
@@ -517,7 +597,9 @@ def export_web_data(
 
     # Provenance Block
     try:
-        git_sha = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], text=True, cwd=str(PROJECT_ROOT)).strip()
+        git_sha = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"], text=True, cwd=str(PROJECT_ROOT)
+        ).strip()
     except Exception:
         git_sha = "unknown"
 
@@ -529,15 +611,19 @@ def export_web_data(
     provenance_block = {
         "script": "pipeline/export_web.py",
         "git_sha": git_sha,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "input_files": {
             "raw_classified_rasters": {
                 str(y): get_file_hash(data_path / f"{city_key}_{y}_classified.tif")
                 for y in [2018, 2020, 2021, 2022, 2023, 2024]
                 if (data_path / f"{city_key}_{y}_classified.tif").exists()
             },
-            "train_points_pooled": get_file_hash(data_path / city_key / "train_points_pooled.geojson"),
-            "test_points_pooled": get_file_hash(data_path / city_key / "test_points_pooled.geojson"),
+            "train_points_pooled": get_file_hash(
+                data_path / city_key / "train_points_pooled.geojson"
+            ),
+            "test_points_pooled": get_file_hash(
+                data_path / city_key / "test_points_pooled.geojson"
+            ),
             "canonical_metrics": get_file_hash(PROJECT_ROOT / "data" / "metrics.json"),
         },
     }
@@ -545,7 +631,7 @@ def export_web_data(
     # LOYO Validation Table: Load from Canonical Metrics (ALL Held-Out Points)
     canonical_metrics_path = PROJECT_ROOT / "data" / "metrics.json"
     if canonical_metrics_path.exists():
-        with open(canonical_metrics_path, "r", encoding="utf-8") as f:
+        with open(canonical_metrics_path, encoding="utf-8") as f:
             all_metrics = json.load(f)
         val_rows = all_metrics.get(city_key, {}).get("loyo_all_points", [])
     else:
@@ -557,7 +643,7 @@ def export_web_data(
         "method": "Stratified Area-Weighted Estimator (Olofsson et al. 2014) with 95% Confidence Intervals",
         "note": "Ground-reference labels come from ESA WorldCover 2021 for all validation folds (2018 is evaluated as a temporal fold only). Note: The LOYO table evaluates the TLS-retrained variant (single-year RF models retrained on TLS-normalised composites across held-out folds). The displayed operational series differs, using the pooled multi-year RF model with 3x3 majority filter and no temporal cleanup.",
         "table": val_rows,
-        "negative_result": "Negative Result: Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not eliminate year-to-year classification noise; temporal consistency filtering remains the robust operational safeguard.",
+        "negative_result": "Negative Result: Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not eliminate year-to-year classification noise; temporal consistency filtering remains the robust operational safeguard. TLS-normalised is shown as the main series because its 2021 area is closest to WorldCover 2021 and its trend is smoothest, not because it improved F1.",
     }
 
     # 1. Loss-to-Gain Gate: computed directly from 2020 and 2024 validated-series rasters
@@ -575,21 +661,30 @@ def export_web_data(
         mapped_loss_km2 = 57.74 if city_key == "ahmedabad" else 55.32
         mapped_gain_km2 = 116.65 if city_key == "ahmedabad" else 118.00
 
-    mapped_loss_gain_ratio = round(mapped_loss_km2 / mapped_gain_km2, 3) if mapped_gain_km2 > 0 else 0.0
+    mapped_loss_gain_ratio = (
+        round(mapped_loss_km2 / mapped_gain_km2, 3) if mapped_gain_km2 > 0 else 0.0
+    )
     gate_loss_gain_pass = mapped_loss_gain_ratio <= 0.30
 
-    loss_gain_val_str = f"Mapped: {mapped_loss_gain_ratio:.3f} ({mapped_loss_km2:.2f} / {mapped_gain_km2:.2f} km²)"
+    loss_gain_val_str = (
+        f"Mapped: {mapped_loss_gain_ratio:.3f} ({mapped_loss_km2:.2f} / {mapped_gain_km2:.2f} km²)"
+    )
     if city_key == "ahmedabad":
         val_csv = data_path / "ahmedabad" / "validation" / "change_sample_labelled.csv"
         if not val_csv.exists():
-            val_csv = data_path / "ahmedabad" / "validation" / "change_sample_labelled_ahmedabad.csv"
+            val_csv = (
+                data_path / "ahmedabad" / "validation" / "change_sample_labelled_ahmedabad.csv"
+            )
         if val_csv.exists():
             from pipeline.score_change_validation import score_change_validation
+
             cv_temp = score_change_validation(val_csv)
             adj_loss = cv_temp["adjusted_loss_km2"]
             adj_gain = cv_temp["adjusted_gain_km2"]
             adj_ratio = round(adj_loss / adj_gain, 3) if adj_gain > 0 else 0.0
-            loss_gain_val_str += f" | Adjusted (Olofsson): {adj_ratio:.3f} ({adj_loss:.2f} / {adj_gain:.2f} km²)"
+            loss_gain_val_str += (
+                f" | Adjusted (Olofsson): {adj_ratio:.3f} ({adj_loss:.2f} / {adj_gain:.2f} km²)"
+            )
 
     # 2. NoData Gate: maximum NoData percentage across 2020-2024 from validated rasters
     nodata_pct_list = []
@@ -597,7 +692,9 @@ def export_web_data(
         if yr in class_areas_raw:
             nd_km2 = class_areas_raw[yr]["nodata"]
             nodata_pct_list.append((nd_km2 / aoi_km2) * 100.0)
-    max_nodata = round(max(nodata_pct_list), 1) if nodata_pct_list else (1.1 if city_key == "pune" else 0.0)
+    max_nodata = (
+        round(max(nodata_pct_list), 1) if nodata_pct_list else (1.1 if city_key == "pune" else 0.0)
+    )
     gate_nodata_pass = max_nodata <= 5.0
 
     # 3. Scenes Gate: threshold >= 4 distinct acquisition dates per year from composite reports
@@ -609,7 +706,7 @@ def export_web_data(
         ]
         cr_path = next((p for p in cr_cand if p.exists()), None)
         if cr_path:
-            with open(cr_path, "r", encoding="utf-8") as f:
+            with open(cr_path, encoding="utf-8") as f:
                 cr_data = json.load(f)
                 dates = cr_data.get("scene_dates", [])
                 in_window = [d for d in dates if int(d.split("-")[1]) in (11, 12, 1, 2)]
@@ -634,10 +731,18 @@ def export_web_data(
     gate_volatility_pass = max_volatility <= 15.0
 
     # 5. Accuracy Gate: built-up F1 (TLS-retrained variant) across all years
-    tls_loyo_rows = [r for r in val_rows if "TLS" in r.get("stage", "") or "After" in r.get("stage", "") or "Normalized" in r.get("stage", "")]
+    tls_loyo_rows = [
+        r
+        for r in val_rows
+        if "TLS" in r.get("stage", "")
+        or "After" in r.get("stage", "")
+        or "Normalized" in r.get("stage", "")
+    ]
     if tls_loyo_rows:
         f1_by_year = {r["year"]: round(r["f1_score"] * 100.0, 1) for r in tls_loyo_rows}
-        in_window_f1 = [r["f1_score"] for r in tls_loyo_rows if not r.get("outside_displayed_window", False)]
+        in_window_f1 = [
+            r["f1_score"] for r in tls_loyo_rows if not r.get("outside_displayed_window", False)
+        ]
         lowest_f1 = min(in_window_f1) if in_window_f1 else 0.70
         f1_str_list = [f"{y}: {pct:.1f}%" for y, pct in sorted(f1_by_year.items())]
         lowest_f1_pct = round(lowest_f1 * 100.0, 1)
@@ -698,7 +803,7 @@ def export_web_data(
             "start_year": 2020,
             "end_year": 2024,
             "years": sorted_years,
-            "excluded_years_note": "2018-2019 excluded: too few in-window Sentinel-2 scenes",
+            "excluded_years_note": "2018-2019 excluded: too few clear scenes in the Nov-Feb window",
         },
         "headline_2020_2024_expansion": {
             "net_growth_range_km2": [min_delta_km2, max_delta_km2],
@@ -732,11 +837,16 @@ def export_web_data(
                 },
             },
             "worldcover_2021_anchor_km2": round(wc_built_km2, 2),
-            "estimate_2021_range_km2": [min(raw_dict[2021], clean_dict[2021], norm_dict[2021]), max(raw_dict[2021], clean_dict[2021], norm_dict[2021])],
+            "estimate_2021_range_km2": [
+                min(raw_dict[2021], clean_dict[2021], norm_dict[2021]),
+                max(raw_dict[2021], clean_dict[2021], norm_dict[2021]),
+            ],
             "estimate_2021_norm_km2": round(norm_dict[2021], 2),
             "estimate_2021_clean_km2": round(clean_dict[2021], 2),
             "estimate_2021_diff_km2": round(norm_dict[2021] - wc_built_km2, 2),
-            "estimate_2021_diff_pct": round(((norm_dict[2021] - wc_built_km2) / wc_built_km2) * 100.0, 1),
+            "estimate_2021_diff_pct": round(
+                ((norm_dict[2021] - wc_built_km2) / wc_built_km2) * 100.0, 1
+            ),
         },
         "growth_series": time_series_data,
         "validation_loyo": validation_loyo,
@@ -771,10 +881,17 @@ def export_web_data(
     if city_key == "ahmedabad":
         val_csv = PROJECT_ROOT / "data" / "ahmedabad" / "validation" / "change_sample_labelled.csv"
         if not val_csv.exists():
-            val_csv = PROJECT_ROOT / "data" / "ahmedabad" / "validation" / "change_sample_labelled_ahmedabad.csv"
-        
+            val_csv = (
+                PROJECT_ROOT
+                / "data"
+                / "ahmedabad"
+                / "validation"
+                / "change_sample_labelled_ahmedabad.csv"
+            )
+
         if val_csv.exists():
             from pipeline.score_change_validation import score_change_validation
+
             cv_res = score_change_validation(val_csv)
             ci_lower = cv_res["ci_lower_net_km2"]
             ci_upper = cv_res["ci_upper_net_km2"]
@@ -791,20 +908,29 @@ def export_web_data(
             strata_table = []
             for st in ["A", "B", "C", "D"]:
                 sm = cv_res["strata_metrics"][st]
-                strata_table.append({
-                    "stratum": st,
-                    "name": strata_names[st],
-                    "mapped_area_km2": sm["mapped_area_km2"],
-                    "sample_size": sm["sample_size"],
-                    "c00": sm["c00"],
-                    "c01_gain": sm["c01"],
-                    "c10_loss": sm["c10"],
-                    "c11_built": sm["c11"],
-                    "unclear": cv_res["unclear_per_stratum"].get(st, 0),
-                    "accuracy_pct": round(sm["accuracy"] * 100.0, 2),
-                    "estimated_gain_km2": sm["estimated_gain_km2"],
-                    "estimated_loss_km2": sm["estimated_loss_km2"],
-                })
+                strata_table.append(
+                    {
+                        "stratum": st,
+                        "name": strata_names[st],
+                        "mapped_area_km2": sm["mapped_area_km2"],
+                        "sample_size": sm["sample_size"],
+                        "c00": sm["c00"],
+                        "c01_gain": sm["c01"],
+                        "c10_loss": sm["c10"],
+                        "c11_built": sm["c11"],
+                        "unclear": cv_res["unclear_per_stratum"].get(st, 0),
+                        "accuracy_pct": round(sm["accuracy"] * 100.0, 2),
+                        "estimated_gain_km2": sm["estimated_gain_km2"],
+                        "estimated_loss_km2": sm["estimated_loss_km2"],
+                    }
+                )
+
+            sm_d = cv_res["strata_metrics"]["D"]
+            n_never_built = sm_d["c00"]
+            n_D = sm_d["sample_size"]
+            loss_area = sm_d["mapped_area_km2"]
+            false_loss_km2 = round((n_never_built / n_D) * loss_area) if n_D > 0 else 0
+            mapped_loss_note = f"{n_never_built} of {n_D} mapped-loss points were never built-up: the 2020 map falsely marks about {false_loss_km2} km² as built-up."
 
             stats_payload["change_validation"] = {
                 "status": "validated",
@@ -813,6 +939,11 @@ def export_web_data(
                 "sample_points_evaluated": cv_res["total_evaluated_points"],
                 "excluded_unclear": cv_res["excluded_unclear_count"],
                 "strata_table": strata_table,
+                "n_never_built": n_never_built,
+                "n_D": n_D,
+                "stratum_d_area_km2": loss_area,
+                "false_builtup_km2": false_loss_km2,
+                "mapped_loss_note": mapped_loss_note,
                 "adjusted_gain_km2": cv_res["adjusted_gain_km2"],
                 "ci95_gain_km2": cv_res["ci95_gain_km2"],
                 "ci_lower_gain_km2": cv_res["ci_lower_gain_km2"],
@@ -841,14 +972,14 @@ def export_web_data(
                     "strata_rasters": "Generated from annual TLS-normalised classifications (2020 vs 2024) with 3x3 majority filter (no temporal consistency rules). SHA-256: 2020 = a70f5c9e42c6adfa27f9bc0cfc22cbbfd7860aa3874958a560612db39b3670b8; 2024 = 2413bc684447619f929898cbf971250218d7d99daef9a2c7836f56a48a736f19.",
                     "raster_sha256": {
                         "2020": "a70f5c9e42c6adfa27f9bc0cfc22cbbfd7860aa3874958a560612db39b3670b8",
-                        "2024": "2413bc684447619f929898cbf971250218d7d99daef9a2c7836f56a48a736f19"
+                        "2024": "2413bc684447619f929898cbf971250218d7d99daef9a2c7836f56a48a736f19",
                     },
                     "mapped_vs_series_reconciliation": "Mapped areas (415.97 and 474.88 km²) match the dashboard TLS series (415.97 and 474.88 km²), both generated from the 3x3 majority filtered TLS classification pipeline without temporal filtering.",
                     "continuity_correction": "Gross loss standard error applies Laplace (add-one) smoothing for zero-count sample proportions.",
                     "labelling_history": "26 of 291 start labels (12 built to not built, 14 not built to built) changed between the first and second passes (labeller change rate ~9%). The third pass rechecked 10 discordant points (apparent losses and gains) using Google Earth historical imagery; the 6 corrected labels persisted through the second pass, while concordant points were not rechecked.",
                     "uncertainty_disclaimer": "Intervals reflect sampling error only; labelling inconsistency (about 9% between passes) is not included.",
-                    "validated_series": "TLS-normalised classification series."
-                }
+                    "validated_series": "TLS-normalised classification series.",
+                },
             }
         else:
             stats_payload["change_validation"] = {

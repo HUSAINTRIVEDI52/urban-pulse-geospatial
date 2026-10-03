@@ -1,10 +1,19 @@
 ---
+# ==============================================================================
+# UrbanPulse Ansible Lint Configuration
+# ==============================================================================
 profile: production
+
 exclude_paths:
   - .venv/
   - venv/
   - data/
   - .github/
-rules:
-  line-length:
-    max: 160
+  - scratch/
+
+roles_path:
+  - infra/ansible/roles
+
+skip_list:
+  - risky-shell-pipe  # Pipe in curl | sh is required by the official k3s automated installation script
+  - command-instead-of-module  # Direct shell installer and kubectl commands are used without requiring heavy external python dependencies

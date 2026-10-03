@@ -1,6 +1,6 @@
-import geopandas as gpd
-import pandas as pd
 from pathlib import Path
+
+import geopandas as gpd
 
 for city in ["ahmedabad", "pune"]:
     tr_p = Path(f"data/{city}/train_points_pooled.geojson")

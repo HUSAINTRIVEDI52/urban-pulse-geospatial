@@ -30,7 +30,7 @@
 
 ## 📊 Key Results (2020–2024 Analysis Window)
 
-> **Framing Note**: All core analytics are evaluated strictly over the **2020–2024** window. Pre-2020 years (2018–2019) are excluded due to too few in-window cloud-free Sentinel-2 scenes. The year **2022** is designated **Oct-Dec 2021, Collection 1** (query window Oct 1, 2021 – Mar 31, 2022; last acquisition date Dec 23, 2021 for Ahmedabad; query window Nov 1, 2021 – Feb 28, 2022; last acquisition date Dec 25, 2021 for Pune; scale and offset are derived directly from STAC item metadata).
+> **Framing Note**: All core analytics are evaluated strictly over the **2020–2024** window. 2018-2019 excluded: too few clear scenes in the Nov-Feb window. 2022 covers October-December 2021 only (no January-February) (query window Oct 1, 2021 – Mar 31, 2022; last acquisition date Dec 23, 2021 for Ahmedabad; query window Nov 1, 2021 – Feb 28, 2022; last acquisition date Dec 25, 2021 for Pune; scale and offset are derived directly from STAC item metadata).
 > 
 > **Real Composite Observation Windows & Scene Counts**:
 > - **Ahmedabad**:
@@ -148,7 +148,7 @@ To independently validate multi-temporal land cover transitions and compute rigo
 
 Cross-year Total Least Squares (TLS) pseudo-invariant feature (PIF) radiometric normalisation was implemented and systematically benchmarked against raw surface reflectance composites. 
 
-**Finding**: Radiometric normalisation **did not reduce year-to-year classification drift** across held-out evaluation folds. Consequently, rule-based temporal consistency filtering (3-year majority smoothing and urban persistence constraints) remains the authoritative operational defense against spurious classification noise in UrbanPulse.
+**Finding**: Radiometric normalisation **did not reduce year-to-year classification drift** across held-out evaluation folds. Consequently, rule-based temporal consistency filtering (3-year majority smoothing and urban persistence constraints) remains the authoritative operational defense against spurious classification noise in UrbanPulse. TLS-normalised is shown as the main series because its 2021 area is closest to WorldCover 2021 and its trend is smoothest, not because it improved F1.
 
 > **Methodological Disclosure**: Ahmedabad's 2021, 2023 and 2024 composites use the 20 lowest-cloud scenes between October and March, so they include October and March scenes (11 of 20 in 2024). Pune's composites use November-February only. Ahmedabad's 2020 composite was built earlier with a strict Dec 1-Feb 15 window; current code does not reproduce its exact scene list. How much the window affects Ahmedabad's built-up area has not been tested.
 

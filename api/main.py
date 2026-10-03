@@ -50,9 +50,10 @@ app.add_middleware(
 if Instrumentator is not None:
     Instrumentator().instrument(app).expose(app, endpoint="/metrics", tags=["Monitoring"])
 else:
+
     @app.get("/metrics", tags=["Monitoring"], response_class=PlainTextResponse)
     def dummy_metrics():
-        return "# HELP http_requests_total Total HTTP Requests\nhttp_requests_total 1\npython_info{version=\"3.14\"} 1\nurbanpulse_api_requests_total 1\n"
+        return '# HELP http_requests_total Total HTTP Requests\nhttp_requests_total 1\npython_info{version="3.14"} 1\nurbanpulse_api_requests_total 1\n'
 
 
 def get_db_connection():

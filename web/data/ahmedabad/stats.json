@@ -5,8 +5,8 @@
   "pixel_area_km2": 0.0036,
   "provenance": {
     "script": "pipeline/export_web.py",
-    "git_sha": "279cd0f",
-    "generated_at": "2026-10-03T18:59:26.435981+00:00",
+    "git_sha": "e1902ca",
+    "generated_at": "2026-10-03T19:37:33.356877+00:00",
     "input_files": {
       "raw_classified_rasters": {
         "2018": "25ec5cc639ea",
@@ -31,7 +31,7 @@
       2023,
       2024
     ],
-    "excluded_years_note": "2018-2019 excluded: too few in-window Sentinel-2 scenes"
+    "excluded_years_note": "2018-2019 excluded: too few clear scenes in the Nov-Feb window"
   },
   "headline_2020_2024_expansion": {
     "net_growth_range_km2": [
@@ -107,7 +107,7 @@
     },
     {
       "year": 2022,
-      "display_year": "2022 (partial season (no Jan-Feb))",
+      "display_year": "2022 - partial season, no Jan-Feb",
       "raw_builtup_km2": 423.91,
       "clean_builtup_km2": 441.91,
       "norm_builtup_km2": 426.94,
@@ -239,7 +239,7 @@
         "ci_upper_km2": 476.3
       }
     ],
-    "negative_result": "Negative Result: Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not eliminate year-to-year classification noise; temporal consistency filtering remains the robust operational safeguard."
+    "negative_result": "Negative Result: Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not eliminate year-to-year classification noise; temporal consistency filtering remains the robust operational safeguard. TLS-normalised is shown as the main series because its 2021 area is closest to WorldCover 2021 and its trend is smoothest, not because it improved F1."
   },
   "quality_gate": {
     "status": "FLAGGED",
@@ -1035,6 +1035,11 @@
         "estimated_loss_km2": 0.0
       }
     ],
+    "n_never_built": 45,
+    "n_D": 50,
+    "stratum_d_area_km2": 57.7404,
+    "false_builtup_km2": 52,
+    "mapped_loss_note": "45 of 50 mapped-loss points were never built-up: the 2020 map falsely marks about 52 km\u00b2 as built-up.",
     "adjusted_gain_km2": 88.8462,
     "ci95_gain_km2": 49.4827,
     "ci_lower_gain_km2": 39.3635,

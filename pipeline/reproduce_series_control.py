@@ -8,6 +8,7 @@ to verify reproduction of the operational validated series.
 import json
 import sys
 from pathlib import Path
+
 import joblib
 import numpy as np
 import rasterio
@@ -20,9 +21,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from pipeline.train_classifier import apply_majority_filter_3x3
 
 # Classifier inputs in exact training order
-FEATURE_NAMES = [
-    "red", "green", "blue", "nir", "swir16", "ndvi", "ndbi", "mndwi"
-]
+FEATURE_NAMES = ["red", "green", "blue", "nir", "swir16", "ndvi", "ndbi", "mndwi"]
 
 
 def reproduce_series_control(data_dir: Path = Path("data/ahmedabad")):
@@ -42,7 +41,7 @@ def reproduce_series_control(data_dir: Path = Path("data/ahmedabad")):
     print("REPRODUCING AHMEDABAD (2020, 2021, 2023, 2024) - CONTROL RUN")
     print("Re-classifying existing normalised feature rasters from data/ahmedabad/normalized/")
     print(f"Classifier Inputs (8 Bands): {FEATURE_NAMES}")
-    print(f"Class Code Counted as Built-up: Class 1 (Built-up)")
+    print("Class Code Counted as Built-up: Class 1 (Built-up)")
     print("=" * 80)
 
     for yr in years:
@@ -53,7 +52,6 @@ def reproduce_series_control(data_dir: Path = Path("data/ahmedabad")):
         with rasterio.open(feature_files[0]) as ref_src:
             profile = ref_src.profile.copy()
             transform = ref_src.transform
-            crs = ref_src.crs
             h, w = ref_src.height, ref_src.width
 
         feature_arrays = []

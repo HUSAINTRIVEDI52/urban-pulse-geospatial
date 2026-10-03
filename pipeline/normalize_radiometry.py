@@ -82,7 +82,7 @@ def extract_pif_mask(
     Extracts Pseudo-Invariant Feature (PIF) boolean mask from a 3D cleaned classified stack (T, H, W).
     PIFs are pixels identified as Water (class 3) in >= min_years_water OR Built-up (class 1)
     in >= min_years_built, eroded by erosion_size x erosion_size structural element away from edges.
-    
+
     Returns:
         tuple of (combined_pif_mask, water_pif_eroded, built_pif_eroded)
     """
@@ -112,7 +112,7 @@ def normalize_city_radiometry(
 ) -> dict[str, Any]:
     """
     Calculates and applies per-band linear radiometric normalisation across all analysis years.
-    
+
     Args:
         city: City name ('ahmedabad', 'pune').
         ref_year: Reference composite year (default: 2021).
@@ -131,12 +131,12 @@ def normalize_city_radiometry(
     data_path = Path(data_dir)
     city_subpath = data_path / city_key
     clean_dir = city_subpath / "clean"
-    
+
     if output_dir is None:
         out_path = city_subpath / "normalized"
     else:
         out_path = Path(output_dir)
-        
+
     out_path.mkdir(parents=True, exist_ok=True)
     if years is None:
         years = DEFAULT_YEARS
@@ -146,7 +146,11 @@ def normalize_city_radiometry(
 
     print("=" * 96)
     print(f"[*] UrbanPulse Radiometric Normalisation: {city_name} (Reference Year = {ref_year})")
-    print(f"    - Calibration Method : {method.upper()} (Orthogonal / Total Least Squares)" if method.lower() == "tls" else "    - Calibration Method : OLS")
+    print(
+        f"    - Calibration Method : {method.upper()} (Orthogonal / Total Least Squares)"
+        if method.lower() == "tls"
+        else "    - Calibration Method : OLS"
+    )
     print(f"    - Target Years       : {years}")
     print(f"    - Excluded from Fit  : {exclude_years}")
     print(f"    - Optical Bands      : {OPTICAL_BANDS}")
@@ -212,7 +216,9 @@ def normalize_city_radiometry(
         is_excluded = y in exclude_years
 
         print(f"\n--- Normalisation Statistics for {city_name} {y} (vs Ref {ref_year}) ---")
-        print(f"{'Band':<8} | {'Slope (m)':<10} | {'Intercept (c)':<14} | {'R²':<8} | {'Before Mean':<12} | {'After Mean':<12} | {'Status'}")
+        print(
+            f"{'Band':<8} | {'Slope (m)':<10} | {'Intercept (c)':<14} | {'R²':<8} | {'Before Mean':<12} | {'After Mean':<12} | {'Status'}"
+        )
         print("-" * 96)
 
         for b in OPTICAL_BANDS:
@@ -225,7 +231,9 @@ def normalize_city_radiometry(
             x_pif = raw_arr[pif_mask]
             y_pif = ref_band_arrays[b][pif_mask]
 
-            valid_pif = np.isfinite(x_pif) & np.isfinite(y_pif) & (x_pif != -9999.0) & (y_pif != -9999.0)
+            valid_pif = (
+                np.isfinite(x_pif) & np.isfinite(y_pif) & (x_pif != -9999.0) & (y_pif != -9999.0)
+            )
             x_clean = x_pif[valid_pif]
             y_clean = y_pif[valid_pif]
 
@@ -254,7 +262,11 @@ def normalize_city_radiometry(
             normalized_bands[b] = norm_arr
 
             before_mean = float(np.mean(x_clean)) if len(x_clean) > 0 else 0.0
-            after_mean = float(np.mean(norm_arr[pif_mask & valid_raw])) if np.any(pif_mask & valid_raw) else 0.0
+            after_mean = (
+                float(np.mean(norm_arr[pif_mask & valid_raw]))
+                if np.any(pif_mask & valid_raw)
+                else 0.0
+            )
             ref_mean = float(np.mean(y_clean)) if len(y_clean) > 0 else 0.0
 
             normalization_results["coefficients"][y][b] = {
@@ -267,20 +279,24 @@ def normalize_city_radiometry(
                 "status": status_str,
             }
 
-            summary_rows.append({
-                "city": city_key,
-                "year": y,
-                "band": b,
-                "slope": round(slope, 6),
-                "intercept": round(intercept, 6),
-                "r2": round(r2, 4),
-                "before_mean": round(before_mean, 6),
-                "after_mean": round(after_mean, 6),
-                "ref_mean": round(ref_mean, 6),
-                "status": status_str,
-            })
+            summary_rows.append(
+                {
+                    "city": city_key,
+                    "year": y,
+                    "band": b,
+                    "slope": round(slope, 6),
+                    "intercept": round(intercept, 6),
+                    "r2": round(r2, 4),
+                    "before_mean": round(before_mean, 6),
+                    "after_mean": round(after_mean, 6),
+                    "ref_mean": round(ref_mean, 6),
+                    "status": status_str,
+                }
+            )
 
-            print(f"{b:<8} | {slope:<10.4f} | {intercept:<14.4f} | {r2:<8.4f} | {before_mean:<12.4f} | {after_mean:<12.4f} | {status_str}")
+            print(
+                f"{b:<8} | {slope:<10.4f} | {intercept:<14.4f} | {r2:<8.4f} | {before_mean:<12.4f} | {after_mean:<12.4f} | {status_str}"
+            )
 
         # Compute Spectral Indices from Normalized Bands
         red = normalized_bands["red"]
@@ -298,13 +314,15 @@ def normalize_city_radiometry(
             prof.pop("blockxsize", None)
             prof.pop("blockysize", None)
             prof.pop("tiled", None)
-            prof.update({
-                "driver": "GTiff",
-                "count": 1,
-                "dtype": "float32",
-                "nodata": -9999.0,
-                "compress": "lzw",
-            })
+            prof.update(
+                {
+                    "driver": "GTiff",
+                    "count": 1,
+                    "dtype": "float32",
+                    "nodata": -9999.0,
+                    "compress": "lzw",
+                }
+            )
 
             for feat_name, arr in normalized_bands.items():
                 out_tif = out_path / f"{city_key}_{y}_{feat_name}.tif"
@@ -314,7 +332,7 @@ def normalize_city_radiometry(
     # Save coefficients to JSON and CSV
     coeff_json_path = city_subpath / "radiometric_normalization_coefficients.json"
     coeff_csv_path = city_subpath / "radiometric_normalization_coefficients.csv"
-    
+
     with open(coeff_json_path, "w", encoding="utf-8") as f:
         json.dump(normalization_results, f, indent=2)
     pd.DataFrame(summary_rows).to_csv(coeff_csv_path, index=False)
@@ -327,14 +345,26 @@ def normalize_city_radiometry(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Radiometric normalisation of optical composites using PIFs.")
+    parser = argparse.ArgumentParser(
+        description="Radiometric normalisation of optical composites using PIFs."
+    )
     parser.add_argument("--city", type=str, default="ahmedabad", help="City name (ahmedabad, pune)")
     parser.add_argument("--ref-year", type=int, default=2021, help="Reference year (default: 2021)")
     parser.add_argument("--years", type=int, nargs="+", default=None, help="Years to normalise")
-    parser.add_argument("--exclude-years", type=int, nargs="+", default=None, help="Years to exclude from fit")
-    parser.add_argument("--method", type=str, default="tls", choices=["tls", "ols"], help="Regression method (tls, ols)")
+    parser.add_argument(
+        "--exclude-years", type=int, nargs="+", default=None, help="Years to exclude from fit"
+    )
+    parser.add_argument(
+        "--method",
+        type=str,
+        default="tls",
+        choices=["tls", "ols"],
+        help="Regression method (tls, ols)",
+    )
     parser.add_argument("--data-dir", type=str, default="data", help="Data directory")
-    parser.add_argument("--output-dir", type=str, default=None, help="Output directory for normalized rasters")
+    parser.add_argument(
+        "--output-dir", type=str, default=None, help="Output directory for normalized rasters"
+    )
     parser.add_argument("--no-save-rasters", action="store_true", help="Skip saving rasters")
 
     args = parser.parse_args()

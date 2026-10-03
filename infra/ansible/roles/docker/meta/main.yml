@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: UrbanPulse Team
+  description: Docker CE repository configuration, container runtime installation, and group permissions
+  company: UrbanPulse
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - "22.04"
+  galaxy_tags:
+    - docker
+    - containers
+dependencies: []

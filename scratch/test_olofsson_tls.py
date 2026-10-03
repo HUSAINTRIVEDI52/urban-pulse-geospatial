@@ -1,12 +1,6 @@
-import json
-import numpy as np
-import rasterio
-import geopandas as gpd
-import pandas as pd
 from pathlib import Path
-from scipy.ndimage import binary_erosion
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
+
+import numpy as np
 
 PROJECT_ROOT = Path("f:/gis-project/UrbanPulse")
 DATA_DIR = PROJECT_ROOT / "data"
@@ -34,7 +28,7 @@ def fit_tls_regression(x, y):
     y_mean = np.mean(y)
     x_c = x - x_mean
     y_c = y - y_mean
-    
+
     # 2x2 covariance / scatter matrix SVD
     M = np.column_stack([x_c, y_c])
     _, _, Vt = np.linalg.svd(M, full_matrices=False)
@@ -45,7 +39,7 @@ def fit_tls_regression(x, y):
     else:
         slope = float(v1[1] / v1[0])
     intercept = float(y_mean - slope * x_mean)
-    
+
     # Correlation coefficient r
     r = np.corrcoef(x, y)[0, 1]
     return slope, intercept, float(r**2)
@@ -80,19 +74,19 @@ def olofsson_area_estimation(cm, mapped_area_km2_by_class, target_class_idx=0):
     K = cm.shape[0]
     A_total = np.sum(mapped_area_km2_by_class)
     W = mapped_area_km2_by_class / A_total  # Mapped area proportions W_i
-    
+
     n_i_dot = np.sum(cm, axis=1)  # row sums (mapped sample counts)
-    
+
     # Stratified area proportion matrix p_ij = W_i * (n_ij / n_i_dot)
     p = np.zeros((K, K), dtype=np.float64)
     for i in range(K):
         if n_i_dot[i] > 0:
             p[i, :] = W[i] * (cm[i, :] / n_i_dot[i])
-            
+
     # Estimated reference class area proportion p_dot_k
     p_dot_k = np.sum(p[:, target_class_idx])
     A_adj_km2 = A_total * p_dot_k
-    
+
     # Standard error of p_dot_k
     var_p_dot_k = 0.0
     for i in range(K):
@@ -102,13 +96,13 @@ def olofsson_area_estimation(cm, mapped_area_km2_by_class, target_class_idx=0):
             sample_prop = n_ik / n_i
             var_term = (W[i]**2) * (sample_prop * (1.0 - sample_prop)) / (n_i - 1)
             var_p_dot_k += var_term
-            
+
     se_p_dot_k = np.sqrt(var_p_dot_k)
     se_A_adj_km2 = A_total * se_p_dot_k
     ci_95_km2 = 1.96 * se_A_adj_km2
-    
+
     mapped_target_km2 = mapped_area_km2_by_class[target_class_idx]
-    
+
     return {
         "mapped_area_km2": mapped_target_km2,
         "adjusted_area_km2": A_adj_km2,

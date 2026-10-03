@@ -79,7 +79,9 @@ def generate_city_validated_series(
             "builtup_pixels": built_px,
             "builtup_km2": built_km2,
         }
-        print(f"  [+] Year {yr}: {built_km2:>6.2f} km² ({built_px:>7} px) -> {out_tif.name} [SHA-256: {file_hash[:16]}...]")
+        print(
+            f"  [+] Year {yr}: {built_km2:>6.2f} km² ({built_px:>7} px) -> {out_tif.name} [SHA-256: {file_hash[:16]}...]"
+        )
 
     manifest_file = out_dir / "manifest.json"
     with open(manifest_file, "w", encoding="utf-8") as f:

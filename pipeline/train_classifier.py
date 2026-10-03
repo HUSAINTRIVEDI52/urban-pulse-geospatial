@@ -157,8 +157,12 @@ def train_and_evaluate_classifier(
         )
 
     print("=" * 78)
-    print(f"[*] UrbanPulse Pooled Multi-Year Classifier (Training: {city.capitalize()} {train_years})")
-    print(f"    - Model Algorithm    : Random Forest ({n_trees} estimators, class_weight='balanced')")
+    print(
+        f"[*] UrbanPulse Pooled Multi-Year Classifier (Training: {city.capitalize()} {train_years})"
+    )
+    print(
+        f"    - Model Algorithm    : Random Forest ({n_trees} estimators, class_weight='balanced')"
+    )
     print(f"    - Input Features     : {FEATURE_NAMES}")
     print(f"    - Pooled Train Data  : {train_pooled_file.resolve()}")
     print(f"    - Pooled Test Data   : {test_pooled_file.resolve()}")
@@ -169,7 +173,9 @@ def train_and_evaluate_classifier(
     test_gdf = gpd.read_file(test_pooled_file)
 
     # If feature columns are already present in pooled GeoJSON
-    has_all_feats = all(f in train_gdf.columns for f in FEATURE_NAMES) and "year" in train_gdf.columns
+    has_all_feats = (
+        all(f in train_gdf.columns for f in FEATURE_NAMES) and "year" in train_gdf.columns
+    )
     if has_all_feats:
         X_train = train_gdf[FEATURE_NAMES].values.astype(np.float32)
         y_train = train_gdf["class_id"].values.astype(np.int64)
@@ -209,11 +215,17 @@ def train_and_evaluate_classifier(
         y_test = np.concatenate(test_y_list)
         test_years_arr = np.concatenate(test_yr_list)
 
-    print(f"\n[+] Total Pooled Training Samples : {len(X_train):>5} points across {len(np.unique(train_years_arr))} years")
-    print(f"[+] Total Pooled Testing Samples  : {len(X_test):>5} points across {len(np.unique(test_years_arr))} years")
+    print(
+        f"\n[+] Total Pooled Training Samples : {len(X_train):>5} points across {len(np.unique(train_years_arr))} years"
+    )
+    print(
+        f"[+] Total Pooled Testing Samples  : {len(X_test):>5} points across {len(np.unique(test_years_arr))} years"
+    )
 
     # 1. Train Random Forest Classifier on Pooled Data
-    print(f"\n[Step 1/3] Training Random Forest model on pooled data ({n_trees} trees, class_weight='balanced')...")
+    print(
+        f"\n[Step 1/3] Training Random Forest model on pooled data ({n_trees} trees, class_weight='balanced')..."
+    )
     rf = RandomForestClassifier(
         n_estimators=n_trees,
         random_state=random_state,
@@ -306,11 +318,13 @@ def train_and_evaluate_classifier(
         print(f"  - Overall Accuracy : {acc_yr * 100:.2f}%")
         print(f"  - Cohen's Kappa    : {kappa_yr:.4f}")
         print("  - Per-Class F1 Scores:")
-        for cid, cname in PROJECT_CLASS_NAMES.items():
+        for cname in PROJECT_CLASS_NAMES.values():
             f1 = rep_dict.get(cname, {}).get("f1-score", 0.0)
             prec = rep_dict.get(cname, {}).get("precision", 0.0)
             rec = rep_dict.get(cname, {}).get("recall", 0.0)
-            print(f"      * {cname:<12}: F1 = {f1:.4f} (Precision = {prec:.4f}, Recall = {rec:.4f})")
+            print(
+                f"      * {cname:<12}: F1 = {f1:.4f} (Precision = {prec:.4f}, Recall = {rec:.4f})"
+            )
 
         print(f"\n  Confusion Matrix ({yr}):")
         print(f"  {header_str}")
@@ -512,7 +526,9 @@ def classify_raster(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Train and evaluate pooled multi-year Random Forest model.")
+    parser = argparse.ArgumentParser(
+        description="Train and evaluate pooled multi-year Random Forest model."
+    )
     parser.add_argument(
         "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
     )

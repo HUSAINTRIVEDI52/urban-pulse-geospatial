@@ -11,21 +11,16 @@ Post-processes annual classified satellite rasters:
 import argparse
 import sys
 from pathlib import Path
-from typing import Any
 
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
 import rasterio
-import yaml
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-
-from pipeline.train_classifier import PROJECT_CLASS_NAMES
 
 
 def clean_temporal_stack(
@@ -126,8 +121,12 @@ def clean_temporal_stack(
     stats = {
         "rule1_removed_false_builtup": rule1_changed_pixels,
         "rule2_enforced_persistence": rule2_changed_pixels,
-        "raw_builtup_pixels": np.array([(built_raw[t] == 1).sum() for t in range(n_years)], dtype=np.int64),
-        "clean_builtup_pixels": np.array([(persisted_built[t] == 1).sum() for t in range(n_years)], dtype=np.int64),
+        "raw_builtup_pixels": np.array(
+            [(built_raw[t] == 1).sum() for t in range(n_years)], dtype=np.int64
+        ),
+        "clean_builtup_pixels": np.array(
+            [(persisted_built[t] == 1).sum() for t in range(n_years)], dtype=np.int64
+        ),
     }
 
     return cleaned_stack, stats
@@ -196,7 +195,9 @@ def plot_cleanup_comparison(
             fontsize=8.5,
             fontweight="bold",
             color="#f8fafc",
-            bbox=dict(boxstyle="round,pad=0.2", facecolor="#0f172a", edgecolor="#059669", alpha=0.85),
+            bbox=dict(
+                boxstyle="round,pad=0.2", facecolor="#0f172a", edgecolor="#059669", alpha=0.85
+            ),
         )
 
     ax.set_title(
@@ -206,13 +207,19 @@ def plot_cleanup_comparison(
         color="#f8fafc",
         pad=15,
     )
-    ax.set_xlabel("Observation Year", fontsize=11, fontweight="medium", color="#cbd5e1", labelpad=10)
-    ax.set_ylabel("Built-up Footprint (km²)", fontsize=11, fontweight="medium", color="#cbd5e1", labelpad=10)
+    ax.set_xlabel(
+        "Observation Year", fontsize=11, fontweight="medium", color="#cbd5e1", labelpad=10
+    )
+    ax.set_ylabel(
+        "Built-up Footprint (km²)", fontsize=11, fontweight="medium", color="#cbd5e1", labelpad=10
+    )
 
     ax.set_xticks(years)
     ax.tick_params(axis="both", colors="#94a3b8", labelsize=10)
 
-    legend = ax.legend(loc="upper left", frameon=True, facecolor="#0f172a", edgecolor="#475569", fontsize=9.5)
+    legend = ax.legend(
+        loc="upper left", frameon=True, facecolor="#0f172a", edgecolor="#475569", fontsize=9.5
+    )
     for text in legend.get_texts():
         text.set_color("#e2e8f0")
 
@@ -246,7 +253,9 @@ def run_temporal_cleanup(
     n_years = len(years)
 
     print("=" * 85)
-    print(f"[*] UrbanPulse Temporal Consistency & Persistence Cleanup: {city_name} ({start_year}–{end_year})")
+    print(
+        f"[*] UrbanPulse Temporal Consistency & Persistence Cleanup: {city_name} ({start_year}–{end_year})"
+    )
     print(f"    - Clean Outputs Directory: {clean_dir.resolve()}")
     print("=" * 85)
 
@@ -266,7 +275,9 @@ def run_temporal_cleanup(
                 chosen = c
                 break
         if chosen is None:
-            raise FileNotFoundError(f"Missing classified GeoTIFF for {city_name} {y} in {data_path.resolve()}")
+            raise FileNotFoundError(
+                f"Missing classified GeoTIFF for {city_name} {y} in {data_path.resolve()}"
+            )
 
         with rasterio.open(chosen) as src:
             raw_rasters.append(src.read(1))
@@ -288,13 +299,15 @@ def run_temporal_cleanup(
         prof.pop("blockxsize", None)
         prof.pop("blockysize", None)
         prof.pop("tiled", None)
-        prof.update({
-            "driver": "GTiff",
-            "count": 1,
-            "dtype": "uint8",
-            "nodata": 0,
-            "compress": "lzw",
-        })
+        prof.update(
+            {
+                "driver": "GTiff",
+                "count": 1,
+                "dtype": "uint8",
+                "nodata": 0,
+                "compress": "lzw",
+            }
+        )
         with rasterio.open(out_tif, "w", **prof) as dst:
             dst.write(cleaned_stack[idx], 1)
 
@@ -308,14 +321,16 @@ def run_temporal_cleanup(
 
     table_data = []
     for i, y in enumerate(years):
-        table_data.append({
-            "Year": y,
-            "Raw_Builtup_km2": round(raw_km2[i], 2),
-            "Clean_Builtup_km2": round(clean_km2[i], 2),
-            "Net_Change_km2": round(clean_km2[i] - raw_km2[i], 2),
-            "Rule1_Spikes_Removed_px": int(r1_pix[i]),
-            "Rule2_Persisted_Added_px": int(r2_pix[i]),
-        })
+        table_data.append(
+            {
+                "Year": y,
+                "Raw_Builtup_km2": round(raw_km2[i], 2),
+                "Clean_Builtup_km2": round(clean_km2[i], 2),
+                "Net_Change_km2": round(clean_km2[i] - raw_km2[i], 2),
+                "Rule1_Spikes_Removed_px": int(r1_pix[i]),
+                "Rule2_Persisted_Added_px": int(r2_pix[i]),
+            }
+        )
 
     df_summary = pd.DataFrame(table_data)
 
@@ -360,9 +375,15 @@ def run_temporal_cleanup(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Temporal consistency and persistence cleanup for land cover.")
-    parser.add_argument("--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)")
-    parser.add_argument("--data-dir", type=str, default="data", help="Data directory (default: data)")
+    parser = argparse.ArgumentParser(
+        description="Temporal consistency and persistence cleanup for land cover."
+    )
+    parser.add_argument(
+        "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
+    )
+    parser.add_argument(
+        "--data-dir", type=str, default="data", help="Data directory (default: data)"
+    )
     parser.add_argument("--start-year", type=int, default=2018, help="Start year (default: 2018)")
     parser.add_argument("--end-year", type=int, default=2024, help="End year (default: 2024)")
 

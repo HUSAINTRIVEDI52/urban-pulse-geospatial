@@ -14,9 +14,7 @@ Outputs:
 """
 
 import argparse
-import csv
 import json
-import os
 import random
 import sys
 import time
@@ -27,10 +25,8 @@ import numpy as np
 import pandas as pd
 import rasterio
 import rioxarray  # noqa: F401
-import scipy.ndimage
 import stackstac
 import xarray as xr
-import yaml
 from dask.diagnostics import ProgressBar
 from PIL import Image, ImageDraw
 from pyproj import Transformer
@@ -44,7 +40,6 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from pipeline.build_composite import (
     load_city_config,
-    scale_and_harmonize_dn,
 )
 
 
@@ -103,7 +98,9 @@ def fetch_and_composite_10m_rgb(
 
     # Check cache
     if not force and cached_tif.exists():
-        print(f"[+] Found cached 10m RGB composite for {city.capitalize()} ({year}): {cached_tif.name}")
+        print(
+            f"[+] Found cached 10m RGB composite for {city.capitalize()} ({year}): {cached_tif.name}"
+        )
         with rasterio.open(cached_tif) as src:
             rgb_arr = src.read()  # (3, H, W)
             transform = src.transform
@@ -122,7 +119,9 @@ def fetch_and_composite_10m_rgb(
     kept_scene_ids = load_scene_list_for_year(city, year, data_dir)
 
     if kept_scene_ids:
-        print(f"[*] Loading {len(kept_scene_ids)} validated scene IDs from diagnostics for {year}...")
+        print(
+            f"[*] Loading {len(kept_scene_ids)} validated scene IDs from diagnostics for {year}..."
+        )
         search = client.search(
             collections=[collection],
             ids=kept_scene_ids,
@@ -158,8 +157,10 @@ def fetch_and_composite_10m_rgb(
             tile_dict.setdefault(tile_id, []).append(it)
 
         items = []
-        for t_id, t_items in tile_dict.items():
-            t_items_sorted = sorted(t_items, key=lambda x: float(x.properties.get("eo:cloud_cover", 100.0)))
+        for t_items in tile_dict.values():
+            t_items_sorted = sorted(
+                t_items, key=lambda x: float(x.properties.get("eo:cloud_cover", 100.0))
+            )
             items.extend(t_items_sorted[:max_scenes_per_tile])
 
     if not items:
@@ -174,7 +175,9 @@ def fetch_and_composite_10m_rgb(
         tile_id = f"{z}{b}{g}" if (z and b and g) else it.id.split("_")[1].replace("T", "")
         mgrs_groups.setdefault(tile_id, []).append(it)
 
-    print(f"[+] Processing {len(items)} scenes across {len(mgrs_groups)} MGRS tiles at 10m resolution (EPSG:32643)...")
+    print(
+        f"[+] Processing {len(items)} scenes across {len(mgrs_groups)} MGRS tiles at 10m resolution (EPSG:32643)..."
+    )
 
     full_rgb = None
     ref_transform = None
@@ -182,7 +185,9 @@ def fetch_and_composite_10m_rgb(
     requested_assets = ["red", "green", "blue", "scl"]
 
     for tile_idx, (t_id, t_scenes) in enumerate(mgrs_groups.items(), start=1):
-        print(f"\n  --> [{tile_idx}/{len(mgrs_groups)}] Streaming MGRS Tile {t_id} ({len(t_scenes)} scenes)...")
+        print(
+            f"\n  --> [{tile_idx}/{len(mgrs_groups)}] Streaming MGRS Tile {t_id} ({len(t_scenes)} scenes)..."
+        )
 
         if len(t_scenes) > max_scenes_per_tile:
             t_scenes = t_scenes[:max_scenes_per_tile]
@@ -207,7 +212,9 @@ def fetch_and_composite_10m_rgb(
 
         for t_idx, item in enumerate(t_scenes):
             item_dt = item.datetime or str(item.properties.get("datetime"))[:10]
-            date_str = item_dt.strftime("%Y-%m-%d") if hasattr(item_dt, "strftime") else str(item_dt)[:10]
+            date_str = (
+                item_dt.strftime("%Y-%m-%d") if hasattr(item_dt, "strftime") else str(item_dt)[:10]
+            )
 
             scl = stack.sel(band="scl").isel(time=t_idx)
             cloud_mask = (
@@ -338,7 +345,9 @@ def validate_composite_brightness(
     for c, b_name in enumerate(band_names):
         valid = rgb_arr[c][valid_mask]
         if len(valid) == 0:
-            raise ValueError(f"No valid pixels found in composite for {city_name} {year_label} band {b_name}.")
+            raise ValueError(
+                f"No valid pixels found in composite for {city_name} {year_label} band {b_name}."
+            )
         p_min = float(np.min(valid))
         p2 = float(np.percentile(valid, 2))
         p50 = float(np.percentile(valid, 50))
@@ -348,13 +357,17 @@ def validate_composite_brightness(
         print(f"{b_name:<12} | {p_min:8.4f} | {p2:8.4f} | {p50:8.4f} | {p98:8.4f} | {p_max:8.4f}")
 
     # Brightness (mean across R, G, B)
-    brightness_arr = (rgb_arr[0][valid_mask] + rgb_arr[1][valid_mask] + rgb_arr[2][valid_mask]) / 3.0
+    brightness_arr = (
+        rgb_arr[0][valid_mask] + rgb_arr[1][valid_mask] + rgb_arr[2][valid_mask]
+    ) / 3.0
     med_brightness = float(np.median(brightness_arr))
     p2_b = float(np.percentile(brightness_arr, 2))
     p98_b = float(np.percentile(brightness_arr, 98))
     min_b = float(np.min(brightness_arr))
     max_b = float(np.max(brightness_arr))
-    print(f"{'Brightness':<12} | {min_b:8.4f} | {p2_b:8.4f} | {med_brightness:8.4f} | {p98_b:8.4f} | {max_b:8.4f}")
+    print(
+        f"{'Brightness':<12} | {min_b:8.4f} | {p2_b:8.4f} | {med_brightness:8.4f} | {p98_b:8.4f} | {max_b:8.4f}"
+    )
     print("-" * 62)
 
     if med_brightness < min_median or med_brightness > max_median:
@@ -407,7 +420,9 @@ def extract_and_draw_chip(
     dst_c_max = dst_c_min + (src_c_max - src_c_min)
 
     if src_r_max > src_r_min and src_c_max > src_c_min:
-        chip[dst_r_min:dst_r_max, dst_c_min:dst_c_max] = rgb_uint8[src_r_min:src_r_max, src_c_min:src_c_max]
+        chip[dst_r_min:dst_r_max, dst_c_min:dst_c_max] = rgb_uint8[
+            src_r_min:src_r_max, src_c_min:src_c_max
+        ]
 
     # Upscale 4x with bicubic resampling
     pil_chip = Image.fromarray(chip)
@@ -448,17 +463,20 @@ def generate_contact_sheet(
     """
     rng = random.Random(seed)
     valid_pts = [
-        pid for pid in point_ids
+        pid
+        for pid in point_ids
         if (chips_dir / f"{pid}_start.jpg").exists() and (chips_dir / f"{pid}_end.jpg").exists()
     ]
     if not valid_pts:
-        raise FileNotFoundError(f"No valid chips found in {chips_dir.resolve()} to build contact sheet.")
+        raise FileNotFoundError(
+            f"No valid chips found in {chips_dir.resolve()} to build contact sheet."
+        )
 
     chosen_pids = rng.sample(valid_pts, min(num_samples, len(valid_pts)))
 
     chip_display_size = 256
     pair_w = chip_display_size * 2 + 10  # 10px gutter between start and end
-    pair_h = chip_display_size + 36      # 36px for labels
+    pair_h = chip_display_size + 36  # 36px for labels
     cols = 3
     rows = (len(chosen_pids) + cols - 1) // cols
 
@@ -500,12 +518,17 @@ def generate_contact_sheet(
 
         # Labels
         draw.text((x_pair + 5, y_pair + 5), f"Point #{pid} ({start_year})", fill=(148, 163, 184))
-        draw.text((x_pair + chip_display_size + 15, y_pair + 5), f"{end_year} (Regenerated)", fill=(52, 211, 153))
-
+        draw.text(
+            (x_pair + chip_display_size + 15, y_pair + 5),
+            f"{end_year} (Regenerated)",
+            fill=(52, 211, 153),
+        )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(output_path, "JPEG", quality=92)
-    print(f"[+] Saved validation contact sheet ({len(chosen_pids)} points): {output_path.resolve()}")
+    print(
+        f"[+] Saved validation contact sheet ({len(chosen_pids)} points): {output_path.resolve()}"
+    )
     return output_path
 
 
@@ -549,7 +572,7 @@ def generate_standalone_labeller_html(
     .stats-badge {{ font-size: 0.85rem; color: var(--text-muted); }}
 
     main {{ flex: 1; display: flex; flex-direction: column; align-items: center; padding: 18px 24px; max-width: 1200px; margin: 0 auto; width: 100%; }}
-    
+
     .nav-bar {{ width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }}
     .point-id-badge {{ font-size: 1.3rem; font-weight: 800; color: #fff; background: var(--card-bg); padding: 6px 16px; border-radius: 8px; border: 1px solid var(--border); }}
     .btn {{ background: var(--card-bg); color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease; text-decoration: none; }}
@@ -564,11 +587,11 @@ def generate_standalone_labeller_html(
     .chip-header {{ width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-weight: 700; font-size: 1.05rem; }}
     .chip-img-wrapper {{ width: 512px; height: 512px; max-width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 8px; overflow: hidden; border: 2px solid var(--border); position: relative; }}
     .chip-img-wrapper img {{ width: 100%; height: 100%; object-fit: contain; image-rendering: auto; }}
-    
+
     .button-group {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; margin-top: 14px; }}
     .choice-btn {{ padding: 12px 8px; border-radius: 8px; font-size: 0.95rem; font-weight: 700; border: 2px solid transparent; cursor: pointer; background: #0f172a; color: var(--text-muted); transition: all 0.15s ease; text-align: center; }}
     .choice-btn:hover {{ border-color: var(--text-muted); color: #fff; }}
-    
+
     .choice-btn.built.active {{ background: rgba(16, 185, 129, 0.2); border-color: var(--built-btn); color: #34d399; }}
     .choice-btn.notbuilt.active {{ background: rgba(239, 68, 68, 0.2); border-color: var(--notbuilt-btn); color: #f87171; }}
     .choice-btn.unclear.active {{ background: rgba(245, 158, 11, 0.2); border-color: var(--unclear-btn); color: #fbbf24; }}
@@ -650,7 +673,7 @@ def generate_standalone_labeller_html(
     </div>
 
     <div class="shortcuts-help">
-      <b>Keyboard Shortcuts:</b> 
+      <b>Keyboard Shortcuts:</b>
       <span class="kbd">&larr;</span> / <span class="kbd">&rarr;</span> = Prev / Next Point &nbsp;|&nbsp;
       <span class="kbd">Q</span> / <span class="kbd">W</span> / <span class="kbd">E</span> = Start Built / Not Built / Unclear &nbsp;|&nbsp;
       <span class="kbd">I</span> / <span class="kbd">O</span> / <span class="kbd">P</span> = End Built / Not Built / Unclear &nbsp;|&nbsp;
@@ -693,7 +716,7 @@ def generate_standalone_labeller_html(
       document.getElementById('gmapsLink').href = gmapsUrl;
 
       const cur = annotations[ptId] || {{ built_start: '', built_end: '', notes: '', built_end_old: '' }};
-      
+
       ['btnStartBuilt', 'btnStartNotBuilt', 'btnStartUnclear'].forEach(id => document.getElementById(id).classList.remove('active'));
       ['btnEndBuilt', 'btnEndNotBuilt', 'btnEndUnclear'].forEach(id => document.getElementById(id).classList.remove('active'));
 
@@ -941,14 +964,18 @@ def make_label_chips(
     print(f"    - Baseline Year (Start) : {start_year}")
     print(f"    - Target Year (End)     : {end_year}")
     print(f"    - Total Validation Points: {len(df_blind)}")
-    print(f"    - Regenerate Mode       : {'END-Year Chips Only' if regenerate_end_only else 'Both Start and End'}")
+    print(
+        f"    - Regenerate Mode       : {'END-Year Chips Only' if regenerate_end_only else 'Both Start and End'}"
+    )
     print(f"    - Output Chips Directory: {chips_dir.resolve()}")
     print("=" * 86)
 
     config = load_city_config(city=city_key)
 
     # 1. Build 10m RGB Composites for Start and End years
-    print(f"\n[Step 1/3] Fetching/verifying 10m true colour composite for start year ({start_year})...")
+    print(
+        f"\n[Step 1/3] Fetching/verifying 10m true colour composite for start year ({start_year})..."
+    )
     rgb_start, transform_start, crs_start = fetch_and_composite_10m_rgb(
         city=city_key, year=start_year, config=config, data_dir=data_path, force=force_composite
     )
@@ -968,14 +995,14 @@ def make_label_chips(
     rgb_end_uint8 = compute_percentile_stretch(rgb_end, gamma=0.8)
 
     # 4. Extract chips for each sample point
-    print(f"\n[Step 3/3] Generating 128x128 chips (4x upscaled with 60m pixel boundary)...")
+    print("\n[Step 3/3] Generating 128x128 chips (4x upscaled with 60m pixel boundary)...")
     transformer = Transformer.from_crs("EPSG:4326", crs_start, always_xy=True)
 
     chips_created = 0
     points_data = []
     point_ids = []
 
-    for idx, row in df_blind.iterrows():
+    for _idx, row in df_blind.iterrows():
         pt_id = int(row["id"])
         lon = float(row["lon"])
         lat = float(row["lat"])
@@ -999,11 +1026,13 @@ def make_label_chips(
         chip_end_img.save(chip_end_path, "JPEG", quality=95)
         chips_created += 1
 
-        points_data.append({
-            "id": pt_id,
-            "lon": lon,
-            "lat": lat,
-        })
+        points_data.append(
+            {
+                "id": pt_id,
+                "lon": lon,
+                "lat": lat,
+            }
+        )
         point_ids.append(pt_id)
 
     # 5. Generate Visual Contact Sheet (12 random samples)
@@ -1051,12 +1080,24 @@ def main():
     parser = argparse.ArgumentParser(
         description="Build 10m true colour Sentinel-2 chips & standalone labeller for change validation."
     )
-    parser.add_argument("--city", type=str, default="ahmedabad", help="City key (default: ahmedabad)")
-    parser.add_argument("--start", type=int, default=2020, help="Baseline start year (default: 2020)")
+    parser.add_argument(
+        "--city", type=str, default="ahmedabad", help="City key (default: ahmedabad)"
+    )
+    parser.add_argument(
+        "--start", type=int, default=2020, help="Baseline start year (default: 2020)"
+    )
     parser.add_argument("--end", type=int, default=2024, help="Target end year (default: 2024)")
-    parser.add_argument("--data-dir", type=Path, default=PROJECT_ROOT / "data", help="Data directory")
-    parser.add_argument("--end-only", action="store_true", help="Regenerate only end-year chips, keeping start chips")
-    parser.add_argument("--force", action="store_true", help="Force rebuild 10m composites from STAC")
+    parser.add_argument(
+        "--data-dir", type=Path, default=PROJECT_ROOT / "data", help="Data directory"
+    )
+    parser.add_argument(
+        "--end-only",
+        action="store_true",
+        help="Regenerate only end-year chips, keeping start chips",
+    )
+    parser.add_argument(
+        "--force", action="store_true", help="Force rebuild 10m composites from STAC"
+    )
 
     args = parser.parse_args()
     make_label_chips(

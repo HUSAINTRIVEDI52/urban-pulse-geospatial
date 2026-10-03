@@ -23,6 +23,7 @@ extend-exclude = '''
   | venv
   | data
   | cache
+  | scratch
   | web/vendor
 )/
 '''
@@ -36,6 +37,7 @@ extend-exclude = [
     "venv",
     "data",
     "cache",
+    "scratch",
     "web/vendor",
 ]
 

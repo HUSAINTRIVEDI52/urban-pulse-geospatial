@@ -1,5 +1,5 @@
+
 import pandas as pd
-import json
 
 for city in ["ahmedabad", "pune"]:
     df = pd.read_csv(f"data/{city}/scene_diagnostics.csv")
@@ -10,7 +10,7 @@ for city in ["ahmedabad", "pune"]:
     print(f"Flagged scenes: {len(flagged)} ({len(flagged)/len(df)*100:.1f}%)")
     print("\nProcessing Baselines:")
     print(df["processing_baseline"].value_counts())
-    
+
     pre = df[df["date"] < "2022-01-25"]
     post = df[df["date"] >= "2022-01-25"]
     print(f"\nPre 2022-01-25 (n={len(pre)}) means:")
@@ -26,7 +26,7 @@ for city in ["ahmedabad", "pune"]:
     print(f"2019 scenes outside Nov-Feb (n={len(outside_2019)}):")
     for _, r in outside_2019.iterrows():
         print(f"  {r['date']} | Tile: {r['mgrs_tile']} | Cloud: {r['cloud_cover_pct']}% | Baseline: {r['processing_baseline']}")
-        
+
     if city == "pune":
         df_2018 = df[df["year"] == 2018]
         outside_2018 = df_2018[(df_2018["date"] < "2017-11-01") | (df_2018["date"] > "2018-02-28")]

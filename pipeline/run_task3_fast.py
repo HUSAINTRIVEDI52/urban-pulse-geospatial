@@ -9,6 +9,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import numpy as np
 import pandas as pd
 import rasterio
@@ -16,27 +18,39 @@ import scipy.ndimage
 from pystac_client import Client
 from rasterio.enums import Resampling
 from rasterio.windows import from_bounds
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from pipeline.scene_selection import load_city_config, extract_mgrs_tile
+from pipeline.scene_selection import extract_mgrs_tile, load_city_config
 
 DATA_DIR = PROJECT_ROOT / "data"
 
 
 def compute_legacy_scene_medians(item, bounds, shape, stable_mask):
-    dt_str = item.datetime.strftime("%Y-%m-%d") if item.datetime else str(item.properties.get("datetime"))[:10]
+    dt_str = (
+        item.datetime.strftime("%Y-%m-%d")
+        if item.datetime
+        else str(item.properties.get("datetime"))[:10]
+    )
     tile_id = extract_mgrs_tile(item)
-    baseline = str(item.properties.get("s2:processing_baseline", item.properties.get("processing_baseline", "N/A")))
+    baseline = str(
+        item.properties.get(
+            "s2:processing_baseline", item.properties.get("processing_baseline", "N/A")
+        )
+    )
     cloud_cover = float(item.properties.get("eo:cloud_cover", 100.0))
-    
+
     band_keys = {"red": "red", "nir": "nir", "swir16": "swir16", "blue": "blue", "scl": "scl"}
     arrays = {}
-    
-    with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR", CPL_VSIL_CURL_ALLOWED_EXTENSIONS=".tif", GDAL_HTTP_TIMEOUT="25", GDAL_HTTP_MAX_RETRY="2"):
+
+    with rasterio.Env(
+        GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR",
+        CPL_VSIL_CURL_ALLOWED_EXTENSIONS=".tif",
+        GDAL_HTTP_TIMEOUT="25",
+        GDAL_HTTP_MAX_RETRY="2",
+    ):
         for b_name, asset_key in band_keys.items():
             if asset_key in item.assets:
                 href = item.assets[asset_key].href
-                for attempt in range(2):
+                for _attempt in range(2):
                     try:
                         with rasterio.open(href) as src:
                             win = from_bounds(*bounds, src.transform)
@@ -49,7 +63,16 @@ def compute_legacy_scene_medians(item, bounds, shape, stable_mask):
 
     scl_arr = arrays.get("scl")
     if scl_arr is not None:
-        c_mask = ((scl_arr == 0) | (scl_arr == 1) | (scl_arr == 3) | (scl_arr == 8) | (scl_arr == 9) | (scl_arr == 10) | (scl_arr == 11) | np.isnan(scl_arr))
+        c_mask = (
+            (scl_arr == 0)
+            | (scl_arr == 1)
+            | (scl_arr == 3)
+            | (scl_arr == 8)
+            | (scl_arr == 9)
+            | (scl_arr == 10)
+            | (scl_arr == 11)
+            | np.isnan(scl_arr)
+        )
         dil_mask = scipy.ndimage.binary_dilation(c_mask, iterations=1)
     else:
         dil_mask = np.zeros(shape, dtype=bool)
@@ -89,18 +112,21 @@ def compute_legacy_scene_medians(item, bounds, shape, stable_mask):
 
 def main():
     client = Client.open("https://earth-search.aws.element84.com/v1")
-    
+
     for city in ["ahmedabad", "pune"]:
-        print(f"\n{'='*100}\n[TASK 3] 2022 LEGACY SCENES REFLECTANCE MEDIANS: {city.upper()}\n{'='*100}", flush=True)
+        print(
+            f"\n{'='*100}\n[TASK 3] 2022 LEGACY SCENES REFLECTANCE MEDIANS: {city.upper()}\n{'='*100}",
+            flush=True,
+        )
         cfg = load_city_config(city)
         bbox = cfg["spatial"]["bbox"]
-        
+
         # Load mask
         classified_tif = DATA_DIR / city / f"{city}_2024_classified.tif"
         with rasterio.open(classified_tif) as src:
             bounds = src.bounds
             shape = (src.height // 2, src.width // 2)  # fast subsampled evaluation
-            
+
         cls_stack = []
         for y in [2018, 2019, 2020, 2021, 2022, 2023, 2024]:
             c_p = DATA_DIR / city / f"{city}_{y}_classified.tif"
@@ -119,8 +145,11 @@ def main():
             query={"eo:cloud_cover": {"lt": 20.0}},
         )
         items_2022 = list(search_2022.items())
-        print(f"[+] Query returned {len(items_2022)} scenes in Jan-Feb 2022. Evaluating stable-pixel medians...", flush=True)
-        
+        print(
+            f"[+] Query returned {len(items_2022)} scenes in Jan-Feb 2022. Evaluating stable-pixel medians...",
+            flush=True,
+        )
+
         records_2022 = []
         with ThreadPoolExecutor(max_workers=16) as executor:
             futures = [
@@ -133,14 +162,33 @@ def main():
                     records_2022.append(res)
                 except Exception as e:
                     print(f"[!] Error: {e}")
-                    
+
         records_2022.sort(key=lambda r: (r["date"], r["tile"], r["scene_id"]))
         df_2022 = pd.DataFrame(records_2022)
         print("\n[+] 2022 Legacy Scenes Table:")
-        print(df_2022[["date", "tile", "baseline", "cloud", "valid_px", "red", "nir", "swir", "blue", "scene_id"]].to_string(index=False), flush=True)
+        print(
+            df_2022[
+                [
+                    "date",
+                    "tile",
+                    "baseline",
+                    "cloud",
+                    "valid_px",
+                    "red",
+                    "nir",
+                    "swir",
+                    "blue",
+                    "scene_id",
+                ]
+            ].to_string(index=False),
+            flush=True,
+        )
 
         # 2. 2021 Legacy vs Collection 1 Comparison on Matching Dates
-        print(f"\n[+] 2021 Legacy vs Collection 1 Matching Dates Reflectance Comparison ({city.upper()}):", flush=True)
+        print(
+            f"\n[+] 2021 Legacy vs Collection 1 Matching Dates Reflectance Comparison ({city.upper()}):",
+            flush=True,
+        )
         search_leg = client.search(
             collections=["sentinel-2-l2a"],
             bbox=bbox,
@@ -155,32 +203,42 @@ def main():
         )
         items_leg = list(search_leg.items())
         items_c1 = list(search_c1.items())
-        
-        leg_map = {f"{it.datetime.strftime('%Y-%m-%d')}_{extract_mgrs_tile(it)}": it for it in items_leg if it.datetime}
-        c1_map = {f"{it.datetime.strftime('%Y-%m-%d')}_{extract_mgrs_tile(it)}": it for it in items_c1 if it.datetime}
+
+        leg_map = {
+            f"{it.datetime.strftime('%Y-%m-%d')}_{extract_mgrs_tile(it)}": it
+            for it in items_leg
+            if it.datetime
+        }
+        c1_map = {
+            f"{it.datetime.strftime('%Y-%m-%d')}_{extract_mgrs_tile(it)}": it
+            for it in items_c1
+            if it.datetime
+        }
         matching_keys = sorted(list(set(leg_map.keys()) & set(c1_map.keys())))
-        
+
         comp_rows = []
         for mk in matching_keys[:4]:
             it_leg = leg_map[mk]
             it_c1 = c1_map[mk]
             res_leg = compute_legacy_scene_medians(it_leg, bounds, shape, stable_mask)
             res_c1 = compute_legacy_scene_medians(it_c1, bounds, shape, stable_mask)
-            
-            comp_rows.append({
-                "Date": res_leg["date"],
-                "Tile": res_leg["tile"],
-                "C1 Baseline": res_c1["baseline"],
-                "Leg Baseline": res_leg["baseline"],
-                "C1 Red": res_c1["red"],
-                "Leg Red": res_leg["red"],
-                "C1 NIR": res_c1["nir"],
-                "Leg NIR": res_leg["nir"],
-                "C1 SWIR": res_c1["swir"],
-                "Leg SWIR": res_leg["swir"],
-                "C1 Blue": res_c1["blue"],
-                "Leg Blue": res_leg["blue"],
-            })
+
+            comp_rows.append(
+                {
+                    "Date": res_leg["date"],
+                    "Tile": res_leg["tile"],
+                    "C1 Baseline": res_c1["baseline"],
+                    "Leg Baseline": res_leg["baseline"],
+                    "C1 Red": res_c1["red"],
+                    "Leg Red": res_leg["red"],
+                    "C1 NIR": res_c1["nir"],
+                    "Leg NIR": res_leg["nir"],
+                    "C1 SWIR": res_c1["swir"],
+                    "Leg SWIR": res_leg["swir"],
+                    "C1 Blue": res_c1["blue"],
+                    "Leg Blue": res_leg["blue"],
+                }
+            )
         print(pd.DataFrame(comp_rows).to_string(index=False), flush=True)
 
 

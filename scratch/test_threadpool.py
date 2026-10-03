@@ -1,10 +1,11 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
-import rasterio
-from rasterio.windows import from_bounds
-from rasterio.enums import Resampling
-from pystac_client import Client
+
 import numpy as np
+import rasterio
+from pystac_client import Client
+from rasterio.enums import Resampling
+from rasterio.windows import from_bounds
 
 with rasterio.open("data/ahmedabad/clean/ahmedabad_2024_classified.tif") as src:
     ref_bounds = src.bounds

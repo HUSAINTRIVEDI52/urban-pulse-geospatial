@@ -25,7 +25,6 @@ Outputs:
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -45,7 +44,6 @@ if str(PROJECT_ROOT) not in sys.path:
 from pipeline.train_classifier import (
     FEATURE_NAMES,
     apply_majority_filter_3x3,
-    load_config,
 )
 
 
@@ -64,12 +62,12 @@ def get_tls_normalized_classified_raster(
     """
     city_key = city.lower()
     city_subpath = data_dir / city_key
-    
+
     # Priority: Read from validated_series/ if available
     validated_tif = city_subpath / "validated_series" / f"{city_key}_{year}_classified.tif"
     if not validated_tif.exists():
         validated_tif = data_dir / "validated_series" / f"{city_key}_{year}_classified.tif"
-    
+
     if validated_tif.exists():
         with rasterio.open(validated_tif) as src:
             classified_2d = src.read(1)
@@ -270,45 +268,49 @@ def export_blind_kml(df_blind: pd.DataFrame, output_kml_path: Path, city_name: s
     kml_lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<kml xmlns="http://www.opengis.net/kml/2.2">',
-        '  <Document>',
-        f'    <name>UrbanPulse Change Validation Sample - {city_name}</name>',
-        f'    <description>Blind validation sample for visual accuracy evaluation of urban change.</description>',
+        "  <Document>",
+        f"    <name>UrbanPulse Change Validation Sample - {city_name}</name>",
+        "    <description>Blind validation sample for visual accuracy evaluation of urban change.</description>",
         '    <Style id="blind_sample_style">',
-        '      <IconStyle>',
-        '        <color>ffffaa00</color>',
-        '        <scale>1.1</scale>',
-        '        <Icon>',
-        '          <href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href>',
-        '        </Icon>',
-        '      </IconStyle>',
-        '      <LabelStyle>',
-        '        <scale>0.8</scale>',
-        '      </LabelStyle>',
-        '    </Style>',
-        '    <Folder>',
-        f'      <name>Validation Sample Points (N={len(df_blind)})</name>',
+        "      <IconStyle>",
+        "        <color>ffffaa00</color>",
+        "        <scale>1.1</scale>",
+        "        <Icon>",
+        "          <href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href>",
+        "        </Icon>",
+        "      </IconStyle>",
+        "      <LabelStyle>",
+        "        <scale>0.8</scale>",
+        "      </LabelStyle>",
+        "    </Style>",
+        "    <Folder>",
+        f"      <name>Validation Sample Points (N={len(df_blind)})</name>",
     ]
 
     for _, row in df_blind.iterrows():
         pt_id = int(row["id"])
         lon = float(row["lon"])
         lat = float(row["lat"])
-        kml_lines.extend([
-            '      <Placemark>',
-            f'        <name>Sample #{pt_id}</name>',
-            f'        <description><![CDATA[<b>ID:</b> {pt_id}<br><b>Coordinates:</b> {lat:.6f}, {lon:.6f}<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>',
-            '        <styleUrl>#blind_sample_style</styleUrl>',
-            '        <Point>',
-            f'          <coordinates>{lon:.6f},{lat:.6f},0</coordinates>',
-            '        </Point>',
-            '      </Placemark>',
-        ])
+        kml_lines.extend(
+            [
+                "      <Placemark>",
+                f"        <name>Sample #{pt_id}</name>",
+                f"        <description><![CDATA[<b>ID:</b> {pt_id}<br><b>Coordinates:</b> {lat:.6f}, {lon:.6f}<br><b>Instructions:</b> Inspect high-resolution historical imagery. Record 1 for Built-up or 0 for Not built-up for Start &amp; End years.]]></description>",
+                "        <styleUrl>#blind_sample_style</styleUrl>",
+                "        <Point>",
+                f"          <coordinates>{lon:.6f},{lat:.6f},0</coordinates>",
+                "        </Point>",
+                "      </Placemark>",
+            ]
+        )
 
-    kml_lines.extend([
-        '    </Folder>',
-        '  </Document>',
-        '</kml>',
-    ])
+    kml_lines.extend(
+        [
+            "    </Folder>",
+            "  </Document>",
+            "</kml>",
+        ]
+    )
 
     output_kml_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_kml_path, "w", encoding="utf-8") as f:
@@ -394,47 +396,57 @@ def generate_change_validation_sample(
     print("\n" + "-" * 86)
     print(f"[*] STRATIFICATION SUMMARY: {city_name} ({start_year} -> {end_year})")
     print("-" * 86)
-    print(f"  Pixel Resolution : {pixel_res_x:.1f} m x {pixel_res_y:.1f} m ({pixel_area_km2:.6f} km²/pixel)")
+    print(
+        f"  Pixel Resolution : {pixel_res_x:.1f} m x {pixel_res_y:.1f} m ({pixel_area_km2:.6f} km²/pixel)"
+    )
     print(f"  Total AOI Grid   : {total_raster_km2:.2f} km² ({total_raster_px:,} pixels)")
-    print(f"  Valid AOI Area   : {total_valid_km2:.2f} km² ({total_valid_px:,} pixels, {total_valid_px/total_raster_px*100:.2f}%)")
-    print(f"  NoData / Masked  : {nodata_km2:.2f} km² ({nodata_px:,} pixels, {nodata_px/total_raster_px*100:.2f}%)\n")
+    print(
+        f"  Valid AOI Area   : {total_valid_km2:.2f} km² ({total_valid_px:,} pixels, {total_valid_px/total_raster_px*100:.2f}%)"
+    )
+    print(
+        f"  NoData / Masked  : {nodata_km2:.2f} km² ({nodata_px:,} pixels, {nodata_px/total_raster_px*100:.2f}%)\n"
+    )
 
-    summary_table = pd.DataFrame([
-        {
-            "Stratum": "A (Mapped Gain)",
-            "Description": f"Not Built ({start_year}) -> Built ({end_year})",
-            "Pixel Count": f"{count_a:,}",
-            "Area (km²)": f"{area_a:.2f}",
-            "Area (%)": f"{area_a/total_valid_km2*100:.2f}%",
-            "Target Sample": 100,
-        },
-        {
-            "Stratum": "B (Persistent Built)",
-            "Description": f"Built ({start_year}) -> Built ({end_year})",
-            "Pixel Count": f"{count_b:,}",
-            "Area (km²)": f"{area_b:.2f}",
-            "Area (%)": f"{area_b/total_valid_km2*100:.2f}%",
-            "Target Sample": 50,
-        },
-        {
-            "Stratum": "C (Persistent Non-Built)",
-            "Description": f"Not Built ({start_year}) -> Not Built ({end_year})",
-            "Pixel Count": f"{count_c:,}",
-            "Area (km²)": f"{area_c:.2f}",
-            "Area (%)": f"{area_c/total_valid_km2*100:.2f}%",
-            "Target Sample": 100,
-        },
-        {
-            "Stratum": "D (Mapped Loss)",
-            "Description": f"Built ({start_year}) -> Not Built ({end_year})",
-            "Pixel Count": f"{count_d:,}",
-            "Area (km²)": f"{area_d:.2f}",
-            "Area (%)": f"{area_d/total_valid_km2*100:.2f}%",
-            "Target Sample": 50,
-        },
-    ])
+    summary_table = pd.DataFrame(
+        [
+            {
+                "Stratum": "A (Mapped Gain)",
+                "Description": f"Not Built ({start_year}) -> Built ({end_year})",
+                "Pixel Count": f"{count_a:,}",
+                "Area (km²)": f"{area_a:.2f}",
+                "Area (%)": f"{area_a/total_valid_km2*100:.2f}%",
+                "Target Sample": 100,
+            },
+            {
+                "Stratum": "B (Persistent Built)",
+                "Description": f"Built ({start_year}) -> Built ({end_year})",
+                "Pixel Count": f"{count_b:,}",
+                "Area (km²)": f"{area_b:.2f}",
+                "Area (%)": f"{area_b/total_valid_km2*100:.2f}%",
+                "Target Sample": 50,
+            },
+            {
+                "Stratum": "C (Persistent Non-Built)",
+                "Description": f"Not Built ({start_year}) -> Not Built ({end_year})",
+                "Pixel Count": f"{count_c:,}",
+                "Area (km²)": f"{area_c:.2f}",
+                "Area (%)": f"{area_c/total_valid_km2*100:.2f}%",
+                "Target Sample": 100,
+            },
+            {
+                "Stratum": "D (Mapped Loss)",
+                "Description": f"Built ({start_year}) -> Not Built ({end_year})",
+                "Pixel Count": f"{count_d:,}",
+                "Area (km²)": f"{area_d:.2f}",
+                "Area (%)": f"{area_d/total_valid_km2*100:.2f}%",
+                "Target Sample": 50,
+            },
+        ]
+    )
     print(summary_table.to_string(index=False))
-    print(f"\n  * Sum of Strata (A+B+C+D): {sum_strata_px:,} px = {total_valid_km2:.2f} km² (Match Valid AOI: 100.0%)")
+    print(
+        f"\n  * Sum of Strata (A+B+C+D): {sum_strata_px:,} px = {total_valid_km2:.2f} km² (Match Valid AOI: 100.0%)"
+    )
     print("-" * 86 + "\n")
 
     # 3. Draw Samples (100 A, 50 B, 100 C, 50 D = 300 total)
@@ -521,11 +533,17 @@ def main():
     parser = argparse.ArgumentParser(
         description="Generate 4-stratum change validation sample (2020-2024) with edge exclusion and minimum spacing."
     )
-    parser.add_argument("--city", type=str, default="ahmedabad", help="City key (e.g. ahmedabad, pune)")
-    parser.add_argument("--start", type=int, default=2020, help="Start baseline year (default: 2020)")
+    parser.add_argument(
+        "--city", type=str, default="ahmedabad", help="City key (e.g. ahmedabad, pune)"
+    )
+    parser.add_argument(
+        "--start", type=int, default=2020, help="Start baseline year (default: 2020)"
+    )
     parser.add_argument("--end", type=int, default=2024, help="End target year (default: 2024)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
-    parser.add_argument("--data-dir", type=Path, default=PROJECT_ROOT / "data", help="Data directory")
+    parser.add_argument(
+        "--data-dir", type=Path, default=PROJECT_ROOT / "data", help="Data directory"
+    )
     parser.add_argument("--output-dir", type=Path, default=None, help="Output validation directory")
 
     args = parser.parse_args()
@@ -541,4 +559,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

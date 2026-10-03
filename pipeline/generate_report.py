@@ -13,25 +13,27 @@ Guarantees:
 import argparse
 import base64
 import json
-import os
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import geopandas as gpd
 import joblib
-import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, classification_report, cohen_kappa_score, confusion_matrix
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    cohen_kappa_score,
+    confusion_matrix,
+)
 
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from pipeline.quality_gate import validate_quality_gate
 from pipeline.train_classifier import FEATURE_NAMES, PROJECT_CLASS_NAMES
 
 
@@ -145,13 +147,15 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
     stats_json_path = web_dir / city_key / "stats.json"
     if stats_json_path.exists():
         try:
-            with open(stats_json_path, "r", encoding="utf-8") as f:
+            with open(stats_json_path, encoding="utf-8") as f:
                 stats_payload = json.load(f)
                 city_data["stats_json"] = stats_payload
                 if "analysis_window" in stats_payload:
                     city_data["analysis_window"] = stats_payload["analysis_window"]
                 if "headline_2020_2024_expansion" in stats_payload:
-                    city_data["headline_2020_2024_expansion"] = stats_payload["headline_2020_2024_expansion"]
+                    city_data["headline_2020_2024_expansion"] = stats_payload[
+                        "headline_2020_2024_expansion"
+                    ]
                 if "growth_series" in stats_payload:
                     city_data["growth_series"] = stats_payload["growth_series"]
                 if "validation_loyo" in stats_payload:
@@ -181,7 +185,9 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
         city_data["cleanup_summary"] = df_cleanup.to_dict(orient="records")
         city_data["df_cleanup"] = df_cleanup
     else:
-        city_data["missing_sections"].append("Temporal Cleanup & Built-up Comparison Table (cleanup_summary.csv missing)")
+        city_data["missing_sections"].append(
+            "Temporal Cleanup & Built-up Comparison Table (cleanup_summary.csv missing)"
+        )
 
     # 2. Concentric Rings Analysis
     rings_csv_candidates = [
@@ -207,7 +213,9 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
         except Exception:
             pass
     else:
-        city_data["missing_sections"].append("Concentric Ring Built-up Densities (rings.csv missing)")
+        city_data["missing_sections"].append(
+            "Concentric Ring Built-up Densities (rings.csv missing)"
+        )
 
     # 3. Spatial Sprawl & Shannon Entropy Metrics
     metrics_csv_candidates = [
@@ -227,7 +235,9 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
     if df_metrics is not None:
         city_data["sprawl_metrics"] = df_metrics.to_dict(orient="records")
     else:
-        city_data["missing_sections"].append("Spatial Sprawl & Shannon Entropy Metrics (metrics.csv missing)")
+        city_data["missing_sections"].append(
+            "Spatial Sprawl & Shannon Entropy Metrics (metrics.csv missing)"
+        )
 
     # 4. Land Cover Transitions (2018 -> 2024)
     trans_csv_candidates = [
@@ -268,7 +278,9 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
         except Exception:
             pass
     else:
-        city_data["missing_sections"].append("2018–2024 Land Cover Transition Matrix (transition_2018_2024.csv missing)")
+        city_data["missing_sections"].append(
+            "2018–2024 Land Cover Transition Matrix (transition_2018_2024.csv missing)"
+        )
 
     # 5. Model Evaluation (Pooled Multi-Year Random Forest)
     model_candidates = [
@@ -323,7 +335,9 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
             city_data["warnings"].append(f"Model evaluation error: {e}")
             city_data["missing_sections"].append("Model Evaluation (Error evaluating test points)")
     else:
-        city_data["missing_sections"].append("Model Accuracy & Confusion Matrix (rf_model_pooled.pkl or test_points_pooled.geojson missing)")
+        city_data["missing_sections"].append(
+            "Model Accuracy & Confusion Matrix (rf_model_pooled.pkl or test_points_pooled.geojson missing)"
+        )
 
     # 6. Diagnostics (diagnostics.csv)
     diag_csv_candidates = [
@@ -342,30 +356,64 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
     if df_diag is not None:
         city_data["diagnostics"] = df_diag.to_dict(orient="records")
     else:
-        city_data["missing_sections"].append("Satellite Diagnostics Table (diagnostics.csv missing)")
+        city_data["missing_sections"].append(
+            "Satellite Diagnostics Table (diagnostics.csv missing)"
+        )
 
     # 7. Quality Gate Validation Execution
     if df_cleanup is not None:
         try:
             checks = []
             # Check 1: NoData
-            nodata_col = next((c for c in ["Composite_NoData_pct", "nodata_pct", "NoData_pct"] if c in df_cleanup.columns), None)
+            nodata_col = next(
+                (
+                    c
+                    for c in ["Composite_NoData_pct", "nodata_pct", "NoData_pct"]
+                    if c in df_cleanup.columns
+                ),
+                None,
+            )
             if nodata_col:
                 bad_nd = df_cleanup[df_cleanup[nodata_col] > 5.0]
                 if not bad_nd.empty:
-                    checks.append({"name": "NoData Gaps", "status": "FAIL", "detail": f"{len(bad_nd)} year(s) > 5.0% NoData"})
+                    checks.append(
+                        {
+                            "name": "NoData Gaps",
+                            "status": "FAIL",
+                            "detail": f"{len(bad_nd)} year(s) > 5.0% NoData",
+                        }
+                    )
                 else:
-                    checks.append({"name": "NoData Gaps", "status": "PASS", "detail": "All years ≤ 5.0% NoData"})
+                    checks.append(
+                        {
+                            "name": "NoData Gaps",
+                            "status": "PASS",
+                            "detail": "All years ≤ 5.0% NoData",
+                        }
+                    )
             else:
-                checks.append({"name": "NoData Gaps", "status": "PASS", "detail": "All composites within nominal threshold (≤5%)"})
+                checks.append(
+                    {
+                        "name": "NoData Gaps",
+                        "status": "PASS",
+                        "detail": "All composites within nominal threshold (≤5%)",
+                    }
+                )
 
             # Check 2: YoY Built-up Change <= 15%
-            b_col = next((c for c in ["Clean_Builtup_km2", "Built-up", "builtup_km2"] if c in df_cleanup.columns), None)
+            b_col = next(
+                (
+                    c
+                    for c in ["Clean_Builtup_km2", "Built-up", "builtup_km2"]
+                    if c in df_cleanup.columns
+                ),
+                None,
+            )
             if b_col and len(df_cleanup) > 1:
                 df_sorted = df_cleanup.sort_values("Year").reset_index(drop=True)
                 yoy_fails = []
                 for i in range(1, len(df_sorted)):
-                    p_val = float(df_sorted.loc[i-1, b_col])
+                    p_val = float(df_sorted.loc[i - 1, b_col])
                     c_val = float(df_sorted.loc[i, b_col])
                     yr = int(df_sorted.loc[i, "Year"])
                     if p_val > 0:
@@ -373,32 +421,86 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
                         if chg > 15.0:
                             yoy_fails.append(f"{yr} ({chg:.1f}%)")
                 if yoy_fails:
-                    checks.append({"name": "YoY Volatility", "status": "FAIL", "detail": f"Exceeded in: {', '.join(yoy_fails)}"})
+                    checks.append(
+                        {
+                            "name": "YoY Volatility",
+                            "status": "FAIL",
+                            "detail": f"Exceeded in: {', '.join(yoy_fails)}",
+                        }
+                    )
                 else:
-                    checks.append({"name": "YoY Volatility", "status": "PASS", "detail": "All YoY changes ≤ 15.0%"})
+                    checks.append(
+                        {
+                            "name": "YoY Volatility",
+                            "status": "PASS",
+                            "detail": "All YoY changes ≤ 15.0%",
+                        }
+                    )
             else:
-                checks.append({"name": "YoY Volatility", "status": "PASS", "detail": "Cleaned time series monotonic"})
+                checks.append(
+                    {
+                        "name": "YoY Volatility",
+                        "status": "PASS",
+                        "detail": "Cleaned time series monotonic",
+                    }
+                )
 
             # Check 3: Per-Year Accuracy >= 70%
             py_acc = city_data.get("model_metrics", {}).get("per_year_accuracy", {})
             if py_acc:
                 acc_fails = [f"{y} ({v*100:.1f}%)" for y, v in py_acc.items() if v < 0.70]
                 if acc_fails:
-                    checks.append({"name": "Per-Year Accuracy", "status": "FAIL", "detail": f"Sub-70% in: {', '.join(acc_fails)}"})
+                    checks.append(
+                        {
+                            "name": "Per-Year Accuracy",
+                            "status": "FAIL",
+                            "detail": f"Sub-70% in: {', '.join(acc_fails)}",
+                        }
+                    )
                 else:
-                    checks.append({"name": "Per-Year Accuracy", "status": "PASS", "detail": "All evaluated years ≥ 70.0%"})
+                    checks.append(
+                        {
+                            "name": "Per-Year Accuracy",
+                            "status": "PASS",
+                            "detail": "All evaluated years ≥ 70.0%",
+                        }
+                    )
             else:
-                checks.append({"name": "Per-Year Accuracy", "status": "PASS", "detail": "Baseline agreement verified"})
+                checks.append(
+                    {
+                        "name": "Per-Year Accuracy",
+                        "status": "PASS",
+                        "detail": "Baseline agreement verified",
+                    }
+                )
 
             # Check 4: Loss/Gain Ratio <= 30%
             if "gain_loss" in city_data:
                 loss_ratio = city_data["gain_loss"].get("loss_to_gain_ratio", 0.0)
                 if loss_ratio > 0.30:
-                    checks.append({"name": "Loss/Gain Ratio", "status": "FAIL", "detail": f"{loss_ratio*100:.1f}% > 30.0% max"})
+                    checks.append(
+                        {
+                            "name": "Loss/Gain Ratio",
+                            "status": "FAIL",
+                            "detail": f"{loss_ratio*100:.1f}% > 30.0% max",
+                        }
+                    )
                 else:
-                    checks.append({"name": "Loss/Gain Ratio", "status": "PASS", "detail": f"{loss_ratio*100:.1f}% ≤ 30.0% threshold"})
+                    checks.append(
+                        {
+                            "name": "Loss/Gain Ratio",
+                            "status": "PASS",
+                            "detail": f"{loss_ratio*100:.1f}% ≤ 30.0% threshold",
+                        }
+                    )
             else:
-                checks.append({"name": "Loss/Gain Ratio", "status": "PASS", "detail": "Transition loss verified"})
+                checks.append(
+                    {
+                        "name": "Loss/Gain Ratio",
+                        "status": "PASS",
+                        "detail": "Transition loss verified",
+                    }
+                )
 
             has_fail = any(c["status"] == "FAIL" for c in checks)
             city_data["quality_gate"] = {
@@ -406,12 +508,17 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
                 "checks": checks,
             }
         except Exception as e:
-            city_data["quality_gate"] = {"status": "ERROR", "checks": [{"name": "Execution", "status": "FAIL", "detail": str(e)}]}
+            city_data["quality_gate"] = {
+                "status": "ERROR",
+                "checks": [{"name": "Execution", "status": "FAIL", "detail": str(e)}],
+            }
     else:
-        city_data["missing_sections"].append("Data Quality Gate Assessment (cleanup_summary.csv missing)")
+        city_data["missing_sections"].append(
+            "Data Quality Gate Assessment (cleanup_summary.csv missing)"
+        )
 
     # 8. Visual Assets (Charts & Maps)
-    charts_to_find = {
+    {
         "cleanup_comparison": [
             data_dir / city_key / "cleanup_comparison.png",
             data_dir / f"{city_key}_cleanup_comparison.png",
@@ -430,7 +537,7 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
         ],
         "classified_2024": [
             web_dir / city_key / "2024.png",
-            data_dir / f"preview_2024_classified.png",
+            data_dir / "preview_2024_classified.png",
         ],
         "change_map": [
             web_dir / city_key / "change_2018_2024.png",
@@ -443,7 +550,7 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
     stats_json_file = web_dir / city_key / "stats.json"
     if stats_json_file.exists():
         try:
-            with open(stats_json_file, "r", encoding="utf-8") as f:
+            with open(stats_json_file, encoding="utf-8") as f:
                 sj = json.load(f)
             if "change_validation" in sj:
                 city_data["change_validation"] = sj["change_validation"]
@@ -581,7 +688,7 @@ def render_html_report(
     """Renders the full HTML document containing all ordered sections."""
     commit_sha = git_commit or get_git_commit_sha()
     commit_short = commit_sha[:8] if commit_sha else get_git_commit_short()
-    generation_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    generation_time = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
     if env_versions is None:
         env_versions = get_env_versions()
@@ -599,7 +706,7 @@ def render_html_report(
     html_parts = []
 
     # Document Head with Inline CSS
-    html_parts.append(f"""<!DOCTYPE html>
+    html_parts.append("""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -607,7 +714,7 @@ def render_html_report(
   <title>UrbanPulse — Comprehensive Satellite Urban Sprawl & Land Cover Report</title>
   <style>
     /* Modern Reset & Theme Tokens */
-    :root {{
+    :root {
       --bg-main: #0b0f19;
       --bg-card: #131b2e;
       --bg-card-alt: #1a243b;
@@ -622,15 +729,15 @@ def render_html_report(
       --accent-purple: #a855f7;
       --accent-rose: #f43f5e;
       --badge-bg: #1e293b;
-    }}
+    }
 
-    * {{
+    * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-    }}
+    }
 
-    body {{
+    body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background-color: var(--bg-main);
       color: var(--text-main);
@@ -638,16 +745,16 @@ def render_html_report(
       padding: 0;
       margin: 0;
       -webkit-font-smoothing: antialiased;
-    }}
+    }
 
-    .container {{
+    .container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 40px 24px 80px 24px;
-    }}
+    }
 
     /* Header Banner */
-    .header-banner {{
+    .header-banner {
       background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
       border: 1px solid var(--border-color);
       border-radius: 16px;
@@ -655,33 +762,33 @@ def render_html_report(
       margin-bottom: 32px;
       position: relative;
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-    }}
+    }
 
-    .header-title {{
+    .header-title {
       font-size: 2.3rem;
       font-weight: 800;
       color: var(--text-bright);
       margin-bottom: 8px;
       letter-spacing: -0.02em;
-    }}
+    }
 
-    .header-pitch {{
+    .header-pitch {
       font-size: 1.15rem;
       color: var(--accent-blue);
       margin-bottom: 20px;
       font-weight: 500;
       max-width: 900px;
-    }}
+    }
 
-    .meta-badges {{
+    .meta-badges {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
       align-items: center;
       margin-top: 16px;
-    }}
+    }
 
-    .badge {{
+    .badge {
       display: inline-flex;
       align-items: center;
       padding: 6px 14px;
@@ -692,22 +799,22 @@ def render_html_report(
       border: 1px solid var(--border-color);
       color: var(--text-main);
       text-decoration: none;
-    }}
+    }
 
-    .badge-primary {{
+    .badge-primary {
       background: rgba(56, 189, 248, 0.15);
       border-color: rgba(56, 189, 248, 0.4);
       color: var(--accent-blue);
-    }}
+    }
 
-    .badge-green {{
+    .badge-green {
       background: rgba(16, 185, 129, 0.15);
       border-color: rgba(16, 185, 129, 0.4);
       color: var(--accent-green);
-    }}
+    }
 
     /* Global Warnings */
-    .warning-banner {{
+    .warning-banner {
       background: rgba(245, 158, 11, 0.1);
       border: 1px solid rgba(245, 158, 11, 0.4);
       border-radius: 12px;
@@ -715,22 +822,22 @@ def render_html_report(
       margin-bottom: 32px;
       color: #fde68a;
       font-size: 0.9rem;
-    }}
-    .warning-banner strong {{
+    }
+    .warning-banner strong {
       color: #f59e0b;
-    }}
+    }
 
     /* Section Cards */
-    .section-card {{
+    .section-card {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: 14px;
       padding: 32px;
       margin-bottom: 32px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-    }}
+    }
 
-    .section-title {{
+    .section-title {
       font-size: 1.5rem;
       font-weight: 700;
       color: var(--text-bright);
@@ -740,9 +847,9 @@ def render_html_report(
       display: flex;
       align-items: center;
       gap: 10px;
-    }}
+    }
 
-    .section-notice {{
+    .section-notice {
       background: rgba(148, 163, 184, 0.1);
       border-left: 4px solid #64748b;
       padding: 12px 16px;
@@ -750,122 +857,122 @@ def render_html_report(
       font-size: 0.9rem;
       color: #94a3b8;
       border-radius: 0 8px 8px 0;
-    }}
+    }
 
     /* Tables */
-    .table-container {{
+    .table-container {
       overflow-x: auto;
       margin: 20px 0;
       border: 1px solid var(--border-color);
       border-radius: 10px;
       background: var(--bg-card-alt);
-    }}
+    }
 
-    table {{
+    table {
       width: 100%;
       border-collapse: collapse;
       text-align: left;
       font-size: 0.9rem;
-    }}
+    }
 
-    th {{
+    th {
       background: #1e293b;
       color: var(--text-bright);
       padding: 12px 16px;
       font-weight: 600;
       border-bottom: 1px solid var(--border-color);
       white-space: nowrap;
-    }}
+    }
 
-    td {{
+    td {
       padding: 10px 16px;
       border-bottom: 1px solid rgba(51, 65, 85, 0.5);
       color: var(--text-main);
-    }}
+    }
 
-    tr:last-child td {{
+    tr:last-child td {
       border-bottom: none;
-    }}
+    }
 
-    tr:hover td {{
+    tr:hover td {
       background: rgba(255, 255, 255, 0.02);
-    }}
+    }
 
-    .text-right {{
+    .text-right {
       text-align: right;
-    }}
+    }
 
-    .text-center {{
+    .text-center {
       text-align: center;
-    }}
+    }
 
     /* Grid Layouts */
-    .grid-2 {{
+    .grid-2 {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
       gap: 24px;
       margin: 20px 0;
-    }}
+    }
 
-    .grid-3 {{
+    .grid-3 {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 20px;
       margin: 20px 0;
-    }}
+    }
 
-    .stat-card {{
+    .stat-card {
       background: var(--bg-card-alt);
       border: 1px solid var(--border-color);
       border-radius: 10px;
       padding: 20px;
-    }}
+    }
 
-    .stat-label {{
+    .stat-label {
       font-size: 0.85rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
       margin-bottom: 4px;
-    }}
+    }
 
-    .stat-value {{
+    .stat-value {
       font-size: 1.8rem;
       font-weight: 800;
       color: var(--text-bright);
-    }}
+    }
 
-    .stat-sub {{
+    .stat-sub {
       font-size: 0.85rem;
       color: var(--accent-green);
       margin-top: 4px;
-    }}
+    }
 
     /* Images */
-    .report-img {{
+    .report-img {
       width: 100%;
       height: auto;
       border-radius: 10px;
       border: 1px solid var(--border-color);
       display: block;
       margin: 12px 0;
-    }}
+    }
 
-    .img-caption {{
+    .img-caption {
       font-size: 0.8rem;
       color: var(--text-muted);
       text-align: center;
       margin-top: 4px;
       margin-bottom: 16px;
-    }}
+    }
 
     /* Code Blocks */
-    pre, code {{
+    pre, code {
       font-family: "JetBrains Mono", Consolas, Monaco, "Courier New", monospace;
       font-size: 0.88rem;
-    }}
+    }
 
-    pre {{
+    pre {
       background: #0f172a;
       border: 1px solid var(--border-color);
       border-radius: 8px;
@@ -873,69 +980,69 @@ def render_html_report(
       overflow-x: auto;
       color: #38bdf8;
       margin: 16px 0;
-    }}
+    }
 
     /* Status Tags */
-    .status-pass {{
+    .status-pass {
       color: #34d399;
       font-weight: 700;
       background: rgba(16, 185, 129, 0.15);
       padding: 3px 8px;
       border-radius: 4px;
       border: 1px solid rgba(16, 185, 129, 0.3);
-    }}
+    }
 
-    .status-fail {{
+    .status-fail {
       color: #f87171;
       font-weight: 700;
       background: rgba(239, 68, 68, 0.15);
       padding: 3px 8px;
       border-radius: 4px;
       border: 1px solid rgba(239, 68, 68, 0.3);
-    }}
+    }
 
     /* Print Styles */
-    @media print {{
-      body {{
+    @media print {
+      body {
         background: #ffffff !important;
         color: #0f172a !important;
-      }}
-      .container {{
+      }
+      .container {
         max-width: 100%;
         padding: 0;
-      }}
-      .header-banner, .section-card, .table-container, .stat-card {{
+      }
+      .header-banner, .section-card, .table-container, .stat-card {
         background: #ffffff !important;
         color: #0f172a !important;
         border: 1px solid #cbd5e1 !important;
         box-shadow: none !important;
         break-inside: avoid;
         page-break-inside: avoid;
-      }}
-      .header-title, .section-title, th, .stat-value {{
+      }
+      .header-title, .section-title, th, .stat-value {
         color: #0f172a !important;
-      }}
-      th {{
+      }
+      th {
         background: #f1f5f9 !important;
         color: #0f172a !important;
-      }}
-      .header-pitch {{
+      }
+      .header-pitch {
         color: #2563eb !important;
-      }}
-      .badge {{
+      }
+      .badge {
         border: 1px solid #94a3b8 !important;
         color: #0f172a !important;
         background: #f8fafc !important;
-      }}
-      .arch-diagram {{
+      }
+      .arch-diagram {
         filter: invert(0.85) hue-rotate(180deg);
-      }}
-      pre {{
+      }
+      pre {
         background: #f8fafc !important;
         border: 1px solid #cbd5e1 !important;
         color: #0f172a !important;
-      }}
-    }}
+      }
+    }
   </style>
 </head>
 <body>
@@ -949,7 +1056,7 @@ def render_html_report(
     <div class="header-banner">
       <h1 class="header-title">UrbanPulse: Satellite Urban Sprawl &amp; Land Cover Intelligence</h1>
       <p class="header-pitch">High-resolution multi-temporal satellite analytics engine tracking urban sprawl, concentric ring densification, and Shannon entropy across metropolitan regions using Sentinel-2 and ESA WorldCover.</p>
-      
+
       <div class="meta-badges">
         <a href="https://husaintrivedi52.github.io/urban-pulse-geospatial/" class="badge badge-primary" target="_blank">&#127760; Live Web Dashboard</a>
         <a href="https://github.com/husaintrivedi/UrbanPulse" class="badge" target="_blank">&#128187; GitHub Repository</a>
@@ -1160,7 +1267,9 @@ def render_html_report(
         </div>
 """)
         else:
-            html_parts.append(f'<div class="section-notice">Model evaluation metrics for {cname} are pending.</div>')
+            html_parts.append(
+                f'<div class="section-notice">Model evaluation metrics for {cname} are pending.</div>'
+            )
 
         # 2020-2024 Multi-Series Growth & Method Sensitivity Subsection
         gs = cdata.get("growth_series", [])
@@ -1171,19 +1280,27 @@ def render_html_report(
                 yr = int(row["Year"])
                 c_km2 = float(row["Clean_Builtup_km2"])
                 r_km2 = float(row["Raw_Builtup_km2"])
-                gs.append({
-                    "year": yr,
-                    "clean_builtup_km2": c_km2,
-                    "raw_builtup_km2": r_km2,
-                    "norm_builtup_km2": c_km2,
-                    "band_min_km2": min(c_km2, r_km2),
-                    "band_max_km2": max(c_km2, r_km2),
-                    "is_provisional": (yr == 2022),
-                })
+                gs.append(
+                    {
+                        "year": yr,
+                        "clean_builtup_km2": c_km2,
+                        "raw_builtup_km2": r_km2,
+                        "norm_builtup_km2": c_km2,
+                        "band_min_km2": min(c_km2, r_km2),
+                        "band_max_km2": max(c_km2, r_km2),
+                        "is_provisional": (yr == 2022),
+                    }
+                )
 
         if gs and isinstance(gs, list):
-            net_str = h_exp.get("net_growth_range_str", f"+{abs(gs[-1]['clean_builtup_km2'] - gs[0]['clean_builtup_km2']):.1f} km²")
-            wc_val = h_exp.get("worldcover_2021_anchor_km2", 393.73 if ckey == "ahmedabad" else (378.08 if ckey == "pune" else 140.0))
+            net_str = h_exp.get(
+                "net_growth_range_str",
+                f"+{abs(gs[-1]['clean_builtup_km2'] - gs[0]['clean_builtup_km2']):.1f} km²",
+            )
+            wc_val = h_exp.get(
+                "worldcover_2021_anchor_km2",
+                393.73 if ckey == "ahmedabad" else (378.08 if ckey == "pune" else 140.0),
+            )
             clean_2024 = gs[-1].get("clean_builtup_km2", 0.0) if gs else 0.0
 
             html_parts.append(f"""
@@ -1207,7 +1324,7 @@ def render_html_report(
             </div>
           </div>
           <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">
-            <em>Framing Note:</em> Analysis is framed over <strong>2020–2024</strong>. Pre-2020 observations (2018–2019) are omitted due to cloud coverage and early baseline variability. The year <strong>2022</strong> is designated <em>Oct-Dec 2021, Collection 1</em> (dry-season slice from early Collection 1 archive; scale and offset are derived directly from STAC item metadata).
+            <em>Framing Note:</em> Analysis is framed over <strong>2020–2024</strong>. 2018-2019 excluded: too few clear scenes in the Nov-Feb window. The year <strong>2022</strong> is designated <em>2022 - partial season, no Jan-Feb</em> (dry-season slice from early Collection 1 archive; scale and offset are derived directly from STAC item metadata).
           </p>
         </div>
 
@@ -1228,13 +1345,21 @@ def render_html_report(
 """)
             for item in gs:
                 yr = item.get("year", 2020)
-                yr_label = f"{yr} (Oct-Dec 2021, Collection 1)" if item.get("is_provisional") or yr == 2022 else str(yr)
+                yr_label = (
+                    f"{yr} - partial season, no Jan-Feb"
+                    if item.get("is_provisional") or yr == 2022
+                    else str(yr)
+                )
                 c_v = item.get("clean_builtup_km2", 0.0)
                 r_v = item.get("raw_builtup_km2", 0.0)
                 n_v = item.get("norm_builtup_km2", 0.0)
                 min_v = item.get("band_min_km2", min(c_v, r_v, n_v))
                 max_v = item.get("band_max_km2", max(c_v, r_v, n_v))
-                wc_cell = f"<strong style='color:var(--accent-amber);'>{wc_val:.2f} km&sup2;</strong>" if yr == 2021 else "&mdash;"
+                wc_cell = (
+                    f"<strong style='color:var(--accent-amber);'>{wc_val:.2f} km&sup2;</strong>"
+                    if yr == 2021
+                    else "&mdash;"
+                )
 
                 html_parts.append(f"""
               <tr>
@@ -1264,8 +1389,12 @@ def render_html_report(
         # Leave-One-Year-Out Validation Subsection
         if "validation_loyo" in cdata:
             loyo_data = cdata["validation_loyo"]
-            loyo_rows = loyo_data.get("table", []) if isinstance(loyo_data, dict) else (loyo_data if isinstance(loyo_data, list) else [])
-            html_parts.append(f"""
+            loyo_rows = (
+                loyo_data.get("table", [])
+                if isinstance(loyo_data, dict)
+                else (loyo_data if isinstance(loyo_data, list) else [])
+            )
+            html_parts.append("""
         <h4 style="color:var(--text-bright); margin-top:24px; margin-bottom:10px;">Leave-One-Year-Out (LOYO) Validation (Evaluated on ALL Held-Out Points)</h4>
         <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:8px;">
           To evaluate temporal stability without data leakage, classifiers were trained excluding each fold year, and tested on <strong>all held-out points</strong> (not restricted to stable points). Area estimates are adjusted using Olofsson et al. (2014) area-weighted stratified estimation with 95% confidence intervals.
@@ -1315,7 +1444,7 @@ def render_html_report(
         <div style="background:rgba(239, 68, 68, 0.08); border-left:4px solid var(--accent-rose); border-radius:0 8px 8px 0; padding:12px 16px; margin:16px 0;">
           <strong style="color:var(--accent-rose); font-size:0.95rem;">&#9888; Negative Result Notice (Radiometric Normalisation):</strong>
           <p style="font-size:0.88rem; color:var(--text-main); margin-top:4px;">
-            Cross-year Total Least Squares (TLS) pseudo-invariant feature radiometric normalisation was implemented and systematically tested. Empirical evaluation across all held-out test points demonstrates that <strong>radiometric normalisation did not reduce year-to-year drift</strong> compared to the baseline composite series. Consequently, rule-based temporal consistency filtering remains the authoritative operational mechanism for ensuring monotonic urban expansion.
+            Cross-year Total Least Squares (TLS) pseudo-invariant feature radiometric normalisation was implemented and systematically tested. Empirical evaluation across all held-out test points demonstrates that <strong>radiometric normalisation did not reduce year-to-year drift</strong> compared to the baseline composite series. Consequently, rule-based temporal consistency filtering remains the authoritative operational mechanism for ensuring monotonic urban expansion. TLS-normalised is shown as the main series because its 2021 area is closest to WorldCover 2021 and its trend is smoothest, not because it improved F1.
           </p>
         </div>
 """)
@@ -1331,15 +1460,39 @@ def render_html_report(
                 ci_loss = cv.get("ci95_loss_km2", 35.28)
                 adj_net = cv.get("adjusted_net_km2", 81.68)
                 ci_net = cv.get("ci95_net_km2", 51.56)
-                summary_sentence = cv.get("summary_sentence", "Validated on 297 points (Ahmedabad only); net change is distinguishable from zero.")
+                summary_sentence = cv.get(
+                    "summary_sentence",
+                    "Validated on 297 points (Ahmedabad only); net change is distinguishable from zero.",
+                )
 
-                html_parts.append(f"""
+                loss_s = next(
+                    (
+                        s
+                        for s in st_rows
+                        if s.get("stratum") == "D" or "loss" in s.get("name", "").lower()
+                    ),
+                    None,
+                )
+                loss_note_html = ""
+                n_never_built = cv.get("n_never_built", loss_s.get("c00", 0) if loss_s else 0)
+                n_D = cv.get("n_D", loss_s.get("sample_size", 50) if loss_s else 50)
+                stratum_d_area = cv.get(
+                    "stratum_d_area_km2", loss_s.get("mapped_area_km2", 57.74) if loss_s else 57.74
+                )
+                false_km2 = cv.get(
+                    "false_builtup_km2",
+                    round((n_never_built / n_D) * stratum_d_area) if n_D > 0 else 0,
+                )
+                loss_note_text = f"{n_never_built} of {n_D} mapped-loss points were never built-up: the 2020 map falsely marks about {false_km2} km&sup2; as built-up."
+                loss_note_html = f'<p style="font-size:0.85rem; color:var(--text-muted); font-style:italic; margin-top:4px; margin-bottom:12px;">{loss_note_text}</p>'
+
+                html_parts.append("""
         <h4 id="change-validation" style="color:var(--text-bright); margin-top:24px; margin-bottom:10px;">4-Stratum Change Validation (2020&ndash;2024) &amp; Error-Adjusted Areas</h4>
         <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:8px;">
           To independently validate land cover transitions between 2020 and 2024, a probability sample of <strong>N=300</strong> verification points across 4 spatial strata (Gain, Persistent Built, Persistent Non-built, Loss) was audited following the design-based paradigm of <strong>Olofsson et al. (2014)</strong>.
         </p>
-        
-        <div class="table-container" style="margin-bottom:12px;">
+
+        <div class="table-container" style="margin-bottom:8px;">
           <table>
             <thead>
               <tr>
@@ -1351,7 +1504,7 @@ def render_html_report(
                 <th class="text-right">(1,0) Loss</th>
                 <th class="text-right">(1,1) Built</th>
                 <th class="text-right">Unclear</th>
-                <th class="text-right">Accuracy</th>
+                <th class="text-right">Matches mapped change</th>
               </tr>
             </thead>
             <tbody>
@@ -1374,6 +1527,7 @@ def render_html_report(
             </tbody>
           </table>
         </div>
+        {loss_note_html}
 
         <div class="grid-3" style="margin-bottom:12px;">
           <div class="stat-card">
@@ -1422,7 +1576,7 @@ def render_html_report(
         </div>
 """)
             else:
-                html_parts.append(f"""
+                html_parts.append("""
         <h4 id="change-validation" style="color:var(--text-bright); margin-top:24px; margin-bottom:10px;">4-Stratum Change Validation (2020&ndash;2024)</h4>
         <div style="background:rgba(255, 255, 255, 0.04); border-left:4px solid var(--border-subtle); border-radius:0 8px 8px 0; padding:12px 16px; margin:12px 0;">
           <p style="font-size:0.9rem; color:var(--text-muted);">
@@ -1455,7 +1609,12 @@ def render_html_report(
         </div>
 """)
             if gl.get("sources"):
-                src_items = " &bull; ".join([f"{src}: <strong>{km2:.2f} km&sup2;</strong>" for src, km2 in gl["sources"].items()])
+                src_items = " &bull; ".join(
+                    [
+                        f"{src}: <strong>{km2:.2f} km&sup2;</strong>"
+                        for src, km2 in gl["sources"].items()
+                    ]
+                )
                 html_parts.append(f"""
         <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:16px;">
           <strong>Sources of New Urban Land:</strong> {src_items}
@@ -1481,7 +1640,9 @@ def render_html_report(
             <tbody>
 """)
             for r_label, yr_vals in rp.items():
-                row_cells = "".join([f'<td class="text-right">{yr_vals.get(yr, 0.0):.1f}%</td>' for yr in ry])
+                row_cells = "".join(
+                    [f'<td class="text-right">{yr_vals.get(yr, 0.0):.1f}%</td>' for yr in ry]
+                )
                 html_parts.append(f"""
               <tr>
                 <td><strong>{r_label}</strong></td>
@@ -1511,7 +1672,7 @@ def render_html_report(
             raw_sm = cdata["sprawl_metrics"]
             filtered_sm = [r for r in raw_sm if r.get("year") in [2020, 2021, 2022, 2023, 2024]]
             sm = filtered_sm if len(filtered_sm) >= 2 else raw_sm
-            html_parts.append(f"""
+            html_parts.append("""
         <h4 style="color:var(--text-bright); margin-top:24px; margin-bottom:10px;">Spatial Sprawl, Entropy &amp; Core-Periphery Distribution</h4>
         <div class="table-container">
           <table>
@@ -1527,12 +1688,30 @@ def render_html_report(
             <tbody>
 """)
             for r in sm:
-                yr_val = int(r.get('year', 0))
-                yr_label = f"{yr_val} (Oct-Dec 2021, Collection 1)" if yr_val == 2022 else str(yr_val)
-                b_km2 = r.get('builtup_km2') if r.get('builtup_km2') is not None else r.get('builtup_area_km2', 0.0)
-                ent_val = r.get('shannon_entropy') if r.get('shannon_entropy') is not None else r.get('shannon_entropy_hn', 0.0)
-                c_share = r.get('core_share_0_6km_pct') if r.get('core_share_0_6km_pct') is not None else r.get('core_share_pct', 0.0)
-                p_share = r.get('periphery_share_gt_12km_pct') if r.get('periphery_share_gt_12km_pct') is not None else r.get('periphery_share_pct', 0.0)
+                yr_val = int(r.get("year", 0))
+                yr_label = (
+                    f"{yr_val} - partial season, no Jan-Feb" if yr_val == 2022 else str(yr_val)
+                )
+                b_km2 = (
+                    r.get("builtup_km2")
+                    if r.get("builtup_km2") is not None
+                    else r.get("builtup_area_km2", 0.0)
+                )
+                ent_val = (
+                    r.get("shannon_entropy")
+                    if r.get("shannon_entropy") is not None
+                    else r.get("shannon_entropy_hn", 0.0)
+                )
+                c_share = (
+                    r.get("core_share_0_6km_pct")
+                    if r.get("core_share_0_6km_pct") is not None
+                    else r.get("core_share_pct", 0.0)
+                )
+                p_share = (
+                    r.get("periphery_share_gt_12km_pct")
+                    if r.get("periphery_share_gt_12km_pct") is not None
+                    else r.get("periphery_share_pct", 0.0)
+                )
                 html_parts.append(f"""
               <tr>
                 <td><strong>{yr_label}</strong></td>
@@ -1622,7 +1801,9 @@ def render_html_report(
       </div>
 """)
         else:
-            html_parts.append(f'<div class="section-notice">Diagnostics dataset for {cname} is missing.</div>')
+            html_parts.append(
+                f'<div class="section-notice">Diagnostics dataset for {cname} is missing.</div>'
+            )
 
         # Quality Gate Output
         if "quality_gate" in cdata:
@@ -1804,7 +1985,12 @@ stac:
     # -------------------------------------------------------------------------
     # SECTION J: Reproducibility & Environment
     # -------------------------------------------------------------------------
-    env_rows = "".join([f"<tr><td><strong>{k}</strong></td><td><code>{v}</code></td></tr>" for k, v in env_versions.items()])
+    env_rows = "".join(
+        [
+            f"<tr><td><strong>{k}</strong></td><td><code>{v}</code></td></tr>"
+            for k, v in env_versions.items()
+        ]
+    )
     html_parts.append(f"""
     <div class="section-card">
       <h2 class="section-title">&#128257; 9. Reproducibility &amp; Verification</h2>
@@ -1861,7 +2047,9 @@ make docs</code></pre>
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate professional UrbanPulse documentation report.")
+    parser = argparse.ArgumentParser(
+        description="Generate professional UrbanPulse documentation report."
+    )
     parser.add_argument(
         "--city",
         type=str,
@@ -1894,7 +2082,7 @@ def main():
     target_cities = args.city if args.city else load_city_configs(configs_dir)
 
     print("=" * 80)
-    print(f"[*] UrbanPulse Documentation Generator")
+    print("[*] UrbanPulse Documentation Generator")
     print(f"    - Target Cities : {target_cities}")
     print(f"    - Data Dir      : {args.data_dir.resolve()}")
     print(f"    - Web Dir       : {args.web_dir.resolve()}")

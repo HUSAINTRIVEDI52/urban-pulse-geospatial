@@ -45,6 +45,7 @@ def load_config(city: str = "ahmedabad", config_path: str | Path | None = None) 
 
 def sample_training_points(
     city: str = "ahmedabad",
+    config_path: str | Path | None = None,
     labels_raster_path: str | Path | None = None,
     samples_per_class: int = 300,
     train_ratio: float = 0.70,
@@ -202,8 +203,12 @@ def sample_training_points(
     def extract_yearly_features(points_gdf: gpd.GeoDataFrame, yr: int) -> gpd.GeoDataFrame:
         feat_paths = [data_path / f"{city_key}_{yr}_{feat}.tif" for feat in feature_names]
         if not all(p.exists() for p in feat_paths):
-            print(f"    [!] Warning: Missing some feature rasters for {city_key} {yr}. Skipping extraction for {yr}.")
-            return gpd.GeoDataFrame(columns=list(points_gdf.columns) + feature_names + ["year"], crs=points_gdf.crs)
+            print(
+                f"    [!] Warning: Missing some feature rasters for {city_key} {yr}. Skipping extraction for {yr}."
+            )
+            return gpd.GeoDataFrame(
+                columns=list(points_gdf.columns) + feature_names + ["year"], crs=points_gdf.crs
+            )
 
         pts_proj = points_gdf.to_crs(raster_crs)
         coords = [(geom.x, geom.y) for geom in pts_proj.geometry]
@@ -233,7 +238,9 @@ def sample_training_points(
         te_yr = extract_yearly_features(test_gdf, yr)
         if len(tr_yr) > 0:
             train_pooled_list.append(tr_yr)
-            print(f"    - Year {yr}: Extracted {len(tr_yr)} valid train points, {len(te_yr)} valid test points")
+            print(
+                f"    - Year {yr}: Extracted {len(tr_yr)} valid train points, {len(te_yr)} valid test points"
+            )
         if len(te_yr) > 0:
             test_pooled_list.append(te_yr)
 
@@ -260,27 +267,39 @@ def sample_training_points(
     test_wgs84 = test_gdf.to_crs("EPSG:4326")
     train_wgs84.to_file(train_path, driver="GeoJSON")
     test_wgs84.to_file(test_path, driver="GeoJSON")
-    (city_subpath / "train_points.geojson").write_text(train_path.read_text(encoding="utf-8"), encoding="utf-8")
-    (city_subpath / "test_points.geojson").write_text(test_path.read_text(encoding="utf-8"), encoding="utf-8")
+    (city_subpath / "train_points.geojson").write_text(
+        train_path.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    (city_subpath / "test_points.geojson").write_text(
+        test_path.read_text(encoding="utf-8"), encoding="utf-8"
+    )
 
     if len(train_pooled_gdf) > 0:
         train_pooled_wgs84 = train_pooled_gdf.to_crs("EPSG:4326")
         test_pooled_wgs84 = test_pooled_gdf.to_crs("EPSG:4326")
         train_pooled_wgs84.to_file(train_pooled_path, driver="GeoJSON")
         test_pooled_wgs84.to_file(test_pooled_path, driver="GeoJSON")
-        (city_subpath / "train_points_pooled.geojson").write_text(train_pooled_path.read_text(encoding="utf-8"), encoding="utf-8")
-        (city_subpath / "test_points_pooled.geojson").write_text(test_pooled_path.read_text(encoding="utf-8"), encoding="utf-8")
+        (city_subpath / "train_points_pooled.geojson").write_text(
+            train_pooled_path.read_text(encoding="utf-8"), encoding="utf-8"
+        )
+        (city_subpath / "test_points_pooled.geojson").write_text(
+            test_pooled_path.read_text(encoding="utf-8"), encoding="utf-8"
+        )
 
     print(f"[+] Saved Training Points: {train_path.resolve()}")
     print(f"[+] Saved Testing Points : {test_path.resolve()}")
     print(f"[+] Saved Pooled Training Points: {train_pooled_path.resolve()}")
     print(f"[+] Saved Pooled Testing Points : {test_pooled_path.resolve()}")
 
-    return train_pooled_gdf if len(train_pooled_gdf) > 0 else train_gdf, test_pooled_gdf if len(test_pooled_gdf) > 0 else test_gdf
+    return train_pooled_gdf if len(train_pooled_gdf) > 0 else train_gdf, (
+        test_pooled_gdf if len(test_pooled_gdf) > 0 else test_gdf
+    )
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Stratified spatial block point sampling with multi-year pooling.")
+    parser = argparse.ArgumentParser(
+        description="Stratified spatial block point sampling with multi-year pooling."
+    )
     parser.add_argument(
         "--city", type=str, default="ahmedabad", help="City name (default: ahmedabad)"
     )
@@ -303,9 +322,7 @@ def main():
     parser.add_argument(
         "--test-out", type=str, default=None, help="Output test points GeoJSON path"
     )
-    parser.add_argument(
-        "--data-dir", type=str, default="data", help="Data directory"
-    )
+    parser.add_argument("--data-dir", type=str, default="data", help="Data directory")
 
     args = parser.parse_args()
     sample_training_points(

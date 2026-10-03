@@ -1,8 +1,9 @@
 import time
-import stackstac
-import rasterio
-from pystac_client import Client
+
 import numpy as np
+import rasterio
+import stackstac
+from pystac_client import Client
 
 stac_url = "https://earth-search.aws.element84.com/v1"
 client = Client.open(stac_url)

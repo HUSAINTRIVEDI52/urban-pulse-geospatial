@@ -1,11 +1,11 @@
 import json
+from pathlib import Path
+
+import geopandas as gpd
 import numpy as np
 import rasterio
-import geopandas as gpd
-import pandas as pd
-from pathlib import Path
-from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
 
 PROJECT_ROOT = Path("f:/gis-project/UrbanPulse")
 DATA_DIR = PROJECT_ROOT / "data"
@@ -18,15 +18,15 @@ def olofsson_area_estimation(cm, mapped_area_km2_by_class, target_class_idx=0):
     A_total = np.sum(mapped_area_km2_by_class)
     W = mapped_area_km2_by_class / A_total
     n_i_dot = np.sum(cm, axis=1)
-    
+
     p = np.zeros((K, K), dtype=np.float64)
     for i in range(K):
         if n_i_dot[i] > 0:
             p[i, :] = W[i] * (cm[i, :] / n_i_dot[i])
-            
+
     p_dot_k = np.sum(p[:, target_class_idx])
     A_adj_km2 = A_total * p_dot_k
-    
+
     var_p_dot_k = 0.0
     for i in range(K):
         if n_i_dot[i] > 1:
@@ -35,12 +35,12 @@ def olofsson_area_estimation(cm, mapped_area_km2_by_class, target_class_idx=0):
             sample_prop = n_ik / n_i
             var_term = (W[i]**2) * (sample_prop * (1.0 - sample_prop)) / (n_i - 1)
             var_p_dot_k += var_term
-            
+
     se_p_dot_k = np.sqrt(var_p_dot_k)
     se_A_adj_km2 = A_total * se_p_dot_k
     ci_95_km2 = 1.96 * se_A_adj_km2
     mapped_target_km2 = mapped_area_km2_by_class[target_class_idx]
-    
+
     return {
         "mapped_area_km2": round(float(mapped_target_km2), 2),
         "adjusted_area_km2": round(float(A_adj_km2), 2),
@@ -53,7 +53,7 @@ def olofsson_area_estimation(cm, mapped_area_km2_by_class, target_class_idx=0):
 for city in ["ahmedabad", "pune"]:
     city_web = WEB_DIR / city
     city_web.mkdir(parents=True, exist_ok=True)
-    
+
     # Load pixel resolution & dimensions
     with rasterio.open(DATA_DIR / f"{city}_2021_classified.tif") as s:
         h, w = s.height, s.width
@@ -61,7 +61,7 @@ for city in ["ahmedabad", "pune"]:
         aoi_km2 = (h * w) * px_km2
         grid_transform = s.transform
         raster_crs = s.crs
-        
+
     # WorldCover anchor
     wc_p = DATA_DIR / f"{city}_worldcover_labels.tif"
     if not wc_p.exists():
@@ -70,19 +70,19 @@ for city in ["ahmedabad", "pune"]:
         wc_arr = s.read(1)
         wc_px_km2 = (abs(s.transform.a) * abs(s.transform.e)) / 1e6
         wc_built_km2 = round(float(np.sum(wc_arr == 1) * wc_px_km2), 2)
-        
+
     # Series 2020-2024
     years_2020_2024 = [2020, 2021, 2022, 2023, 2024]
-    
+
     raw_dict = {}
     clean_dict = {}
     norm_dict = {}
-    
+
     # Read raw
     for y in range(2018, 2025):
         with rasterio.open(DATA_DIR / f"{city}_{y}_classified.tif") as s:
             raw_dict[y] = round(float(np.sum(s.read(1) == 1) * px_km2), 2)
-            
+
     # Read clean
     for y in range(2018, 2025):
         cp = DATA_DIR / city / "clean" / f"{city}_{y}_classified.tif"
@@ -90,13 +90,13 @@ for city in ["ahmedabad", "pune"]:
             cp = DATA_DIR / f"{city}_{y}_classified.tif"
         with rasterio.open(cp) as s:
             clean_dict[y] = round(float(np.sum(s.read(1) == 1) * px_km2), 2)
-            
+
     # Normalized model predictions
     if city == "ahmedabad":
         norm_dict = {2018: 415.61, 2019: 300.56, 2020: 406.31, 2021: 407.74, 2022: 422.18, 2023: 444.36, 2024: 466.19}
     else:
         norm_dict = {2018: 398.45, 2019: 316.72, 2020: 400.05, 2021: 377.92, 2022: 383.66, 2023: 433.17, 2024: 461.92}
-        
+
     time_series_data = []
     for y in years_2020_2024:
         r_val = raw_dict[y]
@@ -105,7 +105,7 @@ for city in ["ahmedabad", "pune"]:
         min_v = min(r_val, c_val, n_val)
         max_v = max(r_val, c_val, n_val)
         label_yr = f"{y} (Provisional)" if y == 2022 else (f"{y} (Ref)" if y == 2021 else str(y))
-        
+
         time_series_data.append({
             "year": y,
             "display_year": label_yr,
@@ -118,37 +118,37 @@ for city in ["ahmedabad", "pune"]:
             "is_provisional": y == 2022,
             "is_reference": y == 2021,
         })
-        
+
     # 2020-2024 Change Range across methods
     delta_raw = raw_dict[2024] - raw_dict[2020]
     delta_clean = clean_dict[2024] - clean_dict[2020]
     delta_norm = norm_dict[2024] - norm_dict[2020]
     min_delta = min(delta_raw, delta_clean, delta_norm)
     max_delta = max(delta_raw, delta_clean, delta_norm)
-    
+
     # LOYO Validation Table
     tr_pooled = gpd.read_file(DATA_DIR / city / "train_points_pooled.geojson").to_crs(raster_crs)
     te_pooled = gpd.read_file(DATA_DIR / city / "test_points_pooled.geojson").to_crs(raster_crs)
-    
+
     # Extract TLS norm features
     tr_coords = [(g.x, g.y) for g in tr_pooled.geometry]
     te_coords = [(g.x, g.y) for g in te_pooled.geometry]
     tr_rc = [rasterio.transform.rowcol(grid_transform, x, y) for x, y in tr_coords]
     te_rc = [rasterio.transform.rowcol(grid_transform, x, y) for x, y in te_coords]
-    
+
     norm_rasters = {}
     for y in [2018, 2021, 2024]:
         norm_rasters[y] = {}
         for f in FEATURE_NAMES:
             with rasterio.open(DATA_DIR / city / "normalized" / f"{city}_{y}_{f}.tif") as s:
                 norm_rasters[y][f] = s.read(1)
-                
+
     tr_norm_df = tr_pooled.copy()
     te_norm_df = te_pooled.copy()
     for f in FEATURE_NAMES:
         tr_norm_df[f] = np.array([norm_rasters[int(row['year'])][f][min(max(tr_rc[i][0], 0), h-1), min(max(tr_rc[i][1], 0), w-1)] for i, row in tr_pooled.iterrows()])
         te_norm_df[f] = np.array([norm_rasters[int(row['year'])][f][min(max(te_rc[i][0], 0), h-1), min(max(te_rc[i][1], 0), w-1)] for i, row in te_pooled.iterrows()])
-        
+
     validation_rows = []
     for holdout_yr in [2018, 2021, 2024]:
         # Before
@@ -159,12 +159,12 @@ for city in ["ahmedabad", "pune"]:
         y_pred_r = rf_r.predict(te_r[FEATURE_NAMES].values)
         y_true_r = te_r["class_id"].values
         cm_r = confusion_matrix(y_pred_r, y_true_r, labels=[1, 2, 3, 4, 5])
-        
+
         with rasterio.open(DATA_DIR / f"{city}_{holdout_yr}_classified.tif") as s:
             raw_map_arr = s.read(1)
         raw_map_areas = np.array([np.sum(raw_map_arr == cid) * px_km2 for cid in range(1, 6)], dtype=np.float64)
         olof_r = olofsson_area_estimation(cm_r, raw_map_areas, target_class_idx=0)
-        
+
         validation_rows.append({
             "year": holdout_yr,
             "stage": "Raw (Before)",
@@ -177,7 +177,7 @@ for city in ["ahmedabad", "pune"]:
             "ci_lower_km2": olof_r["ci_lower_km2"],
             "ci_upper_km2": olof_r["ci_upper_km2"],
         })
-        
+
         # After
         tr_n = tr_norm_df[tr_norm_df["year"] != holdout_yr]
         te_n = te_norm_df[te_norm_df["year"] == holdout_yr]
@@ -186,12 +186,12 @@ for city in ["ahmedabad", "pune"]:
         y_pred_n = rf_n.predict(te_n[FEATURE_NAMES].values)
         y_true_n = te_n["class_id"].values
         cm_n = confusion_matrix(y_pred_n, y_true_n, labels=[1, 2, 3, 4, 5])
-        
+
         norm_map_areas = raw_map_areas.copy()
         norm_map_areas[0] = norm_dict[holdout_yr]
         norm_map_areas[1:] = (aoi_km2 - norm_dict[holdout_yr]) * (raw_map_areas[1:] / np.sum(raw_map_areas[1:]))
         olof_n = olofsson_area_estimation(cm_n, norm_map_areas, target_class_idx=0)
-        
+
         validation_rows.append({
             "year": holdout_yr,
             "stage": "TLS Normalized (After)",
@@ -204,7 +204,7 @@ for city in ["ahmedabad", "pune"]:
             "ci_lower_km2": olof_n["ci_lower_km2"],
             "ci_upper_km2": olof_n["ci_upper_km2"],
         })
-        
+
     payload = {
         "city": city.capitalize(),
         "aoi_area_km2": round(aoi_km2, 2),
@@ -246,7 +246,7 @@ for city in ["ahmedabad", "pune"]:
             "type_check_status": "PASSED",
         }
     }
-    
+
     with open(city_web / "stats.json", "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
     print(f"[+] Saved {city_web / 'stats.json'}")

@@ -4,7 +4,7 @@ Uses hand-verifiable 5-year synthetic land cover stacks.
 """
 
 import numpy as np
-import pytest
+
 from pipeline.temporal_cleanup import clean_temporal_stack
 
 

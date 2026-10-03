@@ -1,6 +1,6 @@
+
 import yaml
 from pystac_client import Client
-from datetime import datetime
 
 client = Client.open("https://earth-search.aws.element84.com/v1")
 

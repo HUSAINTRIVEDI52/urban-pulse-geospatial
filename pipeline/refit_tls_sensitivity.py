@@ -22,7 +22,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from pipeline.normalize_radiometry import extract_pif_mask, fit_tls_regression, safe_normalized_difference
+from pipeline.normalize_radiometry import (
+    extract_pif_mask,
+    fit_tls_regression,
+    safe_normalized_difference,
+)
 from pipeline.train_classifier import apply_majority_filter_3x3
 
 FEATURE_NAMES = ["red", "green", "blue", "nir", "swir16", "ndvi", "ndbi", "mndwi"]
@@ -37,7 +41,7 @@ def run_tls_refit_sensitivity(data_dir: Path = Path("data/ahmedabad")):
     print("=" * 80)
 
     norm_dir = data_dir / "normalized"
-    
+
     # 2021 Reference rasters
     ref_2021 = {}
     for b in OPTICAL_BANDS:
@@ -48,7 +52,7 @@ def run_tls_refit_sensitivity(data_dir: Path = Path("data/ahmedabad")):
 
     # Load 2024 composite
     coef_json_path = data_dir / "radiometric_normalization_coefficients.json"
-    with open(coef_json_path, "r", encoding="utf-8") as f:
+    with open(coef_json_path, encoding="utf-8") as f:
         coef_data = json.load(f)
 
     reused_tls_2024 = coef_data["coefficients"]["2024"]
@@ -77,7 +81,9 @@ def run_tls_refit_sensitivity(data_dir: Path = Path("data/ahmedabad")):
 
     clean_stack_3d = np.stack(clean_stack, axis=0)
     pif_mask, water_pifs, built_pifs = extract_pif_mask(clean_stack_3d)
-    print(f"PIF Mask: {np.sum(pif_mask):,} pixels (Water: {np.sum(water_pifs):,}, Built-up: {np.sum(built_pifs):,})")
+    print(
+        f"PIF Mask: {np.sum(pif_mask):,} pixels (Water: {np.sum(water_pifs):,}, Built-up: {np.sum(built_pifs):,})"
+    )
 
     # (a) Fit TLS regression against 2021 reference PIFs
     refit_coefficients = {}
@@ -93,9 +99,15 @@ def run_tls_refit_sensitivity(data_dir: Path = Path("data/ahmedabad")):
         refit_norm_bands[b] = np.clip(raw_2024[b] * slope + intercept, 0.0, 1.0)
 
     # Compute indices for refit
-    refit_norm_bands["ndvi"] = safe_normalized_difference(refit_norm_bands["nir"], refit_norm_bands["red"])
-    refit_norm_bands["ndbi"] = safe_normalized_difference(refit_norm_bands["swir16"], refit_norm_bands["nir"])
-    refit_norm_bands["mndwi"] = safe_normalized_difference(refit_norm_bands["green"], refit_norm_bands["swir16"])
+    refit_norm_bands["ndvi"] = safe_normalized_difference(
+        refit_norm_bands["nir"], refit_norm_bands["red"]
+    )
+    refit_norm_bands["ndbi"] = safe_normalized_difference(
+        refit_norm_bands["swir16"], refit_norm_bands["nir"]
+    )
+    refit_norm_bands["mndwi"] = safe_normalized_difference(
+        refit_norm_bands["green"], refit_norm_bands["swir16"]
+    )
 
     # Classify (a) Refit
     rf = joblib.load(data_dir / "rf_model_pooled.pkl")
@@ -121,9 +133,15 @@ def run_tls_refit_sensitivity(data_dir: Path = Path("data/ahmedabad")):
         print(f"  - Band {b:<6}: slope = {slope:.6f}, intercept = {intercept:+.6f}")
         reused_norm_bands[b] = np.clip(raw_2024[b] * slope + intercept, 0.0, 1.0)
 
-    reused_norm_bands["ndvi"] = safe_normalized_difference(reused_norm_bands["nir"], reused_norm_bands["red"])
-    reused_norm_bands["ndbi"] = safe_normalized_difference(reused_norm_bands["swir16"], reused_norm_bands["nir"])
-    reused_norm_bands["mndwi"] = safe_normalized_difference(reused_norm_bands["green"], reused_norm_bands["swir16"])
+    reused_norm_bands["ndvi"] = safe_normalized_difference(
+        reused_norm_bands["nir"], reused_norm_bands["red"]
+    )
+    reused_norm_bands["ndbi"] = safe_normalized_difference(
+        reused_norm_bands["swir16"], reused_norm_bands["nir"]
+    )
+    reused_norm_bands["mndwi"] = safe_normalized_difference(
+        reused_norm_bands["green"], reused_norm_bands["swir16"]
+    )
 
     stack_2d_b = np.column_stack([reused_norm_bands[feat].ravel() for feat in FEATURE_NAMES])
     valid_1d_b = np.all(np.isfinite(stack_2d_b) & (stack_2d_b != -9999.0), axis=1)

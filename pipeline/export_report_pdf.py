@@ -4,8 +4,8 @@ Converts docs/report/index.html to docs/report/UrbanPulse_Report.pdf using Playw
 """
 
 import argparse
-import sys
 from pathlib import Path
+
 from playwright.sync_api import sync_playwright
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -23,7 +23,7 @@ def export_pdf(
 
     pdf_file.parent.mkdir(parents=True, exist_ok=True)
 
-    print(f"[*] Launching Playwright Chromium to export PDF...")
+    print("[*] Launching Playwright Chromium to export PDF...")
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()

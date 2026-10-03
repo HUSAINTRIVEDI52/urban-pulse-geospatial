@@ -4,14 +4,13 @@ Tests synthetic CSV metric extraction, HTML generation, and missing section hand
 """
 
 from pathlib import Path
+
 import pandas as pd
 import pytest
 
 from pipeline.generate_report import (
     extract_city_data,
     render_html_report,
-    collect_test_stats,
-    get_env_versions,
 )
 
 
@@ -27,62 +26,92 @@ def synthetic_workspace(tmp_path: Path):
     web_dir.mkdir(parents=True)
 
     # 1. Synthetic cleanup_summary.csv
-    df_cleanup = pd.DataFrame([
-        {
-            "Year": 2018,
-            "Raw_Builtup_km2": 150.50,
-            "Clean_Builtup_km2": 140.25,
-            "Net_Change_km2": -10.25,
-            "Rule1_Spikes_Removed_px": 500,
-            "Rule2_Persisted_Added_px": 0,
-        },
-        {
-            "Year": 2024,
-            "Raw_Builtup_km2": 210.80,
-            "Clean_Builtup_km2": 205.75,
-            "Net_Change_km2": -5.05,
-            "Rule1_Spikes_Removed_px": 120,
-            "Rule2_Persisted_Added_px": 340,
-        },
-    ])
+    df_cleanup = pd.DataFrame(
+        [
+            {
+                "Year": 2018,
+                "Raw_Builtup_km2": 150.50,
+                "Clean_Builtup_km2": 140.25,
+                "Net_Change_km2": -10.25,
+                "Rule1_Spikes_Removed_px": 500,
+                "Rule2_Persisted_Added_px": 0,
+            },
+            {
+                "Year": 2024,
+                "Raw_Builtup_km2": 210.80,
+                "Clean_Builtup_km2": 205.75,
+                "Net_Change_km2": -5.05,
+                "Rule1_Spikes_Removed_px": 120,
+                "Rule2_Persisted_Added_px": 340,
+            },
+        ]
+    )
     df_cleanup.to_csv(data_dir / "testcity_cleanup_summary.csv", index=False)
 
     # 2. Synthetic metrics.csv
-    df_metrics = pd.DataFrame([
-        {
-            "city": "Testcity",
-            "year": 2018,
-            "builtup_km2": 140.25,
-            "annual_growth_pct": 0.0,
-            "cagr_from_start_pct": 0.0,
-            "shannon_entropy": 0.8850,
-            "core_builtup_0_6km_km2": 50.0,
-            "core_share_0_6km_pct": 35.65,
-            "periphery_builtup_gt_12km_km2": 30.0,
-            "periphery_share_gt_12km_pct": 21.39,
-        },
-        {
-            "city": "Testcity",
-            "year": 2024,
-            "builtup_km2": 205.75,
-            "annual_growth_pct": 6.5,
-            "cagr_from_start_pct": 6.58,
-            "shannon_entropy": 0.9320,
-            "core_builtup_0_6km_km2": 55.0,
-            "core_share_0_6km_pct": 26.73,
-            "periphery_builtup_gt_12km_km2": 65.0,
-            "periphery_share_gt_12km_pct": 31.59,
-        },
-    ])
+    df_metrics = pd.DataFrame(
+        [
+            {
+                "city": "Testcity",
+                "year": 2018,
+                "builtup_km2": 140.25,
+                "annual_growth_pct": 0.0,
+                "cagr_from_start_pct": 0.0,
+                "shannon_entropy": 0.8850,
+                "core_builtup_0_6km_km2": 50.0,
+                "core_share_0_6km_pct": 35.65,
+                "periphery_builtup_gt_12km_km2": 30.0,
+                "periphery_share_gt_12km_pct": 21.39,
+            },
+            {
+                "city": "Testcity",
+                "year": 2024,
+                "builtup_km2": 205.75,
+                "annual_growth_pct": 6.5,
+                "cagr_from_start_pct": 6.58,
+                "shannon_entropy": 0.9320,
+                "core_builtup_0_6km_km2": 55.0,
+                "core_share_0_6km_pct": 26.73,
+                "periphery_builtup_gt_12km_km2": 65.0,
+                "periphery_share_gt_12km_pct": 31.59,
+            },
+        ]
+    )
     df_metrics.to_csv(data_dir / "testcity_metrics.csv", index=False)
 
     # 3. Synthetic rings.csv
-    df_rings = pd.DataFrame([
-        {"ring_id": 0, "ring_label": "0-2 km", "distance_km": 2, "builtup_density_pct": 78.5, "year": 2018},
-        {"ring_id": 1, "ring_label": "2-4 km", "distance_km": 4, "builtup_density_pct": 55.2, "year": 2018},
-        {"ring_id": 0, "ring_label": "0-2 km", "distance_km": 2, "builtup_density_pct": 84.1, "year": 2024},
-        {"ring_id": 1, "ring_label": "2-4 km", "distance_km": 4, "builtup_density_pct": 68.9, "year": 2024},
-    ])
+    df_rings = pd.DataFrame(
+        [
+            {
+                "ring_id": 0,
+                "ring_label": "0-2 km",
+                "distance_km": 2,
+                "builtup_density_pct": 78.5,
+                "year": 2018,
+            },
+            {
+                "ring_id": 1,
+                "ring_label": "2-4 km",
+                "distance_km": 4,
+                "builtup_density_pct": 55.2,
+                "year": 2018,
+            },
+            {
+                "ring_id": 0,
+                "ring_label": "0-2 km",
+                "distance_km": 2,
+                "builtup_density_pct": 84.1,
+                "year": 2024,
+            },
+            {
+                "ring_id": 1,
+                "ring_label": "2-4 km",
+                "distance_km": 4,
+                "builtup_density_pct": 68.9,
+                "year": 2024,
+            },
+        ]
+    )
     df_rings.to_csv(data_dir / "testcity_rings.csv", index=False)
 
     # 4. Synthetic transition_2018_2024.csv
@@ -100,32 +129,34 @@ def synthetic_workspace(tmp_path: Path):
     df_trans.to_csv(data_dir / "testcity_transition_2018_2024.csv")
 
     # 5. Synthetic diagnostics.csv
-    df_diag = pd.DataFrame([
-        {
-            "year": 2018,
-            "scenes_used": 6,
-            "scene_dates": "2018-11-10; 2018-12-05",
-            "mgrs_tiles": "43QDG",
-            "nodata_pct": 0.0,
-            "mean_cloud_pct": 0.45,
-            "stable_mean_red": 0.1245,
-            "stable_mean_nir": 0.2104,
-            "stable_mean_ndvi": 0.2568,
-            "stable_mean_ndbi": 0.1842,
-        },
-        {
-            "year": 2024,
-            "scenes_used": 8,
-            "scene_dates": "2024-11-12; 2024-12-02",
-            "mgrs_tiles": "43QDG",
-            "nodata_pct": 0.0,
-            "mean_cloud_pct": 0.32,
-            "stable_mean_red": 0.1251,
-            "stable_mean_nir": 0.2098,
-            "stable_mean_ndvi": 0.2531,
-            "stable_mean_ndbi": 0.1855,
-        },
-    ])
+    df_diag = pd.DataFrame(
+        [
+            {
+                "year": 2018,
+                "scenes_used": 6,
+                "scene_dates": "2018-11-10; 2018-12-05",
+                "mgrs_tiles": "43QDG",
+                "nodata_pct": 0.0,
+                "mean_cloud_pct": 0.45,
+                "stable_mean_red": 0.1245,
+                "stable_mean_nir": 0.2104,
+                "stable_mean_ndvi": 0.2568,
+                "stable_mean_ndbi": 0.1842,
+            },
+            {
+                "year": 2024,
+                "scenes_used": 8,
+                "scene_dates": "2024-11-12; 2024-12-02",
+                "mgrs_tiles": "43QDG",
+                "nodata_pct": 0.0,
+                "mean_cloud_pct": 0.32,
+                "stable_mean_red": 0.1251,
+                "stable_mean_nir": 0.2098,
+                "stable_mean_ndvi": 0.2531,
+                "stable_mean_ndbi": 0.1855,
+            },
+        ]
+    )
     df_diag.to_csv(data_dir / "testcity_diagnostics.csv", index=False)
 
     return {

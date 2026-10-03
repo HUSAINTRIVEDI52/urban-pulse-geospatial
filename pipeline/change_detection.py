@@ -105,7 +105,9 @@ def detect_changes(
 
     print("=" * 80)
     mode_str = "RAW" if use_raw else "CLEAN (Temporally Consistent)"
-    print(f" URBANPULSE LAND COVER CHANGE DETECTION [{mode_str}]: {city.upper()} ({start_year} -> {end_year})")
+    print(
+        f" URBANPULSE LAND COVER CHANGE DETECTION [{mode_str}]: {city.upper()} ({start_year} -> {end_year})"
+    )
     print(f" Start Raster : {start_raster_path.resolve()}")
     print(f" End Raster   : {end_raster_path.resolve()}")
     print(f" Min Patch    : {min_patch_size} pixels")

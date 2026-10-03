@@ -272,7 +272,11 @@ def run_sprawl_metrics(
         n_years = yr - first_year
         if n_years > 0 and yr in class_areas_map and first_year in class_areas_map:
             first_val = class_areas_map[first_year]
-            cagr_pct = (((builtup_km2 / first_val) ** (1.0 / n_years)) - 1.0) * 100.0 if first_val > 0 else 0.0
+            cagr_pct = (
+                (((builtup_km2 / first_val) ** (1.0 / n_years)) - 1.0) * 100.0
+                if first_val > 0
+                else 0.0
+            )
         elif n_years > 0:
             first_sub = df_rings[df_rings["year"] == first_year]
             first_val = float(first_sub["builtup_km2"].sum())

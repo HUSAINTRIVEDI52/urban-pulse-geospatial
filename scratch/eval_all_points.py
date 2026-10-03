@@ -1,11 +1,10 @@
-import json
+from pathlib import Path
+
+import geopandas as gpd
 import numpy as np
 import rasterio
-import geopandas as gpd
-import pandas as pd
-from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score
+from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
 
 PROJECT_ROOT = Path("f:/gis-project/UrbanPulse")
 DATA_DIR = PROJECT_ROOT / "data"
@@ -42,9 +41,9 @@ def olofsson_area_estimation(cm, mapped_area_km2_by_class, target_class_idx=0):
     }
 
 for city in ["ahmedabad", "pune"]:
-    print(f"\n=======================================================")
+    print("\n=======================================================")
     print(f"=== CITY: {city.upper()} ===")
-    print(f"=======================================================")
+    print("=======================================================")
     with rasterio.open(DATA_DIR / f"{city}_2021_classified.tif") as src:
         h, w = src.height, src.width
         res_x, res_y = abs(src.transform.a), abs(src.transform.e)
@@ -54,14 +53,14 @@ for city in ["ahmedabad", "pune"]:
 
     tr_pooled = gpd.read_file(DATA_DIR / city / "train_points_pooled.geojson").to_crs(raster_crs)
     te_pooled = gpd.read_file(DATA_DIR / city / "test_points_pooled.geojson").to_crs(raster_crs)
-    
+
     # Load normalization coeffs or compute normalized features for points
     # Extract coords
     tr_coords = [(g.x, g.y) for g in tr_pooled.geometry]
     te_coords = [(g.x, g.y) for g in te_pooled.geometry]
     tr_rc = [rasterio.transform.rowcol(grid_transform, x, y) for x, y in tr_coords]
     te_rc = [rasterio.transform.rowcol(grid_transform, x, y) for x, y in te_coords]
-    
+
     # Check if normalized rasters exist
     norm_rasters = {}
     for y in [2018, 2021, 2024]:
@@ -71,7 +70,7 @@ for city in ["ahmedabad", "pune"]:
             for f in FEATURE_NAMES:
                 with rasterio.open(norm_dir / f"{city}_{y}_{f}.tif") as s:
                     norm_rasters[y][f] = s.read(1)
-                    
+
     tr_norm = tr_pooled.copy()
     te_norm = te_pooled.copy()
     if norm_rasters:
@@ -95,16 +94,16 @@ for city in ["ahmedabad", "pune"]:
         y_pred_r = rf_r.predict(te_r[FEATURE_NAMES].values)
         y_true_r = te_r["class_id"].values
         cm_r = confusion_matrix(y_pred_r, y_true_r, labels=[1, 2, 3, 4, 5])
-        
+
         with rasterio.open(DATA_DIR / f"{city}_{holdout_yr}_classified.tif") as s:
             raw_map_arr = s.read(1)
         raw_map_areas = np.array([np.sum(raw_map_arr == cid) * px_km2 for cid in range(1, 6)], dtype=np.float64)
         olof_r = olofsson_area_estimation(cm_r, raw_map_areas, target_class_idx=0)
-        
+
         p_r = precision_score((y_true_r == 1).astype(int), (y_pred_r == 1).astype(int), zero_division=0)
         r_r = recall_score((y_true_r == 1).astype(int), (y_pred_r == 1).astype(int), zero_division=0)
         f1_r = f1_score((y_true_r == 1).astype(int), (y_pred_r == 1).astype(int), zero_division=0)
-        
+
         print(f"[{city.upper()} {holdout_yr} RAW] N={len(te_r)}, Prec={p_r:.4f}, Rec={r_r:.4f}, F1={f1_r:.4f}, Mapped={olof_r['mapped_area_km2']:.2f} km2, Adj={olof_r['adjusted_area_km2']:.2f} +- {olof_r['ci_95_km2']:.2f} km2")
 
         # --- TLS NORM ---
@@ -116,7 +115,7 @@ for city in ["ahmedabad", "pune"]:
             y_pred_n = rf_n.predict(te_n[FEATURE_NAMES].values)
             y_true_n = te_n["class_id"].values
             cm_n = confusion_matrix(y_pred_n, y_true_n, labels=[1, 2, 3, 4, 5])
-            
+
             # If normalized classified raster exists or we use proxy class areas
             olof_n = olofsson_area_estimation(cm_n, raw_map_areas, target_class_idx=0)
             p_n = precision_score((y_true_n == 1).astype(int), (y_pred_n == 1).astype(int), zero_division=0)

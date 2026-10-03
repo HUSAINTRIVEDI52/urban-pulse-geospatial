@@ -37,6 +37,7 @@ def _execute_values(cur, sql, rows):
         for r in rows:
             cur.execute(sql, r)
 
+
 # Class mapping standard
 PROJECT_CLASSES = {
     1: "Built-up",

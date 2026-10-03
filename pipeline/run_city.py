@@ -17,7 +17,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
 import yaml
 
 # Ensure project root is in sys.path
@@ -220,7 +219,9 @@ def run_city_pipeline(
     # --------------------------------------------------------------------------
     # STEP 5: Sprawl Velocity & Shannon Spatial Entropy Metrics & Web Export
     # --------------------------------------------------------------------------
-    print(f"\n[PHASE 5/5] Computing Shannon Entropy & Exporting Web Client Datasets for {city_name}...")
+    print(
+        f"\n[PHASE 5/5] Computing Shannon Entropy & Exporting Web Client Datasets for {city_name}..."
+    )
     df_metrics = run_sprawl_metrics(
         city=city_key,
         use_raw=False,

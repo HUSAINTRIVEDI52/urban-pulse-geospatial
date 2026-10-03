@@ -1,6 +1,7 @@
-import rasterio
-import numpy as np
 from pathlib import Path
+
+import numpy as np
+import rasterio
 
 PROJECT_ROOT = Path("f:/gis-project/UrbanPulse")
 DATA_DIR = PROJECT_ROOT / "data"

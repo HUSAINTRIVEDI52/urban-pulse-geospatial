@@ -115,8 +115,14 @@ def query_stac_scenes_for_year(
         for _, t_items in tile_dict.items():
             by_date = {}
             for it in t_items:
-                dt_str = it.datetime.strftime("%Y-%m-%d") if it.datetime else str(it.properties.get("datetime"))[:10]
-                if dt_str not in by_date or float(it.properties.get("eo:cloud_cover", 100)) < float(by_date[dt_str].properties.get("eo:cloud_cover", 100)):
+                dt_str = (
+                    it.datetime.strftime("%Y-%m-%d")
+                    if it.datetime
+                    else str(it.properties.get("datetime"))[:10]
+                )
+                if dt_str not in by_date or float(it.properties.get("eo:cloud_cover", 100)) < float(
+                    by_date[dt_str].properties.get("eo:cloud_cover", 100)
+                ):
                     by_date[dt_str] = it
             u_dates = sorted(by_date.keys())
             if len(u_dates) <= scenes_per_tile:
@@ -266,7 +272,9 @@ def diagnose_years(
     years = list(range(start_year, end_year + 1))
 
     print("\n" + "=" * 115)
-    print(f"[*] UrbanPulse Multi-Year Diagnostic & Radiometric Analysis: {city_clean.upper()} ({start_year} - {end_year})")
+    print(
+        f"[*] UrbanPulse Multi-Year Diagnostic & Radiometric Analysis: {city_clean.upper()} ({start_year} - {end_year})"
+    )
     print("=" * 115)
 
     # 1. Load classified maps and compute stable mask (Water [3] or Built-up [1] in >= len(years)-1 years)
@@ -280,7 +288,9 @@ def diagnose_years(
         ]
         chosen = next((p for p in candidates if p.exists()), None)
         if not chosen:
-            raise FileNotFoundError(f"Missing classified map for {y}: looked in {[str(c) for c in candidates]}")
+            raise FileNotFoundError(
+                f"Missing classified map for {y}: looked in {[str(c) for c in candidates]}"
+            )
         with rasterio.open(chosen) as src:
             classes_dict[y] = src.read(1)
 
@@ -296,8 +306,12 @@ def diagnose_years(
 
     stable_pixel_count = int(np.sum(stable_mask))
     total_pixels = stable_mask.size
-    print(f"\n[+] Computed Stable Pixels Mask (Built-up [1] or Water [3] in >= {min_stable_years} of {len(years)} years):")
-    print(f"    - Stable Pixels Count : {stable_pixel_count:,} / {total_pixels:,} ({stable_pixel_count / total_pixels * 100:.2f}%)")
+    print(
+        f"\n[+] Computed Stable Pixels Mask (Built-up [1] or Water [3] in >= {min_stable_years} of {len(years)} years):"
+    )
+    print(
+        f"    - Stable Pixels Count : {stable_pixel_count:,} / {total_pixels:,} ({stable_pixel_count / total_pixels * 100:.2f}%)"
+    )
 
     # 2. Collect statistics per year
     scene_diagnostics = []
@@ -314,6 +328,7 @@ def diagnose_years(
         rep_file = next((p for p in report_candidates if p.exists()), None)
         if rep_file:
             import json
+
             with open(rep_file, encoding="utf-8") as f:
                 rdata = json.load(f)
             scene_count = rdata.get("scene_count", 0)
@@ -322,7 +337,9 @@ def diagnose_years(
             mean_cloud = rdata.get("mean_scene_cloud_cover_pct", 0.0)
             items = []
         else:
-            scene_count, scene_dates, unique_tiles, mean_cloud, items = query_stac_scenes_for_year(year=y, config=config)
+            scene_count, scene_dates, unique_tiles, mean_cloud, items = query_stac_scenes_for_year(
+                year=y, config=config
+            )
 
         dates_str = ", ".join(scene_dates) if scene_dates else "N/A"
         tiles_str = ", ".join(unique_tiles) if unique_tiles else "N/A"
@@ -330,20 +347,20 @@ def diagnose_years(
             stac_items_sample[y] = items[0]
 
         # B. Load band GeoTIFFs
-        def find_band_file(b_name: str) -> Path:
+        def find_band_file(b_name: str, yr: int = y) -> Path:
             b_cands = [
-                data_path / f"{city_clean}_{y}_{b_name}.tif",
-                data_path / city_clean / f"{city_clean}_{y}_{b_name}.tif",
+                data_path / f"{city_clean}_{yr}_{b_name}.tif",
+                data_path / city_clean / f"{city_clean}_{yr}_{b_name}.tif",
             ]
             chosen_b = next((p for p in b_cands if p.exists()), None)
             if not chosen_b:
-                raise FileNotFoundError(f"Missing {b_name} band for {y}")
+                raise FileNotFoundError(f"Missing {b_name} band for {yr}")
             return chosen_b
 
         red_p = find_band_file("red")
         nir_p = find_band_file("nir")
         swir16_p = find_band_file("swir16")
-        
+
         with rasterio.open(red_p) as src_r:
             red = src_r.read(1).astype(np.float32)
         with rasterio.open(nir_p) as src_n:
@@ -356,7 +373,10 @@ def diagnose_years(
             ndvi = np.where((nir + red) != 0, (nir - red) / (nir + red), np.nan)
             ndbi = np.where((swir16 + nir) != 0, (swir16 - nir) / (swir16 + nir), np.nan)
             # For MNDWI we can use green if available, otherwise swir16/nir
-            green_cands = [data_path / f"{city_clean}_{y}_green.tif", data_path / city_clean / f"{city_clean}_{y}_green.tif"]
+            green_cands = [
+                data_path / f"{city_clean}_{y}_green.tif",
+                data_path / city_clean / f"{city_clean}_{y}_green.tif",
+            ]
             green_p = next((p for p in green_cands if p.exists()), None)
             if green_p:
                 with rasterio.open(green_p) as src_g:
@@ -389,47 +409,52 @@ def diagnose_years(
         mean_mndwi = float(np.mean(mndwi[valid_stable])) if np.any(valid_stable) else 0.0
 
         # E. Statistics over ALL valid pixels
-        valid_all = (
-            ~nodata_mask
-            & np.isfinite(red)
-            & np.isfinite(nir)
-            & np.isfinite(swir16)
-        )
+        valid_all = ~nodata_mask & np.isfinite(red) & np.isfinite(nir) & np.isfinite(swir16)
         all_mean_red = float(np.mean(red[valid_all])) if np.any(valid_all) else 0.0
         all_mean_nir = float(np.mean(nir[valid_all])) if np.any(valid_all) else 0.0
         all_mean_swir16 = float(np.mean(swir16[valid_all])) if np.any(valid_all) else 0.0
 
-        scene_diagnostics.append({
-            "year": y,
-            "scenes_used": scene_count,
-            "scene_dates": dates_str,
-            "mgrs_tiles": tiles_str,
-            "nodata_pct": nodata_pct,
-            "mean_cloud_pct": mean_cloud,
-        })
+        scene_diagnostics.append(
+            {
+                "year": y,
+                "scenes_used": scene_count,
+                "scene_dates": dates_str,
+                "mgrs_tiles": tiles_str,
+                "nodata_pct": nodata_pct,
+                "mean_cloud_pct": mean_cloud,
+            }
+        )
 
-        stable_radiometry.append({
-            "year": y,
-            "mean_red": mean_red,
-            "mean_nir": mean_nir,
-            "mean_swir16": mean_swir16,
-            "mean_ndvi": mean_ndvi,
-            "mean_ndbi": mean_ndbi,
-            "mean_mndwi": mean_mndwi,
-        })
+        stable_radiometry.append(
+            {
+                "year": y,
+                "mean_red": mean_red,
+                "mean_nir": mean_nir,
+                "mean_swir16": mean_swir16,
+                "mean_ndvi": mean_ndvi,
+                "mean_ndbi": mean_ndbi,
+                "mean_mndwi": mean_mndwi,
+            }
+        )
 
-        all_valid_radiometry.append({
-            "year": y,
-            "all_mean_red": all_mean_red,
-            "all_mean_nir": all_mean_nir,
-            "all_mean_swir16": all_mean_swir16,
-        })
+        all_valid_radiometry.append(
+            {
+                "year": y,
+                "all_mean_red": all_mean_red,
+                "all_mean_nir": all_mean_nir,
+                "all_mean_swir16": all_mean_swir16,
+            }
+        )
 
     # 3. Print Table 1: Scenes & Acquisition Diagnostics
     print("\n" + "=" * 125)
-    print(f"TABLE 1: Sentinel-2 Scene Selection & Acquisition Diagnostics ({city_clean.capitalize()})")
+    print(
+        f"TABLE 1: Sentinel-2 Scene Selection & Acquisition Diagnostics ({city_clean.capitalize()})"
+    )
     print("=" * 125)
-    print(f"{'Year':<5} | {'Scenes':<6} | {'MGRS Tiles':<12} | {'NoData %':<8} | {'Cloud %':<7} | {'Scene Acquisition Dates'}")
+    print(
+        f"{'Year':<5} | {'Scenes':<6} | {'MGRS Tiles':<12} | {'NoData %':<8} | {'Cloud %':<7} | {'Scene Acquisition Dates'}"
+    )
     print("-" * 125)
     for row in scene_diagnostics:
         print(
@@ -444,9 +469,13 @@ def diagnose_years(
 
     # 4. Print Table 2: Stable Pixels Radiometric Consistency
     print("\n" + "=" * 125)
-    print(f"TABLE 2: Stable Pixels Radiometric Means (Water / Built-up in >= 6 of 7 Years) - {city_clean.capitalize()}")
+    print(
+        f"TABLE 2: Stable Pixels Radiometric Means (Water / Built-up in >= 6 of 7 Years) - {city_clean.capitalize()}"
+    )
     print("=" * 125)
-    print(f"{'Year':<5} | {'Mean Red':<9} | {'Mean NIR':<9} | {'Mean SWIR16':<11} | {'Mean NDVI':<10} | {'Mean NDBI':<10} | {'Mean MNDWI':<10}")
+    print(
+        f"{'Year':<5} | {'Mean Red':<9} | {'Mean NIR':<9} | {'Mean SWIR16':<11} | {'Mean NDVI':<10} | {'Mean NDBI':<10} | {'Mean MNDWI':<10}"
+    )
     print("-" * 125)
     for row in stable_radiometry:
         print(
@@ -475,35 +504,51 @@ def diagnose_years(
     print("\n" + "=" * 125)
     print(f"BASELINE 04.00 OFFSET & HARMONIZATION ANALYSIS ({city_clean.capitalize()})")
     print("=" * 125)
-    print(f"[*] Pre-2022  (2018-2021) All-Pixel Means -> Red: {pre_red:.4f}, NIR: {pre_nir:.4f}, SWIR16: {pre_swir:.4f}")
-    print(f"[*] Post-2022 (2022-2024) All-Pixel Means -> Red: {post_red:.4f}, NIR: {post_nir:.4f}, SWIR16: {post_swir:.4f}")
-    print(f"[*] Mean Differences (Post - Pre)         -> dRed: {post_red - pre_red:+.4f}, dNIR: {post_nir - pre_nir:+.4f}, dSWIR16: {post_swir - pre_swir:+.4f}")
+    print(
+        f"[*] Pre-2022  (2018-2021) All-Pixel Means -> Red: {pre_red:.4f}, NIR: {pre_nir:.4f}, SWIR16: {pre_swir:.4f}"
+    )
+    print(
+        f"[*] Post-2022 (2022-2024) All-Pixel Means -> Red: {post_red:.4f}, NIR: {post_nir:.4f}, SWIR16: {post_swir:.4f}"
+    )
+    print(
+        f"[*] Mean Differences (Post - Pre)         -> dRed: {post_red - pre_red:+.4f}, dNIR: {post_nir - pre_nir:+.4f}, dSWIR16: {post_swir - pre_swir:+.4f}"
+    )
     print("-" * 125)
     print("[*] STAC Metadata & Pipeline Harmonization Findings:")
-    print("    - Sentinel-2 Processing Baseline 04.00 (deployed 2022-01-25) added a +1000 DN offset (+0.1 reflectance).")
-    print("    - The STAC collection 'sentinel-2-c1-l2a' on AWS Earth Search provides harmonized surface reflectance assets")
-    print("      with explicit 'raster:bands' metadata specifying scale = 0.0001 and offset = -0.1 for post-baseline-04.00 scenes.")
-    print("    - As shown in the stable pixel and whole-AOI means above, spectral values remain stable across the 2021/2022 transition")
+    print(
+        "    - Sentinel-2 Processing Baseline 04.00 (deployed 2022-01-25) added a +1000 DN offset (+0.1 reflectance)."
+    )
+    print(
+        "    - The STAC collection 'sentinel-2-c1-l2a' on AWS Earth Search provides harmonized surface reflectance assets"
+    )
+    print(
+        "      with explicit 'raster:bands' metadata specifying scale = 0.0001 and offset = -0.1 for post-baseline-04.00 scenes."
+    )
+    print(
+        "    - As shown in the stable pixel and whole-AOI means above, spectral values remain stable across the 2021/2022 transition"
+    )
     print("      without artificial +0.1 (+1000 DN) offset jumps.")
     print("=" * 125)
 
     # 6. Save data/{city}/diagnostics.csv
     csv_rows = []
     for s_row, r_row in zip(scene_diagnostics, stable_radiometry, strict=True):
-        csv_rows.append({
-            "year": s_row["year"],
-            "scenes_used": s_row["scenes_used"],
-            "scene_dates": s_row["scene_dates"],
-            "mgrs_tiles": s_row["mgrs_tiles"],
-            "nodata_pct": f"{s_row['nodata_pct']:.4f}",
-            "mean_cloud_pct": f"{s_row['mean_cloud_pct']:.4f}",
-            "stable_mean_red": f"{r_row['mean_red']:.4f}",
-            "stable_mean_nir": f"{r_row['mean_nir']:.4f}",
-            "stable_mean_swir16": f"{r_row['mean_swir16']:.4f}",
-            "stable_mean_ndvi": f"{r_row['mean_ndvi']:.4f}",
-            "stable_mean_ndbi": f"{r_row['mean_ndbi']:.4f}",
-            "stable_mean_mndwi": f"{r_row['mean_mndwi']:.4f}",
-        })
+        csv_rows.append(
+            {
+                "year": s_row["year"],
+                "scenes_used": s_row["scenes_used"],
+                "scene_dates": s_row["scene_dates"],
+                "mgrs_tiles": s_row["mgrs_tiles"],
+                "nodata_pct": f"{s_row['nodata_pct']:.4f}",
+                "mean_cloud_pct": f"{s_row['mean_cloud_pct']:.4f}",
+                "stable_mean_red": f"{r_row['mean_red']:.4f}",
+                "stable_mean_nir": f"{r_row['mean_nir']:.4f}",
+                "stable_mean_swir16": f"{r_row['mean_swir16']:.4f}",
+                "stable_mean_ndvi": f"{r_row['mean_ndvi']:.4f}",
+                "stable_mean_ndbi": f"{r_row['mean_ndbi']:.4f}",
+                "stable_mean_mndwi": f"{r_row['mean_mndwi']:.4f}",
+            }
+        )
 
     # Save to both data/{city}/diagnostics.csv and data/{city}_diagnostics.csv
     out_csv_paths = [

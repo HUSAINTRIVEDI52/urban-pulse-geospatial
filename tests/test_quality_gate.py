@@ -73,7 +73,9 @@ def test_quality_gate_fails_low_per_year_accuracy():
             df_areas,
             per_year_accuracies={2018: 0.75, 2021: 0.68, 2024: 0.80},  # 2021 has 68% < 70%
         )
-    assert "Year 2021 validation accuracy (68.00%) is below minimum threshold" in str(exc_info.value)
+    assert "Year 2021 validation accuracy (68.00%) is below minimum threshold" in str(
+        exc_info.value
+    )
 
 
 def test_quality_gate_fails_excessive_builtup_loss():

@@ -13,6 +13,7 @@ Verifies that stats.json is the single consistent source of truth across both ci
 
 import json
 from pathlib import Path
+
 import pytest
 
 CITIES = ["ahmedabad", "pune"]
@@ -26,7 +27,7 @@ def city_stats(request):
     city = request.param
     stats_path = WEB_DATA_DIR / city / "stats.json"
     assert stats_path.exists(), f"stats.json missing for {city} at {stats_path}"
-    with open(stats_path, "r", encoding="utf-8") as f:
+    with open(stats_path, encoding="utf-8") as f:
         data = json.load(f)
     return city, data
 
@@ -43,24 +44,31 @@ def test_class_areas_sum_to_aoi(city_stats):
     for entry in class_areas:
         year = entry["year"]
         assert 2020 <= year <= 2024, f"Unexpected year {year} in analysis window"
-        
+
         # Five classes + explicit NoData
-        keys = ["built_up_km2", "vegetation_km2", "water_km2", "agriculture_km2", "open_land_km2", "nodata_km2"]
+        keys = [
+            "built_up_km2",
+            "vegetation_km2",
+            "water_km2",
+            "agriculture_km2",
+            "open_land_km2",
+            "nodata_km2",
+        ]
         sum_km2 = sum(entry.get(k, 0.0) for k in keys)
-        
+
         # Area sum vs AOI area must be within 0.5% tolerance
         rel_diff = abs(sum_km2 - aoi_area) / aoi_area
         assert rel_diff < 0.005, (
             f"Class areas sum ({sum_km2:.2f} km²) deviates from AOI ({aoi_area:.2f} km²) "
             f"by {rel_diff * 100:.3f}% for {city} {year} (threshold < 0.5%)"
         )
-        
+
         # Shares sum must be ~100%
         shares = entry.get("shares_pct", {})
         sum_pct = sum(shares.values())
-        assert abs(sum_pct - 100.0) < 0.1, (
-            f"Class shares sum to {sum_pct:.2f}% instead of 100% for {city} {year}"
-        )
+        assert (
+            abs(sum_pct - 100.0) < 0.1
+        ), f"Class shares sum to {sum_pct:.2f}% instead of 100% for {city} {year}"
 
 
 def test_raw_and_tls_series_distinct(city_stats):
@@ -78,9 +86,9 @@ def test_raw_and_tls_series_distinct(city_stats):
         yr = g["year"]
         raw_val = g["raw_builtup_km2"]
         tls_val = g["norm_builtup_km2"]
-        assert raw_val != tls_val, (
-            f"Raw and TLS built-up areas are identical ({raw_val} km²) for {city} {yr}"
-        )
+        assert (
+            raw_val != tls_val
+        ), f"Raw and TLS built-up areas are identical ({raw_val} km²) for {city} {yr}"
 
 
 def test_builtup_class_area_equals_card_value(city_stats):
@@ -96,11 +104,11 @@ def test_builtup_class_area_equals_card_value(city_stats):
         yr = ca["year"]
         g = next((x for x in growth_series if x["year"] == yr), None)
         assert g is not None, f"Missing growth_series for year {yr} in {city}"
-        
+
         # Class areas built-up area must match TLS-normalised main series
-        assert abs(ca["built_up_km2"] - g["norm_builtup_km2"]) < 0.01, (
-            f"class_areas built_up_km2 ({ca['built_up_km2']}) != norm_builtup_km2 ({g['norm_builtup_km2']}) for {city} {yr}"
-        )
+        assert (
+            abs(ca["built_up_km2"] - g["norm_builtup_km2"]) < 0.01
+        ), f"class_areas built_up_km2 ({ca['built_up_km2']}) != norm_builtup_km2 ({g['norm_builtup_km2']}) for {city} {yr}"
 
 
 def test_ring_builtup_total_matches_series_within_1pct(city_stats):
@@ -139,23 +147,27 @@ def test_gate_count_equals_passing_gates_in_tooltip(city_stats):
 
     gates = qg.get("gates", {})
     assert len(gates) == 5, f"Expected 5 gate criteria in quality_gate.gates for {city}"
-    
-    expected_gate_keys = {"nodata", "scenes_in_window", "volatility", "accuracy", "loss_gain_ratio"}
-    assert set(gates.keys()) == expected_gate_keys, f"Gate keys mismatch for {city}: {set(gates.keys())}"
 
-    passing_gates = [k for k, g in gates.items() if g.get("passed") is True or g.get("status") == "PASS"]
+    expected_gate_keys = {"nodata", "scenes_in_window", "volatility", "accuracy", "loss_gain_ratio"}
+    assert (
+        set(gates.keys()) == expected_gate_keys
+    ), f"Gate keys mismatch for {city}: {set(gates.keys())}"
+
+    passing_gates = [
+        k for k, g in gates.items() if g.get("passed") is True or g.get("status") == "PASS"
+    ]
     actual_pass_count = len(passing_gates)
 
-    assert qg.get("pass_count") == actual_pass_count, (
-        f"pass_count ({qg.get('pass_count')}) != passing gates count ({actual_pass_count}) for {city}"
-    )
+    assert (
+        qg.get("pass_count") == actual_pass_count
+    ), f"pass_count ({qg.get('pass_count')}) != passing gates count ({actual_pass_count}) for {city}"
     assert qg.get("total_count") == 5, f"total_count ({qg.get('total_count')}) != 5 for {city}"
 
     # Summary badge string
     expected_badge = f"Gate: {actual_pass_count}/5 PASS"
-    assert qg.get("summary_badge") == expected_badge, (
-        f"summary_badge ({qg.get('summary_badge')}) != {expected_badge} for {city}"
-    )
+    assert (
+        qg.get("summary_badge") == expected_badge
+    ), f"summary_badge ({qg.get('summary_badge')}) != {expected_badge} for {city}"
 
 
 def test_worldcover_2021_tls_difference_calculation(city_stats):
@@ -177,12 +189,12 @@ def test_worldcover_2021_tls_difference_calculation(city_stats):
     expected_diff_km2 = round(est_2021_norm - wc_anchor, 2)
     expected_diff_pct = round((expected_diff_km2 / wc_anchor) * 100.0, 1)
 
-    assert abs(diff_km2 - expected_diff_km2) < 0.05, (
-        f"diff_km2 ({diff_km2}) != expected ({expected_diff_km2}) for {city}"
-    )
-    assert abs(diff_pct - expected_diff_pct) < 0.1, (
-        f"diff_pct ({diff_pct}) != expected ({expected_diff_pct}) for {city}"
-    )
+    assert (
+        abs(diff_km2 - expected_diff_km2) < 0.05
+    ), f"diff_km2 ({diff_km2}) != expected ({expected_diff_km2}) for {city}"
+    assert (
+        abs(diff_pct - expected_diff_pct) < 0.1
+    ), f"diff_pct ({diff_pct}) != expected ({expected_diff_pct}) for {city}"
 
 
 def test_headline_range_endpoints_match_three_methods(city_stats):
@@ -193,7 +205,7 @@ def test_headline_range_endpoints_match_three_methods(city_stats):
     city, data = city_stats
     growth_series = data.get("growth_series", [])
     assert len(growth_series) >= 5, f"Expected at least 5 years of growth series for {city}"
-    
+
     g_2020 = next(g for g in growth_series if g["year"] == 2020)
     g_2024 = next(g for g in growth_series if g["year"] == 2024)
 
@@ -223,18 +235,18 @@ def test_headline_range_endpoints_match_three_methods(city_stats):
     range_pct = headline.get("net_growth_range_pct", [])
     assert len(range_km2) == 2 and len(range_pct) == 2
 
-    assert abs(range_km2[0] - expected_min_km2) < 0.05, (
-        f"Headline min_change_km2 ({range_km2[0]}) != expected ({expected_min_km2:.2f})"
-    )
-    assert abs(range_km2[1] - expected_max_km2) < 0.05, (
-        f"Headline max_change_km2 ({range_km2[1]}) != expected ({expected_max_km2:.2f})"
-    )
-    assert abs(range_pct[0] - expected_min_pct) < 0.1, (
-        f"Headline min_change_pct ({range_pct[0]}) != expected ({expected_min_pct:.1f})"
-    )
-    assert abs(range_pct[1] - expected_max_pct) < 0.1, (
-        f"Headline max_change_pct ({range_pct[1]}) != expected ({expected_max_pct:.1f})"
-    )
+    assert (
+        abs(range_km2[0] - expected_min_km2) < 0.05
+    ), f"Headline min_change_km2 ({range_km2[0]}) != expected ({expected_min_km2:.2f})"
+    assert (
+        abs(range_km2[1] - expected_max_km2) < 0.05
+    ), f"Headline max_change_km2 ({range_km2[1]}) != expected ({expected_max_km2:.2f})"
+    assert (
+        abs(range_pct[0] - expected_min_pct) < 0.1
+    ), f"Headline min_change_pct ({range_pct[0]}) != expected ({expected_min_pct:.1f})"
+    assert (
+        abs(range_pct[1] - expected_max_pct) < 0.1
+    ), f"Headline max_change_pct ({range_pct[1]}) != expected ({expected_max_pct:.1f})"
 
     # 3. Check methods breakdown object consistency
     methods = headline.get("methods_breakdown", {})
@@ -315,16 +327,16 @@ def test_validation_f1_matches_committed_metrics(city_stats):
     city, data = city_stats
     metrics_path = PROJECT_ROOT / "data" / "metrics.json"
     assert metrics_path.exists(), f"metrics.json missing at {metrics_path}"
-    with open(metrics_path, "r", encoding="utf-8") as f:
+    with open(metrics_path, encoding="utf-8") as f:
         canonical_metrics = json.load(f)
 
     expected_rows = canonical_metrics.get(city, {}).get("loyo_all_points", [])
     assert len(expected_rows) > 0, f"No expected metrics for {city}"
 
     val_table = data.get("validation_loyo", {}).get("table", [])
-    assert len(val_table) == len(expected_rows), (
-        f"Validation table row count ({len(val_table)}) != canonical metrics ({len(expected_rows)}) for {city}"
-    )
+    assert len(val_table) == len(
+        expected_rows
+    ), f"Validation table row count ({len(val_table)}) != canonical metrics ({len(expected_rows)}) for {city}"
 
     for i, row in enumerate(val_table):
         exp = expected_rows[i]
@@ -384,11 +396,9 @@ def test_dashboard_builtup_equals_validation_strata(city_stats):
     expected_2020 = area_b + area_d
     expected_2024 = area_a + area_b
 
-    assert abs(norm_2020 - expected_2020) < 0.05, (
-        f"Dashboard 2020 built-up ({norm_2020} km²) != Stratum B+D ({expected_2020:.2f} km²) for {city}"
-    )
-    assert abs(norm_2024 - expected_2024) < 0.05, (
-        f"Dashboard 2024 built-up ({norm_2024} km²) != Stratum A+B ({expected_2024:.2f} km²) for {city}"
-    )
-
-
+    assert (
+        abs(norm_2020 - expected_2020) < 0.05
+    ), f"Dashboard 2020 built-up ({norm_2020} km²) != Stratum B+D ({expected_2020:.2f} km²) for {city}"
+    assert (
+        abs(norm_2024 - expected_2024) < 0.05
+    ), f"Dashboard 2024 built-up ({norm_2024} km²) != Stratum A+B ({expected_2024:.2f} km²) for {city}"

@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: UrbanPulse Team
+  description: Common base server configuration, standard packages, and deployment user setup
+  company: UrbanPulse
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - "22.04"
+  galaxy_tags:
+    - system
+    - hardening
+dependencies: []

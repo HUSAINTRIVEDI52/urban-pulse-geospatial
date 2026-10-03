@@ -35,7 +35,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 def load_city_config(city: str, config_path: str | Path | None = None) -> dict[str, Any]:
     """Loads city YAML configuration file."""
-    cfg_file = Path(config_path) if config_path else PROJECT_ROOT / "configs" / f"{city.lower()}.yaml"
+    cfg_file = (
+        Path(config_path) if config_path else PROJECT_ROOT / "configs" / f"{city.lower()}.yaml"
+    )
     if not cfg_file.exists():
         raise FileNotFoundError(f"Configuration file not found: {cfg_file.resolve()}")
     with open(cfg_file, encoding="utf-8") as f:
@@ -141,8 +143,9 @@ def query_strict_year_scenes(
     stac_url = config.get("stac", {}).get(
         "earth_search_url", "https://earth-search.aws.element84.com/v1"
     )
-    collection = config.get("stac", {}).get(
-        "collections", {}).get("sentinel_2", "sentinel-2-c1-l2a")
+    collection = (
+        config.get("stac", {}).get("collections", {}).get("sentinel_2", "sentinel-2-c1-l2a")
+    )
 
     dt_range = get_strict_dry_season_range(year)
     client = Client.open(stac_url)
@@ -157,7 +160,11 @@ def query_strict_year_scenes(
 
     items.sort(
         key=lambda it: (
-            it.datetime.strftime("%Y-%m-%d") if it.datetime else str(it.properties.get("datetime"))[:10],
+            (
+                it.datetime.strftime("%Y-%m-%d")
+                if it.datetime
+                else str(it.properties.get("datetime"))[:10]
+            ),
             float(it.properties.get("eo:cloud_cover", 100.0)),
         )
     )
@@ -173,7 +180,11 @@ def process_single_scene(
     stable_mask: np.ndarray,
 ) -> dict[str, Any]:
     """Processes a single STAC item to extract stable pixel medians."""
-    dt_str = item.datetime.strftime("%Y-%m-%d") if item.datetime else str(item.properties.get("datetime"))[:10]
+    dt_str = (
+        item.datetime.strftime("%Y-%m-%d")
+        if item.datetime
+        else str(item.properties.get("datetime"))[:10]
+    )
 
     z = str(item.properties.get("mgrs:utm_zone", ""))
     b = str(item.properties.get("mgrs:latitude_band", ""))
@@ -207,7 +218,9 @@ def process_single_scene(
                 with rasterio.Env(**gdal_env):
                     with rasterio.open(asset_href) as src:
                         win = from_bounds(*profile_bounds, transform=src.transform)
-                        arr = src.read(1, window=win, out_shape=profile_shape, resampling=resampling_type)
+                        arr = src.read(
+                            1, window=win, out_shape=profile_shape, resampling=resampling_type
+                        )
                         band_arrays[b_name] = arr.astype(np.float32)
                         break
             except Exception:
@@ -227,7 +240,9 @@ def process_single_scene(
             | (scl_arr == 11)
             | np.isnan(scl_arr)
         )
-        dilated_mask = scipy.ndimage.binary_dilation(cloud_mask, structure=dilation_structure, iterations=1)
+        dilated_mask = scipy.ndimage.binary_dilation(
+            cloud_mask, structure=dilation_structure, iterations=1
+        )
     else:
         dilated_mask = np.zeros(stable_mask.shape, dtype=bool)
 
@@ -299,18 +314,26 @@ def process_scene_diagnostics_for_city(
     city_name = config.get("city", {}).get("name", city.capitalize())
 
     print("=" * 140, flush=True)
-    print(f"[*] UrbanPulse Strict-Window Scene Diagnostics & Tile Quality Screening: {city_name}", flush=True)
-    print(f"    - Strict Window     : Nov 1 to Feb 28/29 (No widening)", flush=True)
-    print(f"    - Scene Cap         : None (All valid in-window scenes evaluated)", flush=True)
-    print(f"    - 2022 Status       : ARCHIVE-GAP YEAR (Skipped / No composite)", flush=True)
-    print(f"    - Stable Mask Filter: Built-up [1] or Water [3] in >= 6 of 7 years", flush=True)
-    print(f"    - Drop Rule 1       : < 50% of tile's median valid stable-pixel count", flush=True)
-    print(f"    - Drop Rule 2       : > 25% deviation from own tile's median reflectance in any band", flush=True)
+    print(
+        f"[*] UrbanPulse Strict-Window Scene Diagnostics & Tile Quality Screening: {city_name}",
+        flush=True,
+    )
+    print("    - Strict Window     : Nov 1 to Feb 28/29 (No widening)", flush=True)
+    print("    - Scene Cap         : None (All valid in-window scenes evaluated)", flush=True)
+    print("    - 2022 Status       : ARCHIVE-GAP YEAR (Skipped / No composite)", flush=True)
+    print("    - Stable Mask Filter: Built-up [1] or Water [3] in >= 6 of 7 years", flush=True)
+    print("    - Drop Rule 1       : < 50% of tile's median valid stable-pixel count", flush=True)
+    print(
+        "    - Drop Rule 2       : > 25% deviation from own tile's median reflectance in any band",
+        flush=True,
+    )
     print("=" * 140, flush=True)
 
     # 1. Compute stable pixels mask
     print("\n[Step 1/3] Computing multi-temporal stable pixel mask...", flush=True)
-    stable_mask, profile = compute_stable_pixels_mask(city=city_key, years=years, data_dir=data_path)
+    stable_mask, profile = compute_stable_pixels_mask(
+        city=city_key, years=years, data_dir=data_path
+    )
     total_px = stable_mask.size
     stable_px = int(np.sum(stable_mask))
     print(
@@ -322,7 +345,10 @@ def process_scene_diagnostics_for_city(
     profile_shape = (profile["height"], profile["width"])
 
     # 2. Query all scenes across all years
-    print("\n[Step 2/3] Querying strict in-window scenes and processing remote assets in parallel...", flush=True)
+    print(
+        "\n[Step 2/3] Querying strict in-window scenes and processing remote assets in parallel...",
+        flush=True,
+    )
     tasks = []
     yearly_counts = {}
 
@@ -334,10 +360,18 @@ def process_scene_diagnostics_for_city(
         items = query_strict_year_scenes(
             city=city_key, year=year, config=config, max_cloud_cover=max_cloud_cover
         )
-        dates_list = sorted(list({
-            it.datetime.strftime("%Y-%m-%d") if it.datetime else str(it.properties.get("datetime"))[:10]
-            for it in items
-        }))
+        dates_list = sorted(
+            list(
+                {
+                    (
+                        it.datetime.strftime("%Y-%m-%d")
+                        if it.datetime
+                        else str(it.properties.get("datetime"))[:10]
+                    )
+                    for it in items
+                }
+            )
+        )
         yearly_counts[year] = {
             "scenes": len(items),
             "dates": len(dates_list),
@@ -352,7 +386,10 @@ def process_scene_diagnostics_for_city(
         for it in items:
             tasks.append((it, year))
 
-    print(f"\n[+] Executing {len(tasks)} scene evaluations using {max_workers} concurrent threads...", flush=True)
+    print(
+        f"\n[+] Executing {len(tasks)} scene evaluations using {max_workers} concurrent threads...",
+        flush=True,
+    )
 
     raw_scene_records = []
     executor = ThreadPoolExecutor(max_workers=max_workers)
@@ -383,10 +420,19 @@ def process_scene_diagnostics_for_city(
         executor.shutdown(wait=False, cancel_futures=True)
 
     # Sort records deterministically by year, date, tile
-    raw_scene_records.sort(key=lambda r: (r.get("year", 0), r.get("date", ""), r.get("mgrs_tile", ""), r.get("scene_id", "")))
+    raw_scene_records.sort(
+        key=lambda r: (
+            r.get("year", 0),
+            r.get("date", ""),
+            r.get("mgrs_tile", ""),
+            r.get("scene_id", ""),
+        )
+    )
 
     # 3. Compute Per-Tile Medians and Apply Dropping Rules
-    print("\n[Step 3/3] Calculating per-tile medians and screening for dropped scenes...", flush=True)
+    print(
+        "\n[Step 3/3] Calculating per-tile medians and screening for dropped scenes...", flush=True
+    )
     target_bands = ["red", "nir", "swir16", "blue"]
 
     tile_groups: dict[str, list[dict[str, Any]]] = {}
@@ -411,9 +457,13 @@ def process_scene_diagnostics_for_city(
 
     print("[+] Computed Per-Tile Medians:")
     for t_id, t_info in tile_stats.items():
-        print(f"    - Tile {t_id:<6}: Median Valid Stable Pixels = {t_info['tile_median_valid_count']:,.0f}")
+        print(
+            f"    - Tile {t_id:<6}: Median Valid Stable Pixels = {t_info['tile_median_valid_count']:,.0f}"
+        )
         for b_name in target_bands:
-            print(f"                   Median {b_name.upper():<7} = {t_info['band_medians'][b_name]:.4f}")
+            print(
+                f"                   Median {b_name.upper():<7} = {t_info['band_medians'][b_name]:.4f}"
+            )
 
     # Evaluate dropping criteria
     dropped_scenes = []
@@ -445,7 +495,9 @@ def process_scene_diagnostics_for_city(
             if val is not None and b_med > 0:
                 diff_pct = (val - b_med) / b_med
                 if abs(diff_pct) > 0.25:
-                    drop_reasons.append(f"{b_name} ({diff_pct*100:+.1f}%) > 25% dev from tile median")
+                    drop_reasons.append(
+                        f"{b_name} ({diff_pct*100:+.1f}%) > 25% dev from tile median"
+                    )
                     band_devs.append(f"{b_name} ({diff_pct*100:+.1f}%)")
                 elif abs(diff_pct) > 0.15:
                     band_devs.append(f"{b_name} ({diff_pct*100:+.1f}%) [flagged >15%]")
@@ -505,10 +557,12 @@ def process_scene_diagnostics_for_city(
     )
     print("-" * 145, flush=True)
     for r in final_records:
-        r_str = f"{r['stable_median_red']:.4f}" if r['stable_median_red'] is not None else "N/A"
-        n_str = f"{r['stable_median_nir']:.4f}" if r['stable_median_nir'] is not None else "N/A"
-        s_str = f"{r['stable_median_swir16']:.4f}" if r['stable_median_swir16'] is not None else "N/A"
-        b_str = f"{r['stable_median_blue']:.4f}" if r['stable_median_blue'] is not None else "N/A"
+        r_str = f"{r['stable_median_red']:.4f}" if r["stable_median_red"] is not None else "N/A"
+        n_str = f"{r['stable_median_nir']:.4f}" if r["stable_median_nir"] is not None else "N/A"
+        s_str = (
+            f"{r['stable_median_swir16']:.4f}" if r["stable_median_swir16"] is not None else "N/A"
+        )
+        b_str = f"{r['stable_median_blue']:.4f}" if r["stable_median_blue"] is not None else "N/A"
         stat_disp = f"[*] {r['status']}" if r["status"] == "DROPPED" else "KEPT"
         reason_disp = r["drop_reasons"] if r["status"] == "DROPPED" else r["deviations_summary"]
         print(
@@ -519,9 +573,11 @@ def process_scene_diagnostics_for_city(
 
     print(f"\n[+] Summary for {city_name}:")
     print(f"    - Total strict in-window scenes evaluated : {len(final_records)}")
-    print(f"    - Total scenes KEPT                       : {len(final_records) - len(dropped_scenes)}")
+    print(
+        f"    - Total scenes KEPT                       : {len(final_records) - len(dropped_scenes)}"
+    )
     print(f"    - Total scenes DROPPED                    : {len(dropped_scenes)}")
-    print(f"    - Yearly In-Window Breakdown (2018-2024):")
+    print("    - Yearly In-Window Breakdown (2018-2024):")
     for y, counts in yearly_counts.items():
         if y == 2022:
             print(f"      * {y}: 0 scenes [ARCHIVE-GAP YEAR]")
@@ -535,11 +591,19 @@ def main():
     parser = argparse.ArgumentParser(
         description="UrbanPulse - Sentinel-2 Scene Diagnostics & Quality Screening (Strict Window)"
     )
-    parser.add_argument("--city", type=str, default="ahmedabad", help="Target city key (e.g. ahmedabad, pune)")
-    parser.add_argument("--data-dir", type=Path, default=PROJECT_ROOT / "data", help="Path to data directory")
+    parser.add_argument(
+        "--city", type=str, default="ahmedabad", help="Target city key (e.g. ahmedabad, pune)"
+    )
+    parser.add_argument(
+        "--data-dir", type=Path, default=PROJECT_ROOT / "data", help="Path to data directory"
+    )
     parser.add_argument("--config", type=Path, default=None, help="Path to city YAML config")
-    parser.add_argument("--max-cloud", type=float, default=20.0, help="Max cloud cover percentage (default: 20.0)")
-    parser.add_argument("--workers", type=int, default=16, help="Parallel worker threads (default: 16)")
+    parser.add_argument(
+        "--max-cloud", type=float, default=20.0, help="Max cloud cover percentage (default: 20.0)"
+    )
+    parser.add_argument(
+        "--workers", type=int, default=16, help="Parallel worker threads (default: 16)"
+    )
 
     args = parser.parse_args()
     process_scene_diagnostics_for_city(

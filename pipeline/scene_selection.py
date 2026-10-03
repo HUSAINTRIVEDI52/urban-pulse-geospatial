@@ -4,17 +4,17 @@ Shared across build_composite.py, scene_diagnostics.py, and annual pipeline runn
 """
 
 import calendar
-import csv
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import numpy as np
-from pystac_client import Client
 import yaml
+from pystac_client import Client
 
 
-def load_city_config(city: str = "ahmedabad", config_path: str | Path | None = None) -> dict[str, Any]:
+def load_city_config(
+    city: str = "ahmedabad", config_path: str | Path | None = None
+) -> dict[str, Any]:
     """Loads city YAML configuration."""
     cfg_file = Path(config_path) if config_path else Path(f"configs/{city.lower()}.yaml")
     if not cfg_file.exists():
@@ -28,7 +28,7 @@ def get_strict_window_dates(year: int, config: dict[str, Any]) -> tuple[str, str
     """
     Constructs strict dry season date range from YAML config (Nov 1 to Feb 28/29).
     Never widens into October or March.
-    
+
     Returns:
         (start_date, end_date, iso_datetime_range)
         e.g., for 2020: ('2019-11-01', '2020-02-29', '2019-11-01/2020-02-29')
@@ -76,11 +76,11 @@ def extract_mgrs_tile(item: Any) -> str:
     g = str(item.properties.get("mgrs:grid_square", "")).strip()
     if z and b and g:
         return f"{z}{b}{g}"
-    
+
     parts = item.id.split("_")
     if len(parts) >= 2 and len(parts[1]) == 5:
         return parts[1]
-    
+
     return "UNKNOWN"
 
 
@@ -135,7 +135,7 @@ def deduplicate_tile_date_records(
     """
     Deduplicates scenes having the same (mgrs_tile, date) pair.
     Keeps the scene with the highest valid_stable_pixels (or lowest cloud cover as tie-breaker).
-    
+
     Returns:
         (deduplicated_records, dropped_duplicate_records)
     """
@@ -147,7 +147,7 @@ def deduplicate_tile_date_records(
     deduped = []
     dropped_dups = []
 
-    for key, group in groups.items():
+    for group in groups.values():
         if len(group) == 1:
             deduped.append(group[0])
         else:
@@ -188,14 +188,14 @@ def apply_tile_quality_screening(
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, dict[str, Any]]]:
     """
     Computes per-tile medians and screens scenes using Rule 1 (valid pixel count) and Rule 2 (reflectance deviation).
-    
+
     Args:
         records: List of scene records (pre-deduplicated).
         target_bands: All bands to calculate medians for (default: red, nir, swir16, blue).
         rule2_bands: Bands used to evaluate Rule 2 (e.g. ['red', 'nir', 'swir16', 'blue'] or ['red', 'nir', 'swir16']).
         dev_threshold: Maximum allowable fractional deviation (default: 0.25 -> 25%).
         valid_ratio_threshold: Minimum allowable ratio of tile median valid pixels (default: 0.50 -> 50%).
-        
+
     Returns:
         (kept_records, dropped_records, tile_stats)
     """
@@ -210,7 +210,9 @@ def apply_tile_quality_screening(
 
     tile_stats = {}
     for t_id, t_records in tile_groups.items():
-        valid_counts = [r["valid_stable_pixels"] for r in t_records if r.get("valid_stable_pixels", 0) > 0]
+        valid_counts = [
+            r["valid_stable_pixels"] for r in t_records if r.get("valid_stable_pixels", 0) > 0
+        ]
         tile_med_valid = float(np.median(valid_counts)) if valid_counts else 0.0
 
         band_tile_medians = {}
@@ -240,7 +242,9 @@ def apply_tile_quality_screening(
         drop_reasons = []
 
         # Rule 1: < 50% of tile median valid count
-        if tile_med_valid > 0 and r_copy.get("valid_stable_pixels", 0) < (valid_ratio_threshold * tile_med_valid):
+        if tile_med_valid > 0 and r_copy.get("valid_stable_pixels", 0) < (
+            valid_ratio_threshold * tile_med_valid
+        ):
             pct_of_med = (r_copy["valid_stable_pixels"] / tile_med_valid) * 100.0
             drop_reasons.append(
                 f"Valid stable pixels ({r_copy['valid_stable_pixels']:,}) < {valid_ratio_threshold*100:.0f}% of tile median ({tile_med_valid:,.0f}) [{pct_of_med:.1f}%]"
@@ -254,7 +258,9 @@ def apply_tile_quality_screening(
             if val is not None and b_med > 0:
                 diff_pct = (val - b_med) / b_med
                 if b_name in rule2_bands and abs(diff_pct) > dev_threshold:
-                    drop_reasons.append(f"{b_name} ({diff_pct*100:+.1f}%) > {dev_threshold*100:.0f}% dev from tile median")
+                    drop_reasons.append(
+                        f"{b_name} ({diff_pct*100:+.1f}%) > {dev_threshold*100:.0f}% dev from tile median"
+                    )
                     band_devs.append(f"{b_name} ({diff_pct*100:+.1f}%)")
                 elif abs(diff_pct) > 0.15:
                     band_devs.append(f"{b_name} ({diff_pct*100:+.1f}%) [flagged >15%]")

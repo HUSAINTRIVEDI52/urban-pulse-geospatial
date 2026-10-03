@@ -1,9 +1,10 @@
 import time
-import rasterio
-from rasterio.windows import from_bounds
-from rasterio.enums import Resampling
-from pystac_client import Client
+
 import numpy as np
+import rasterio
+from pystac_client import Client
+from rasterio.enums import Resampling
+from rasterio.windows import from_bounds
 
 client = Client.open("https://earth-search.aws.element84.com/v1")
 bbox = [72.356712, 22.814991, 72.802746, 23.22784]

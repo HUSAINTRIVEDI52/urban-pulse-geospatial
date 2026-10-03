@@ -20,7 +20,6 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 import geopandas as gpd
-import joblib
 import pandas as pd
 from sklearn.metrics import accuracy_score
 
@@ -126,7 +125,9 @@ def run_pune_stabilisation():
 
     # STEP 6: Downstream Analytics
     print("\n" + "=" * 80)
-    print(">>> STEP 6: Downstream Analytics (Change Detection, Rings, Metrics, Web Export, DB Load)")
+    print(
+        ">>> STEP 6: Downstream Analytics (Change Detection, Rings, Metrics, Web Export, DB Load)"
+    )
     print("=" * 80)
     change_res = detect_changes(
         city=city,

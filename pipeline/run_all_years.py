@@ -164,6 +164,7 @@ def run_all_years(
     plot_file = data_path / f"{city_key}_builtup_trend.png"
 
     from pipeline.build_composite import load_city_config
+
     cfg = load_city_config(city=city_key, config_path=config_path)
     ay = cfg.get("temporal", {}).get("analysis_years", {})
     if start_year is None:

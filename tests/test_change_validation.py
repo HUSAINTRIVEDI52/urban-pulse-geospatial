@@ -9,7 +9,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
-import rasterio
 from rasterio.transform import from_origin
 
 from pipeline.make_change_validation_sample import (
@@ -40,12 +39,14 @@ def synthetic_raster_pair():
     # Rest is Non-built (class 4 = Agri)
     start_cls = np.full((h, w), 4, dtype=np.uint8)
     start_cls[35:65, 35:65] = 1  # 30x30 = 900 pixels built-up
-    start_cls[5:15, 5:15] = 1    # 10x10 = 100 pixels built-up (will become Loss)
+    start_cls[5:15, 5:15] = 1  # 10x10 = 100 pixels built-up (will become Loss)
 
     # End: center 50x50 is Built-up (class 1)
     # Top-left block reverted to Non-built (class 4 = Agri) [Loss]
     end_cls = np.full((h, w), 4, dtype=np.uint8)
-    end_cls[25:75, 25:75] = 1    # 50x50 = 2500 pixels built-up (includes 900 persistent built + 1600 gain)
+    end_cls[25:75, 25:75] = (
+        1  # 50x50 = 2500 pixels built-up (includes 900 persistent built + 1600 gain)
+    )
 
     valid_mask = np.ones((h, w), dtype=bool)
 
@@ -77,7 +78,9 @@ def test_compute_strata_masks(synthetic_raster_pair):
     assert np.sum(strata["C"]) == 7400
 
     # Total partitioned pixels must equal valid AOI (10,000 px)
-    total_strata_px = np.sum(strata["A"]) + np.sum(strata["B"]) + np.sum(strata["C"]) + np.sum(strata["D"])
+    total_strata_px = (
+        np.sum(strata["A"]) + np.sum(strata["B"]) + np.sum(strata["C"]) + np.sum(strata["D"])
+    )
     assert total_strata_px == 10000
 
 
@@ -271,10 +274,24 @@ def test_score_change_validation_blind_key_join(tmp_path):
     blind_data = [
         {"id": 1, "lon": 72.5, "lat": 23.0, "built_start": "0", "built_end": "1", "notes": ""},
         {"id": 2, "lon": 72.6, "lat": 23.1, "built_start": "0", "built_end": "1", "notes": ""},
-        {"id": 3, "lon": 72.7, "lat": 23.2, "built_start": "unclear", "built_end": "1", "notes": "cloudy"},
+        {
+            "id": 3,
+            "lon": 72.7,
+            "lat": 23.2,
+            "built_start": "unclear",
+            "built_end": "1",
+            "notes": "cloudy",
+        },
         {"id": 4, "lon": 72.8, "lat": 23.3, "built_start": "1", "built_end": "1", "notes": ""},
         {"id": 5, "lon": 72.9, "lat": 23.4, "built_start": "0", "built_end": "0", "notes": ""},
-        {"id": 6, "lon": 73.0, "lat": 23.5, "built_start": "1", "built_end": "0", "notes": "cleared"},
+        {
+            "id": 6,
+            "lon": 73.0,
+            "lat": 23.5,
+            "built_start": "1",
+            "built_end": "0",
+            "notes": "cleared",
+        },
     ]
     pd.DataFrame(blind_data).to_csv(blind_csv, index=False)
 
@@ -299,9 +316,9 @@ def test_extract_and_draw_chip():
 
     # Synthetic RGB raster: 300 x 300 pixels
     synthetic_rgb = np.zeros((300, 300, 3), dtype=np.uint8)
-    synthetic_rgb[:, :, 0] = 50   # R
+    synthetic_rgb[:, :, 0] = 50  # R
     synthetic_rgb[:, :, 1] = 120  # G
-    synthetic_rgb[:, :, 2] = 70   # B
+    synthetic_rgb[:, :, 2] = 70  # B
 
     # Center chip extraction
     chip_img = extract_and_draw_chip(
@@ -373,6 +390,7 @@ def test_dashboard_change_validation_matches_scorer():
     and displayed in the dashboard exactly match the authoritative output of score_change_validation().
     """
     import json
+
     from pipeline.score_change_validation import score_change_validation
 
     stats_path = Path("web/data/ahmedabad/stats.json")
@@ -383,7 +401,7 @@ def test_dashboard_change_validation_matches_scorer():
     assert stats_path.exists(), "web/data/ahmedabad/stats.json must exist"
     assert val_csv.exists(), "Labelled validation CSV must exist"
 
-    with open(stats_path, "r", encoding="utf-8") as f:
+    with open(stats_path, encoding="utf-8") as f:
         stats_json = json.load(f)
 
     assert "change_validation" in stats_json, "stats.json must contain 'change_validation' key"
@@ -417,9 +435,12 @@ def test_dashboard_change_validation_matches_scorer():
     # Verify Pune is marked as not independently validated
     pune_stats_path = Path("web/data/pune/stats.json")
     if pune_stats_path.exists():
-        with open(pune_stats_path, "r", encoding="utf-8") as f:
+        with open(pune_stats_path, encoding="utf-8") as f:
             pune_stats = json.load(f)
-        assert pune_stats.get("change_validation", {}).get("status") == "not_independently_validated"
-        assert "not independently validated" in pune_stats.get("change_validation", {}).get("summary_sentence", "").lower()
-
-
+        assert (
+            pune_stats.get("change_validation", {}).get("status") == "not_independently_validated"
+        )
+        assert (
+            "not independently validated"
+            in pune_stats.get("change_validation", {}).get("summary_sentence", "").lower()
+        )

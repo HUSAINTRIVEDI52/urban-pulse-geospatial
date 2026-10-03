@@ -5,8 +5,8 @@
   "pixel_area_km2": 0.0036,
   "provenance": {
     "script": "pipeline/export_web.py",
-    "git_sha": "279cd0f",
-    "generated_at": "2026-10-03T18:59:38.845907+00:00",
+    "git_sha": "e1902ca",
+    "generated_at": "2026-10-03T19:37:35.807936+00:00",
     "input_files": {
       "raw_classified_rasters": {
         "2018": "3b15db2631fe",
@@ -31,7 +31,7 @@
       2023,
       2024
     ],
-    "excluded_years_note": "2018-2019 excluded: too few in-window Sentinel-2 scenes"
+    "excluded_years_note": "2018-2019 excluded: too few clear scenes in the Nov-Feb window"
   },
   "headline_2020_2024_expansion": {
     "net_growth_range_km2": [
@@ -107,7 +107,7 @@
     },
     {
       "year": 2022,
-      "display_year": "2022 (partial season (no Jan-Feb))",
+      "display_year": "2022 - partial season, no Jan-Feb",
       "raw_builtup_km2": 692.99,
       "clean_builtup_km2": 443.75,
       "norm_builtup_km2": 393.07,
@@ -239,7 +239,7 @@
         "ci_upper_km2": 381.2
       }
     ],
-    "negative_result": "Negative Result: Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not eliminate year-to-year classification noise; temporal consistency filtering remains the robust operational safeguard."
+    "negative_result": "Negative Result: Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not eliminate year-to-year classification noise; temporal consistency filtering remains the robust operational safeguard. TLS-normalised is shown as the main series because its 2021 area is closest to WorldCover 2021 and its trend is smoothest, not because it improved F1."
   },
   "quality_gate": {
     "status": "FLAGGED",
