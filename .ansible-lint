@@ -11,9 +11,6 @@ exclude_paths:
   - .github/
   - scratch/
 
-roles_path:
-  - infra/ansible/roles
-
 skip_list:
   - risky-shell-pipe  # Pipe in curl | sh is required by the official k3s automated installation script
   - command-instead-of-module  # Direct shell installer and kubectl commands are used without requiring heavy external python dependencies
