@@ -20,10 +20,10 @@
     cmd: "kubectl apply -k {{ deploy_k8s_overlay_dir }}"
   environment:
     KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
-  register: kubectl_apply
+  register: deploy_kubectl_apply
   changed_when: >-
-    'configured' in kubectl_apply.stdout or
-    'created' in kubectl_apply.stdout
+    'configured' in deploy_kubectl_apply.stdout or
+    'created' in deploy_kubectl_apply.stdout
 
 - name: Wait for API deployment rollout to complete
   ansible.builtin.command:
