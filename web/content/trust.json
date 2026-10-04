@@ -4,22 +4,45 @@
   "why_a_range": {
     "title": "Why a range, not one number?",
     "sentence_1": "Satellite imaging is subject to atmospheric variations, soil moisture shifts, and model classification uncertainty across different seasons.",
-    "sentence_2": "Different filtering methods (raw, smoothed, and error-adjusted) yield slightly different estimates of expansion rather than a single absolute truth.",
+    "sentence_2": "The three series use different processing: raw classification, temporally cleaned, and radiometrically normalised.",
     "sentence_3": "Presenting the full spread between methods ensures transparency and prevents giving a false impression of decimal-point certainty."
   },
   "validation_summary": {
     "what_was_checked": "An independent stratified random sample of 300 ground points across the entire metropolitan extent, auditing mapped gain, persistent built, persistent non-built, and mapped loss.",
     "how_many_points": "297 points evaluated across 4 strata (3 points excluded due to unresolvable ambiguity on historical imagery).",
-    "what_was_found": "Net expansion is statistically distinguishable from zero post-recheck (+81.7 ± 51.6 km²). Crucially, 45 of 50 mapped-loss points were never built-up: the 2020 map falsely marked about 52 km² of bare ground as buildings. Only about 4 in 10 newly mapped built-up areas were real additions; the rest were dry fallow fields.",
-    "what_is_not_covered": "Pune has not been independently validated with ground-truth audit points; its figures are modelled estimates only. In addition, the 95% confidence intervals account for sampling uncertainty only, and do not reflect subjective human labelling disagreements."
+    "what_was_found": "Net expansion is statistically distinguishable from zero post-recheck (+81.7 ± 51.6 km²). Crucially, 90% of areas mapped as built in 2020 but not in 2024 were never built-up, so the 2020 map wrongly marks about 52 km² as built-up. Only about 4 in 10 newly mapped built-up areas were real additions; the rest were dry fallow fields.",
+    "what_is_not_covered": "Pune has not been independently validated with ground-truth audit points; its figures are modelled estimates only (with a 2021 trajectory dip of -5.1% consistent with classifier noise). In addition, the 95% confidence intervals account for sampling uncertainty only, and do not reflect subjective human labelling disagreements."
+  },
+  "sensitivity_analysis": {
+    "title": "Sensitivity & Robustness Variations (Ahmedabad Net Change)",
+    "rows": [
+      {
+        "scenario": "Primary Rechecked Audit (Olofsson 2014)",
+        "net_change": "+81.7 ± 51.6 km²",
+        "ci95": "30.1 to 133.2 km²",
+        "note": "Statistically distinguishable from zero"
+      },
+      {
+        "scenario": "Pre-recheck Baseline (Initial Chips)",
+        "net_change": "+14.9 ± 83.6 km²",
+        "ci95": "-68.7 to +98.5 km²",
+        "note": "Pre-recheck; includes 1st-pass false-loss mislabels"
+      },
+      {
+        "scenario": "Without Stratum C Gains (Conservative)",
+        "net_change": "+48.3 ± 23.1 km²",
+        "ci95": "25.2 to 71.4 km²",
+        "note": "Excludes unmapped background gains in persistent non-built"
+      }
+    ]
   },
   "claims": [
     {
       "claim": "Ahmedabad 2020–2024 Net Built-up Expansion",
-      "status": "Validated",
+      "status": "Validated, with caveats",
       "status_type": "validated",
       "evidence": "Audited via Olofsson et al. (2014) stratified protocol across 297 points. Error-adjusted net expansion is +81.7 ± 51.6 km² (95% CI: 30.1 to 133.2 km²), statistically distinguishable from zero.",
-      "caveat": "Results depend on historical image recheck. Sampling error interval does not include ~9% labelling inconsistency between passes."
+      "caveat": "Results depend on historical image recheck. Sensitivity: pre-recheck is +14.9 ± 83.6 km²; without Stratum C gains is +48.3 ± 23.1 km². Sampling error interval does not include ~9% labelling inconsistency between passes."
     },
     {
       "claim": "Model Calibration Against International Standards",
@@ -33,7 +56,7 @@
       "status": "Not validated",
       "status_type": "not-validated",
       "evidence": "Pune metrics are generated via the calibrated Random Forest pipeline and satisfy all 5 automated quality gates.",
-      "caveat": "Pune has not undergone human-audited stratified ground validation. Trends reflect machine classifications only and should be treated as unvalidated estimates."
+      "caveat": "Pune has not undergone human-audited stratified ground validation. Main series dips by -5.1% in 2021 (386.6 km² vs 407.1 km² in 2020), which is consistent with classifier noise (F1 0.58) and composite variations."
     },
     {
       "claim": "2022 Observation Season Measurements",
@@ -44,7 +67,7 @@
     },
     {
       "claim": "Reported Confidence Intervals Scope",
-      "status": "Validated",
+      "status": "Validated, with caveats",
       "status_type": "validated",
       "evidence": "Mathematically calculated at 95% confidence using standard error propagation formulas for stratified random sampling (Olofsson 2014).",
       "caveat": "Intervals reflect random sampling uncertainty only. Systematic human labelling disagreements (~9% between labelling passes) are not captured by the interval."

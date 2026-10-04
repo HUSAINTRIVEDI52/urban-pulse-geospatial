@@ -81,7 +81,7 @@ def test_ui_user_flows_and_numbers():
         page.wait_for_timeout(2000)
 
         # 5. Number verification for Ahmedabad
-        all_text = page.text_content("#dashboard") + " " + page.text_content("#view-findings")
+        all_text = (page.text_content("#dashboard") + " " + page.text_content("#view-findings")).replace(",", "")
         found_tokens = set(re.findall(r"\b\d+(?:\.\d+)?\b", all_text))
 
         with open("web/data/ahmedabad/stats.json", encoding="utf-8") as f:
@@ -148,6 +148,21 @@ def test_ui_user_flows_and_numbers():
                     collect_nums(it)
 
         collect_nums(stats)
+
+        # Include derived side length from aoi_area_km2
+        if "aoi_area_km2" in stats:
+            side = stats["aoi_area_km2"] ** 0.5
+            allowed.add(f"{side:.1f}")
+            allowed.add(f"{round(side)}")
+
+        # Include year-over-year percentage changes in growth_series
+        if "growth_series" in stats:
+            gs = stats["growth_series"]
+            for i in range(1, len(gs)):
+                diff = gs[i]["norm_builtup_km2"] - gs[i - 1]["norm_builtup_km2"]
+                pct = abs((diff / gs[i - 1]["norm_builtup_km2"]) * 100)
+                allowed.add(f"{pct:.1f}")
+                allowed.add(f"{round(pct)}")
 
         # Include derived stratum ratios
         if "change_validation" in stats and "strata_table" in stats["change_validation"]:

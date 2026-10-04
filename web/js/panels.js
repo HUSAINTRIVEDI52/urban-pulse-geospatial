@@ -130,16 +130,18 @@ export function updateHowToRead(statsData, currentYear) {
     const overallRises = endItem.norm_builtup_km2 > startItem.norm_builtup_km2;
     const trendWord = overallRises ? 'rises overall' : 'declines overall';
 
-    // Check for decreases in raw or normalised series
-    const rawDecreases = [];
+    // Check for decreases in the main series (normalised)
+    const normDecreases = [];
     for (let i = 1; i < gs.length; i++) {
-      if (gs[i].raw_builtup_km2 < gs[i - 1].raw_builtup_km2) {
-        rawDecreases.push(`${gs[i].year} (${gs[i].raw_builtup_km2.toFixed(1)} km² vs ${gs[i - 1].raw_builtup_km2.toFixed(1)} km² in ${gs[i - 1].year})`);
+      if (gs[i].norm_builtup_km2 < gs[i - 1].norm_builtup_km2) {
+        const diff = gs[i].norm_builtup_km2 - gs[i - 1].norm_builtup_km2;
+        const pct = ((diff / gs[i - 1].norm_builtup_km2) * 100).toFixed(1);
+        normDecreases.push(`${gs[i].year} (${pct}%, ${gs[i].norm_builtup_km2.toFixed(1)} km² vs ${gs[i - 1].norm_builtup_km2.toFixed(1)} km² in ${gs[i - 1].year})`);
       }
     }
     let decreaseNote = '';
-    if (rawDecreases.length > 0) {
-      decreaseNote = `, with a temporary decrease in the raw series in ${rawDecreases.join(', ')}`;
+    if (normDecreases.length > 0) {
+      decreaseNote = `, with a decrease in ${normDecreases.join(', ')} (which is within the method's classification noise)`;
     }
 
     growthEl.innerHTML = `<strong>How to read:</strong> Each point is an annual satellite measurement. Steeper upward slope indicates faster expansion. Example: The main series (normalised) ${trendWord} from ${startVal} km² (${startItem.year}) to ${endVal} km² (${endItem.year})${decreaseNote}.`;

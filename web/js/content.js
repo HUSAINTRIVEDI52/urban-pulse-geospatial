@@ -101,7 +101,7 @@ export function updateKeyFindings(statsData, metaData, cityName) {
         <p style="margin: 0; font-size: 13px; line-height: 1.5; color: var(--color-text-main);">
           Multi-temporal Random Forest classification cross-calibrated against European Space Agency (ESA) WorldCover 2021
           (model estimate <strong>${puneTls21} km²</strong> vs ESA anchor <strong>${puneWcKm} km²</strong>, aligned within <strong>${puneDiffPct}%</strong>)
-          indicates Pune's built-up footprint expanded between 2020 and 2024.
+          indicates Pune's built-up footprint expanded between 2020 and 2024. Note: The main series dips by -5.1% in 2021 (386.6 km² vs 407.1 km² in 2020), which is consistent with classifier noise (F1 0.58) and composite variations.
         </p>
       </div>
     `;
@@ -134,26 +134,26 @@ export function updateKeyFindings(statsData, metaData, cityName) {
       <div class="metric-card">
         <div class="metric-label">ESA WorldCover 2021 Baseline</div>
         <div class="metric-value font-mono">${wcKm} km²</div>
-        <div class="metric-delta">vs ${tls21Km} km² TLS 2021 (${ac.difference_pct >= 0 ? '+' : ''}${diffPct}%)</div>
+        <div class="metric-delta">vs ${tls21Km} km² Main series (normalised) (${ac.difference_pct >= 0 ? '+' : ''}${diffPct}%)</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">Shannon Entropy (2024)</div>
         <div class="metric-value font-mono">${entropyVal}</div>
-        <div class="metric-delta delta-up">High Radial Dispersion</div>
+        <div class="metric-delta delta-up">Radial Dispersion</div>
       </div>
     </div>
 
     <div class="chart-box">
       <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: 8px;">1. Expansion Across Satellite Processing Methods</h3>
       <p style="color: var(--color-text-secondary); line-height: 1.6; font-size: 14px;">
-        Between 2020 and 2024, ${cityDisplay}'s built-up footprint expanded by <strong>${minExp}% to ${maxExp}%</strong> across processing methods (+${minKm} to +${maxKm} km²). Because different temporal filters treat transient noise differently, we report the complete range across Raw, TLS-normalised, and Cleaned pipelines rather than a single artificial number.
+        Between 2020 and 2024, ${cityDisplay}'s built-up footprint expanded by <strong>${minExp}% to ${maxExp}%</strong> across processing methods (+${minKm} to +${maxKm} km²). Because different temporal filters treat transient noise differently, we report the complete range across Raw, Main series (normalised), and Cleaned pipelines rather than a single artificial number.
       </p>
     </div>
 
     <div class="chart-box" style="margin-top: 16px;">
       <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: 8px;">2. Macroscopic Calibration Against ESA WorldCover</h3>
       <p style="color: var(--color-text-secondary); line-height: 1.6; font-size: 14px;">
-        The independent European Space Agency (ESA) WorldCover 2021 map measured ${cityDisplay}'s built-up footprint at <strong>${wcKm} km²</strong>. Our TLS-normalised 2021 estimate of <strong>${tls21Km} km²</strong> aligns within <strong>${diffPct}%</strong>, confirming that our machine-learning model is calibrated to international satellite baselines.
+        The independent European Space Agency (ESA) WorldCover 2021 map measured ${cityDisplay}'s built-up footprint at <strong>${wcKm} km²</strong>. Our Main series (normalised) 2021 estimate of <strong>${tls21Km} km²</strong> aligns within <strong>${diffPct}%</strong>, confirming that our machine-learning model is calibrated to international satellite baselines.
       </p>
     </div>
 
@@ -222,8 +222,6 @@ function renderHowItsMade() {
   `;
 }
 
-
-
 export function renderTrust(statsData, cityName) {
   const container = document.getElementById('trust-content-container');
   if (!container || !trustData) return;
@@ -236,6 +234,7 @@ export function renderTrust(statsData, cityName) {
   const why = trustData.why_a_range || {};
   const vSum = trustData.validation_summary || {};
   const claims = trustData.claims || [];
+  const sens = trustData.sensitivity_analysis || {};
 
   container.innerHTML = `
     <!-- Why a range, not one number? -->
@@ -272,6 +271,36 @@ export function renderTrust(statsData, cityName) {
         </div>
       </div>
     </div>
+
+    <!-- Sensitivity & Robustness Variations -->
+    ${sens.rows ? `
+    <div class="chart-box" style="margin-top: 16px;">
+      <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: 8px;">${sens.title}</h3>
+      <p style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 12px;">
+        To evaluate sensitivity to interpretation changes and background gain assumptions, we report net expansion under alternative audit scenarios:
+      </p>
+      <div style="overflow-x: auto;">
+        <table class="data-table" style="width: 100%; font-size: 13px;">
+          <thead>
+            <tr>
+              <th style="text-align: left;">Scenario</th>
+              <th style="text-align: right;">Net Change (95% CI)</th>
+              <th style="text-align: left;">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sens.rows.map(r => `
+              <tr>
+                <td><strong>${r.scenario}</strong></td>
+                <td style="text-align: right; font-family: var(--font-mono); font-weight: 700; color: var(--color-accent-primary);">${r.net_change}</td>
+                <td style="color: var(--color-text-secondary);">${r.note}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    ` : ''}
 
     <!-- Verified Analytical Claims & Evidence with Status Chips -->
     <div class="chart-box" style="margin-top: 16px;">

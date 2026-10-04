@@ -150,7 +150,7 @@ export const PIPELINE_STAGES = [
     details: `
       <ul>
         <li><strong>Concentric Ring Buffering:</strong> 2 km radial zones generated outward from the city center (0–2 km, 2–4 km ... out to 16–18 km).</li>
-        <li><strong>Shannon Entropy ($H_n$):</strong> Derived from information theory: <code>H_n = -sum(p_i * ln(p_i)) / ln(k)</code>, measuring spatial dispersion. A value near 1.0 (e.g. 0.9501) indicates high sprawl and leapfrog outward expansion.</li>
+        <li><strong>Shannon Entropy ($H_n$):</strong> Derived from information theory: <code>H_n = -sum(p_i * ln(p_i)) / ln(k)</code>, measuring spatial dispersion across distance rings. Values near 1.0 (e.g. 0.9501) indicate that built-up land is evenly spread across rings rather than concentrated near the centre.</li>
         <li><strong>Core vs. Periphery Breakdown:</strong> Tallying built-up share in the historic core (0–6 km) versus expanding outer rural rings (>12 km).</li>
       </ul>
     `

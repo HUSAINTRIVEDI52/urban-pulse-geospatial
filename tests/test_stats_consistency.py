@@ -474,55 +474,82 @@ def test_readme_key_results_match_stats_json():
 
 def test_how_to_read_examples_numbers_in_stats_json(city_stats):
     """
-    Verifies that all numerical values appearing in dynamic 'How to read' explanatory
-    text examples (growth chart & ring chart) are strictly sourced from stats.json.
+    Verifies that all numerical values and labels appearing in dynamic 'How to read'
+    explanatory text examples (growth chart & ring chart) strictly match the SAME city's
+    stats.json fields (by ring index, year, and growth series entries).
     """
     city, data = city_stats
 
-    # 1. Growth chart example verification
+    # 1. Growth chart example verification against SAME city's growth_series
     growth = data.get("growth_series", [])
     assert len(growth) >= 2, f"Expected at least 2 growth series entries for {city}"
 
     start_item = growth[0]
     end_item = growth[-1]
-    start_val = round(start_item["norm_builtup_km2"], 1)
-    end_val = round(end_item["norm_builtup_km2"], 1)
-    start_yr = start_item["year"]
-    end_yr = end_item["year"]
+    start_val_str = f"{start_item['norm_builtup_km2']:.1f}"
+    end_val_str = f"{end_item['norm_builtup_km2']:.1f}"
 
-    assert start_val > 0
-    assert end_val > 0
-    assert start_yr in [2020, 2021]
-    assert end_yr in [2024]
+    assert float(start_val_str) > 0
+    assert float(end_val_str) > 0
 
-    # Verify that raw decreases reference genuine stats.json year & values
+    # Verify main series decreases are precisely computed from the same city
+    norm_decreases = []
     for i in range(1, len(growth)):
-        if growth[i]["raw_builtup_km2"] < growth[i - 1]["raw_builtup_km2"]:
-            curr_val = round(growth[i]["raw_builtup_km2"], 1)
-            prev_val = round(growth[i - 1]["raw_builtup_km2"], 1)
-            assert curr_val < prev_val
-            assert growth[i]["year"] in [2021, 2022, 2023, 2024]
+        if growth[i]["norm_builtup_km2"] < growth[i - 1]["norm_builtup_km2"]:
+            diff = growth[i]["norm_builtup_km2"] - growth[i - 1]["norm_builtup_km2"]
+            pct = f"{(diff / growth[i - 1]['norm_builtup_km2']) * 100:.1f}%"
+            curr_str = f"{growth[i]['norm_builtup_km2']:.1f}"
+            prev_str = f"{growth[i - 1]['norm_builtup_km2']:.1f}"
+            norm_decreases.append((growth[i]["year"], pct, curr_str, prev_str))
 
-    # 2. Ring chart example verification across all available years
+    if city == "ahmedabad":
+        assert len(norm_decreases) == 1
+        assert norm_decreases[0][0] == 2021
+        assert norm_decreases[0][1] == "-0.6%"
+    elif city == "pune":
+        assert len(norm_decreases) == 1
+        assert norm_decreases[0][0] == 2021
+        assert norm_decreases[0][1] == "-5.1%"
+
+    # 2. Ring chart example verification across all available years in SAME city's rings
     rings_data = data.get("rings", {})
     for year_key in ["2020", "2021", "2022", "2023", "2024"]:
-        if isinstance(rings_data, list):
-            year_rings = [r for r in rings_data if str(r.get("year")) == year_key]
-        else:
+        if isinstance(rings_data, dict):
             year_rings = rings_data.get(year_key, [])
+        else:
+            year_rings = [r for r in rings_data if str(r.get("year")) == year_key]
 
         if not year_rings:
             continue
 
+        # Exact ring indices: index 0 (0-2 km) and index 7 (14-16 km)
         r0 = year_rings[0]
-        r_far_idx = 7 if len(year_rings) >= 8 else len(year_rings) - 1
-        r_far = year_rings[r_far_idx]
+        r_far = year_rings[7] if len(year_rings) >= 8 else year_rings[-1]
 
-        r0_density = round(r0.get("builtup_pct", r0.get("builtup_density_pct", 0.0)), 1)
-        r_far_density = round(r_far.get("builtup_pct", r_far.get("builtup_density_pct", 0.0)), 1)
+        r0_label = r0.get("ring_label", f"{r0.get('ring_start_km', 0):.0f}-{r0.get('ring_end_km', 2):.0f} km")
+        r_far_label = r_far.get("ring_label", f"{r_far.get('ring_start_km', 14):.0f}-{r_far.get('ring_end_km', 16):.0f} km")
 
-        # Confirm these values exist and are positive
-        assert 0.0 <= r0_density <= 100.0
-        assert 0.0 <= r_far_density <= 100.0
-        # Core density is higher than far ring density
-        assert r0_density > r_far_density, f"Expected core density > far density for {city} in {year_key}"
+        r0_val = r0.get("builtup_pct", r0.get("builtup_density_pct"))
+        r_far_val = r_far.get("builtup_pct", r_far.get("builtup_density_pct"))
+
+        assert r0_val is not None and 0.0 <= r0_val <= 100.0
+        assert r_far_val is not None and 0.0 <= r_far_val <= 100.0
+
+        r0_density_str = f"{r0_val:.1f}"
+        r_far_density_str = f"{r_far_val:.1f}"
+
+        # In 2024, verify exact city-specific numbers
+        if year_key == "2024":
+            if city == "ahmedabad":
+                assert r0_density_str == "91.4"
+                assert r_far_density_str == "13.7"
+                assert r0_label == "0-2 km"
+                assert r_far_label == "14-16 km"
+            elif city == "pune":
+                assert r0_density_str == "69.6"
+                assert r_far_density_str == "27.7"
+                assert r0_label == "0-2 km"
+                assert r_far_label == "14-16 km"
+
+        assert float(r0_density_str) > float(r_far_density_str)
+
