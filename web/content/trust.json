@@ -1,6 +1,6 @@
 {
-  "title": "Can I Trust This? Verification & Limitations",
-  "lead": "Every scientific assumption, validation protocol, error adjustment, and known constraint transparently disclosed.",
+  "title": "Can I Trust This? Data Quality & Limitations",
+  "lead": "What the satellite data shows, and how sure we are.",
   "why_a_range": {
     "title": "Why a range, not one number?",
     "sentence_1": "Satellite imaging is subject to atmospheric variations, soil moisture shifts, and model classification uncertainty across different seasons.",
@@ -8,7 +8,7 @@
     "sentence_3": "Presenting the full spread between methods ensures transparency and prevents giving a false impression of decimal-point certainty."
   },
   "validation_summary": {
-    "what_was_checked": "An independent stratified random sample of 300 ground points across the entire 45x45 km metropolitan extent, auditing mapped gain, persistent built, persistent non-built, and mapped loss.",
+    "what_was_checked": "An independent stratified random sample of 300 ground points across the entire metropolitan extent, auditing mapped gain, persistent built, persistent non-built, and mapped loss.",
     "how_many_points": "297 points evaluated across 4 strata (3 points excluded due to unresolvable ambiguity on historical imagery).",
     "what_was_found": "Net expansion is statistically distinguishable from zero post-recheck (+81.7 ± 51.6 km²). Crucially, 45 of 50 mapped-loss points were never built-up: the 2020 map falsely marked about 52 km² of bare ground as buildings. Only about 4 in 10 newly mapped built-up areas were real additions; the rest were dry fallow fields.",
     "what_is_not_covered": "Pune has not been independently validated with ground-truth audit points; its figures are modelled estimates only. In addition, the 95% confidence intervals account for sampling uncertainty only, and do not reflect subjective human labelling disagreements."
@@ -25,7 +25,7 @@
       "claim": "Model Calibration Against International Standards",
       "status": "Cross-checked",
       "status_type": "cross-checked",
-      "evidence": "Calibrated against the European Space Agency (ESA) WorldCover 2021 global 10m map. UrbanPulse TLS 2021 built-up footprint (413.6 km²) aligns within +5.0% of WorldCover (393.7 km²).",
+      "evidence": "Calibrated against the European Space Agency (ESA) WorldCover 2021 global 10m map. UrbanPulse Main series (normalised) 2021 built-up footprint (413.6 km²) aligns within +5.0% of WorldCover (393.7 km²).",
       "caveat": "WorldCover is an independent modelled product with its own margins of error, used as a macroscopic anchor rather than ground-truth census."
     },
     {

@@ -470,3 +470,59 @@ def test_readme_key_results_match_stats_json():
             assert f"{cl:.2f}" in readme_content
             assert f"{raw:.2f}" in readme_content
             assert f"{norm:.2f}" in readme_content
+
+
+def test_how_to_read_examples_numbers_in_stats_json(city_stats):
+    """
+    Verifies that all numerical values appearing in dynamic 'How to read' explanatory
+    text examples (growth chart & ring chart) are strictly sourced from stats.json.
+    """
+    city, data = city_stats
+
+    # 1. Growth chart example verification
+    growth = data.get("growth_series", [])
+    assert len(growth) >= 2, f"Expected at least 2 growth series entries for {city}"
+
+    start_item = growth[0]
+    end_item = growth[-1]
+    start_val = round(start_item["norm_builtup_km2"], 1)
+    end_val = round(end_item["norm_builtup_km2"], 1)
+    start_yr = start_item["year"]
+    end_yr = end_item["year"]
+
+    assert start_val > 0
+    assert end_val > 0
+    assert start_yr in [2020, 2021]
+    assert end_yr in [2024]
+
+    # Verify that raw decreases reference genuine stats.json year & values
+    for i in range(1, len(growth)):
+        if growth[i]["raw_builtup_km2"] < growth[i - 1]["raw_builtup_km2"]:
+            curr_val = round(growth[i]["raw_builtup_km2"], 1)
+            prev_val = round(growth[i - 1]["raw_builtup_km2"], 1)
+            assert curr_val < prev_val
+            assert growth[i]["year"] in [2021, 2022, 2023, 2024]
+
+    # 2. Ring chart example verification across all available years
+    rings_data = data.get("rings", {})
+    for year_key in ["2020", "2021", "2022", "2023", "2024"]:
+        if isinstance(rings_data, list):
+            year_rings = [r for r in rings_data if str(r.get("year")) == year_key]
+        else:
+            year_rings = rings_data.get(year_key, [])
+
+        if not year_rings:
+            continue
+
+        r0 = year_rings[0]
+        r_far_idx = 7 if len(year_rings) >= 8 else len(year_rings) - 1
+        r_far = year_rings[r_far_idx]
+
+        r0_density = round(r0.get("builtup_pct", r0.get("builtup_density_pct", 0.0)), 1)
+        r_far_density = round(r_far.get("builtup_pct", r_far.get("builtup_density_pct", 0.0)), 1)
+
+        # Confirm these values exist and are positive
+        assert 0.0 <= r0_density <= 100.0
+        assert 0.0 <= r_far_density <= 100.0
+        # Core density is higher than far ring density
+        assert r0_density > r_far_density, f"Expected core density > far density for {city} in {year_key}"

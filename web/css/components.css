@@ -753,3 +753,65 @@ body.view-detailed .depth-simple-only {
   position: relative;
 }
 
+/* Status Chips & Badges */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.chip-validated {
+  background-color: rgba(46, 125, 50, 0.12);
+  color: #2e7d32;
+  border: 1px solid rgba(46, 125, 50, 0.3);
+}
+
+[data-theme="dark"] .chip-validated {
+  background-color: rgba(76, 175, 80, 0.18);
+  color: #81c784;
+  border-color: rgba(76, 175, 80, 0.4);
+}
+
+.chip-cross-checked {
+  background-color: rgba(2, 136, 209, 0.12);
+  color: #0288d1;
+  border: 1px solid rgba(2, 136, 209, 0.3);
+}
+
+[data-theme="dark"] .chip-cross-checked {
+  background-color: rgba(41, 182, 246, 0.18);
+  color: #4fc3f7;
+  border-color: rgba(41, 182, 246, 0.4);
+}
+
+.chip-not-validated {
+  background-color: rgba(217, 119, 6, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(217, 119, 6, 0.3);
+}
+
+[data-theme="dark"] .chip-not-validated {
+  background-color: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.chip-partial-season {
+  background-color: rgba(124, 58, 237, 0.12);
+  color: #7c3aed;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+[data-theme="dark"] .chip-partial-season {
+  background-color: rgba(167, 139, 250, 0.18);
+  color: #c4b5fd;
+  border-color: rgba(167, 139, 250, 0.4);
+}
+

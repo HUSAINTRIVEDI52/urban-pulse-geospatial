@@ -4,7 +4,7 @@
       "id": "built-up",
       "term": "Built-up",
       "aliases": ["built up", "built-up land", "urban footprint"],
-      "definition": "Land covered by human-made structures such as buildings, paved roads, concrete, and industrial infrastructure.",
+      "definition": "Buildings, roads and other paved surfaces, estimated from 60 m pixels.",
       "detail": "In satellite imagery, built-up areas include residential neighborhoods, factories, asphalt roads, and commercial complexes. UrbanPulse classifies any 60-meter pixel with predominant artificial impervious surface as built-up. It excludes open soil, parks, and seasonal farmland unless paved over.",
       "report_link": "report/index.html#builtup-definition"
     },
@@ -90,10 +90,10 @@
     },
     {
       "id": "normalisation-tls",
-      "term": "Normalisation (TLS)",
-      "aliases": ["tls", "normalisation", "tls-normalised", "tls-normalized", "temporal logistic smoothing"],
+      "term": "Main series (normalised)",
+      "aliases": ["tls", "normalisation", "normalisation (tls)", "normalization (tls)", "tls-normalised", "tls-normalized", "temporal logistic smoothing", "main series (normalised)", "tls est", "main series"],
       "definition": "A mathematical calibration technique that harmonizes multi-year satellite images so lighting and atmospheric variations don't mimic false growth.",
-      "detail": "Year-to-year differences in soil moisture, aerosol haze, and sun angle can cause identical ground features to appear brighter or darker. Temporal Logistic Smoothing (TLS) aligns pixel histograms across years to stabilize annual comparisons. UrbanPulse selects the TLS series as its primary metric because its 2021 area matches ESA WorldCover closest and exhibits smooth temporal continuity.",
+      "detail": "Year-to-year differences in soil moisture, aerosol haze, and sun angle can cause identical ground features to appear brighter or darker. Normalisation (using Total Least Squares regression against pseudo-invariant ground features) aligns pixel distributions across years to stabilize annual comparisons. UrbanPulse selects the normalised series as its main metric because its 2021 area matches ESA WorldCover closest and exhibits smooth temporal continuity.",
       "report_link": "report/index.html#tls-normalisation"
     },
     {
@@ -109,7 +109,7 @@
       "term": "Olofsson Estimator",
       "aliases": ["olofsson", "olofsson 2014", "error-adjusted area"],
       "definition": "The international gold-standard statistical method (Olofsson et al. 2014) for calculating real land change by adjusting for map misclassifications.",
-      "detail": "No satellite classification is 100% accurate. Directly counting colored pixels almost always overstates or understates true change. The Olofsson estimator uses human-verified audit points from each stratum to mathematically calculate the true change area along with rigorous 95% confidence intervals.",
+      "detail": "No satellite classification is 100% accurate. Directly counting colored pixels almost always overstates or understates true change. The Olofsson estimator uses human-verified audit points from each stratum to mathematically calculate the true change area along with 95% confidence intervals.",
       "report_link": "report/index.html#olofsson-method"
     },
     {
@@ -148,8 +148,8 @@
       "id": "shannon-entropy",
       "term": "Shannon Entropy",
       "aliases": ["entropy", "relative entropy", "shannon entropy (hn)"],
-      "definition": "A spatial dispersion metric from 0 to 1 indicating whether urban growth is tightly clustered (near 0) or sprawling randomly (near 1).",
-      "detail": "Derived from information theory, Shannon Entropy measures the uniformity of built-up development across concentric distance zones. A value close to 1 (like Ahmedabad's 0.950) indicates high spatial dispersion and outward sprawl rather than compact, transit-oriented densification.",
+      "definition": "How evenly built-up land is spread across distance rings from the centre. Values near 1 mean it is not concentrated near the centre; this does not measure leapfrog development.",
+      "detail": "Derived from information theory, Shannon Entropy measures the uniformity of built-up development across concentric distance zones. Outer rings are larger, so values are high for most cities (typically >0.90), showing that built-up area is distributed across outer distances rather than concentrated solely in the central core.",
       "report_link": "report/index.html#entropy"
     },
     {
@@ -173,7 +173,7 @@
       "term": "Quality Gate",
       "aliases": ["quality gates", "pipeline quality gate", "data checks"],
       "definition": "Automated verification checks in the processing pipeline that halt deployment if satellite data quality or model accuracy falls below standards.",
-      "detail": "UrbanPulse enforces 5 rigorous checks: cloud contamination thresholds (<2%), cloud cover consistency across years, raw composite F1 validation (>=0.75), baseline area alignment with ESA WorldCover, and spatial entropy bounds.",
+      "detail": "UrbanPulse enforces 5 automated quality checks: cloud contamination thresholds (<2%), cloud cover consistency across years, raw composite F1 validation (>=0.75), baseline area alignment with ESA WorldCover, and spatial entropy bounds.",
       "report_link": "report/index.html#quality-gates"
     },
     {

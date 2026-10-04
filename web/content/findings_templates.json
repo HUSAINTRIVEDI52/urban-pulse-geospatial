@@ -2,10 +2,10 @@
   "title": "Key Findings: Multi-Year Urban Transformation",
   "lead": "Dynamically synthesized findings computed from annual satellite classifications and stratified ground-truth validation for {city}.",
   "expansion_headline_template": "Between 2020 and 2024, {city}'s built-up area expanded by a range of {min_expansion}% to {max_expansion}% across processing methods (+{min_expansion_km2} to +{max_expansion_km2} km²).",
-  "worldcover_template": "The 2021 TLS-normalised baseline footprint of {tls_2021_km2} km² aligns within {worldcover_diff_pct}% of the independent ESA WorldCover 2021 reference map ({worldcover_km2} km²), confirming robust macroscopic calibration.",
+  "worldcover_template": "A separate global land-cover map we compare against. Our 2021 estimate of {tls_2021_km2} km² is {worldcover_diff_pct}% {above_below} the independent ESA WorldCover 2021 reference map ({worldcover_km2} km²).",
   "ahmedabad_validation_template": "Stratified ground-truth auditing across {sample_points_evaluated} points confirms that Ahmedabad's net built-up change is statistically distinguishable from zero (+{adjusted_net_km2} ± {ci95_net_km2} km² at 95% confidence).",
   "strata_finding_template": "Auditing of newly mapped built-up areas (Stratum A) reveals that about {gain_ratio} mapped new-built-up spots ({gain_pct}%) were genuine additions, while about {fallow_ratio} ({fallow_pct}%) were dry fallow agricultural fields or bare soil misclassified as concrete.",
   "pune_unvalidated_notice": "Pune has not been independently validated with ground-truth audit points; reported figures are unvalidated machine-learning estimates based on the calibrated Random Forest pipeline.",
-  "sprawl_template": "{city} demonstrates high outward radial dispersion with a Shannon Entropy score of {entropy} in 2024, indicating rapid leapfrog sprawl into outlying peripheral agricultural land.",
+  "sprawl_template": "{city} demonstrates a Shannon Entropy score of {entropy} in 2024, reflecting how evenly built-up land is spread across distance rings from the centre (values near 1 mean it is not concentrated near the centre; this does not measure leapfrog development).",
   "core_periphery_template": "In {city}, the historical core (0–6 km) remains saturated at {core_density}% density with {core_km2} km² built-up, while the outer periphery (>12 km) holds {periphery_km2} km² ({periphery_share}% of total metro built-up land)."
 }

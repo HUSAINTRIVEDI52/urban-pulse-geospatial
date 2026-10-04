@@ -27,7 +27,7 @@ import {
 import { initGlossary } from './glossary.js';
 import { initTour } from './tour.js';
 import { initDepthToggle } from './depth.js';
-import { initContentPages, updateKeyFindings } from './content.js';
+import { initContentPages, updateKeyFindings, renderTrust } from './content.js';
 
 // Base path helper (supports GitHub Pages subpaths)
 const DATA_BASE = 'data';
@@ -225,8 +225,9 @@ function updateAllViews() {
   // Render Legend Items
   renderLegendItems();
 
-  // Update Key Findings page
+  // Update Key Findings & Trust pages
   updateKeyFindings(state.statsData, state.metaData, state.currentCity);
+  renderTrust(state.statsData, state.currentCity);
 
   // Update Download data link
   const downloadDataBtn = document.getElementById('download-data-btn');

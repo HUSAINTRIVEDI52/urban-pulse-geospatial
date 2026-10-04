@@ -7,38 +7,38 @@ let currentDepth = 'simple';
 const CALC_EXPLANATIONS = {
   'expansion-range': {
     title: 'How 2020–2024 Expansion is Calculated',
-    meaning: 'The percentage growth in built-up area between the 2020 baseline and the 2024 satellite observation.',
-    calculation: 'Calculated by comparing the initial built-up footprint (2020) against the final footprint (2024) across multiple processing pipelines: Raw Random Forest, Temporal Logistic Smoothing (TLS), and clean post-processing. Because each method filters noise differently, we present the full spread of results (e.g. 12.6% to 21.9% for Ahmedabad; steady multi-year expansion for Pune) rather than a single misleading number.'
+    meaning: 'Three ways of measuring: raw, cleaned and normalised.',
+    calculation: 'Calculated by comparing the initial built-up footprint (2020) against the final footprint (2024) across three measurement methods: raw Random Forest, cleaned sensitivity, and main normalised series. Because each method filters noise differently, we present the full spread of results rather than a single artificial number.'
   },
   'worldcover-anchor': {
     title: 'How the WorldCover Anchor is Calculated',
-    meaning: 'An independent international ground-truth reference to verify that our model is neither wildly overestimating nor underestimating city size.',
-    calculation: 'The European Space Agency (ESA) produced WorldCover 2021 at 10m resolution using global training data. We re-sample this reference to our 60m grid within the exact same administrative AOI boundary. Our TLS baseline aligns closely with WorldCover (Ahmedabad within +5.0%, Pune within +2.2%), confirming strong calibration to international standards.'
+    meaning: 'A separate global land-cover map we compare against.',
+    calculation: 'The European Space Agency (ESA) produced WorldCover 2021 at 10m resolution using global training data. We re-sample this reference to our 60m grid within the exact same administrative AOI boundary to verify model calibration.'
   },
   'builtup-footprint': {
     title: 'How Annual Built-up Footprint is Calculated',
-    meaning: 'The total physical land area covered by buildings, paved roads, and concrete infrastructure in a given year.',
-    calculation: 'Each 60m x 60m pixel (0.0036 km²) classified as built-up is tallied across the 45x45 km Area of Interest (AOI). In Ahmedabad, the TLS series measures 415.97 km² (2020) to 474.88 km² (2024). In Pune, the calibrated series measures 407.12 km² (2020) to 469.80 km² (2024).'
+    meaning: 'Buildings, roads and other paved surfaces, estimated from 60 m pixels.',
+    calculation: 'Each 60m x 60m pixel (0.0036 km²) classified as built-up is tallied across the metropolitan Area of Interest (AOI).'
   },
   'shannon-entropy': {
-    title: 'How Shannon Entropy (Sprawl) is Calculated',
-    meaning: 'A mathematical measure of whether urban growth is clustered compactly or sprawling outward in a dispersed, leapfrog pattern.',
-    calculation: 'We divide the metropolitan area into concentric 2 km distance rings and calculate Shannon Entropy: H_n = -sum(p_i * log(p_i)) / log(k), where p_i is the proportion of total built-up land in ring i, and k is the number of rings. Values close to 1.0 (such as 0.9501) indicate high radial dispersion, meaning growth is spreading evenly across distant rings rather than concentrating in the center.'
+    title: 'How Shannon Entropy is Calculated',
+    meaning: 'How evenly built-up land is spread across distance rings from the centre. Values near 1 mean it is not concentrated near the centre; this does not measure leapfrog development.',
+    calculation: 'We divide the metropolitan area into concentric 2 km distance rings and calculate Shannon Entropy: H_n = -sum(p_i * log(p_i)) / log(k), where p_i is the proportion of total built-up land in ring i, and k is the number of rings. Note: outer rings are larger, so values are high for most cities.'
   },
   'core-periphery': {
     title: 'How Core vs. Periphery is Calculated',
-    meaning: 'Tracks whether growth is densifying the historical city center or eating into outlying agricultural and rural boundaries.',
-    calculation: 'Core is defined as the innermost 0–6 km rings (historic city center), where existing built-up density exceeds 90%. Periphery is defined as rings beyond 12 km from the center. In growing metros, the core has almost no vacant land left, so over 70% of new construction occurs in the outer periphery.'
+    meaning: 'Tracks whether growth is densifying the historical city center or expanding into outer perimeter boundaries.',
+    calculation: 'Core is defined as the innermost 0–6 km rings (historic city center), where existing built-up density is highest. Periphery is defined as rings beyond 12 km from the center.'
   },
   'growth-chart': {
     title: 'How the Multi-Series Growth Chart is Built',
-    meaning: 'Compares different satellite processing pipelines over time to test whether detected trends are robust or just algorithm quirks.',
-    howToRead: 'Each line represents a processing pipeline. Orange is raw classification, green is TLS-normalised (our primary validated series), and purple marks the ESA WorldCover anchor. Example: If the green TLS line slopes upward smoothly from 2020 to 2024, it confirms steady outward expansion across years.'
+    meaning: 'Compares different satellite processing pipelines over time to test whether detected trends are robust or algorithm-dependent.',
+    howToRead: 'Each line represents a measurement approach. Yellow is raw classification, green is cleaned sensitivity, red is the main series (normalised), and purple marks the ESA WorldCover anchor.'
   },
   'ring-chart': {
     title: 'How the Concentric Rings Chart is Built',
     meaning: 'Displays the proportion of land that is paved or built up as you travel outward from the municipal center to the outskirts.',
-    howToRead: 'The horizontal axis shows 2-kilometer distance intervals from 0 km (center) to 18 km (edge). The vertical axis shows built-up density percentage (0–100%). Example: The 0–2 km ring is 91% built-up, whereas the 14–16 km ring is only 15% built-up, illustrating the classic urban-to-rural density gradient.'
+    howToRead: 'The horizontal axis shows 2-kilometer distance intervals from the city center outward. The vertical axis shows built-up density percentage (0–100%).'
   }
 };
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>UrbanPulse — Satellite Urban Sprawl & Land Cover Analytics</title>
-  <meta name="description" content="Open-source satellite analytics measuring metropolitan urban sprawl, land cover transitions, and radial growth across India using multi-temporal Sentinel-2 imagery.">
+  <meta name="description" content="Shows how Ahmedabad and Pune grew from 2020 to 2024, measured from free Sentinel-2 satellite images.">
   
   <!-- Self-Hosted Typography (SIL OFL, Offline & Subpath Ready) -->
   <link rel="stylesheet" href="vendor/fonts/fonts.css">
@@ -56,7 +56,10 @@
             <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
             How it's made
           </button>
-
+          <button class="nav-tab-btn" data-nav-target="trust" role="tab" aria-selected="false">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            Can I trust this?
+          </button>
           <button class="nav-tab-btn" data-nav-target="glossary" role="tab" aria-selected="false">
             <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
             Glossary
@@ -100,7 +103,7 @@
     <div class="hero-strip" id="hero-strip">
       <div class="hero-strip-text">
         <span class="hero-badge">Satellite Observatory</span>
-        <span>UrbanPulse monitors metropolitan growth and sprawl across India using multi-temporal <span class="glossary-term" data-term="sentinel-2">Sentinel-2</span> satellite imagery and <span class="glossary-term" data-term="classification">classification</span> models.</span>
+        <span>Shows how Ahmedabad and Pune grew from 2020 to 2024, measured from free Sentinel-2 satellite images.</span>
       </div>
       <div class="hero-actions">
         <button class="hero-btn hero-btn-primary" id="hero-explore-btn">
@@ -233,7 +236,7 @@
               <span id="dashboard-city-title">Ahmedabad Growth Analytics</span>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span id="aoi-meta-badge" style="font-size: 11px; font-family: var(--font-mono); color: var(--color-text-muted); background: var(--color-bg-subtle); padding: 3px 6px; border-radius: var(--radius-sm);">45x45 km</span>
+              <span id="aoi-meta-badge" style="font-size: 11px; font-family: var(--font-mono); color: var(--color-text-muted); background: var(--color-bg-subtle); padding: 3px 6px; border-radius: var(--radius-sm);">-</span>
               <button class="depth-toggle-btn mobile-depth-toggle" style="font-size: 11px; padding: 2px 8px; border: 1px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-bg-subtle); color: var(--color-text-main);" title="Toggle Simple/Detailed View" aria-label="Toggle Simple or Detailed View">
                 <span class="mobile-depth-label">Simple</span>
               </button>
@@ -271,7 +274,7 @@
                   <span id="metric-expansion-sub">Range across methods</span>
                 </div>
                 <div class="card-meaning-line">
-                  Overall <span class="glossary-term" data-term="built-up">built-up</span> growth observed across all statistical models.
+                  Three ways of measuring: raw, cleaned and normalised.
                 </div>
                 <div class="tooltip-popup" id="headline-methods-tooltip"></div>
               </div>
@@ -286,27 +289,27 @@
                 </div>
                 <div id="metric-anchor-val" class="metric-value">393.7 km²</div>
                 <div id="metric-anchor-diff" class="metric-delta">
-                  <span>vs 2021 TLS Est</span>
+                  <span>vs 2021 Main series (normalised)</span>
                 </div>
-                <div class="card-meaning-line">
-                  Independent <span class="glossary-term" data-term="worldcover">WorldCover</span> map verifying our baseline scale.
+                <div class="card-meaning-line" id="metric-worldcover-card-meaning">
+                  A separate global land-cover map we compare against. Our 2021 estimate is 5.0% above it.
                 </div>
               </div>
 
-              <!-- Current Year Built-up (Mapped built-up (TLS series)) -->
+              <!-- Current Year Built-up (Main series (normalised)) -->
               <div class="metric-card">
                 <div class="metric-header">
                   <div class="metric-label">
-                    <span data-simple-title="Built-up Footprint" data-detailed-title="Mapped built-up (TLS series)">Mapped built-up (TLS series)</span> (<span id="metric-cur-year">2024</span>)
+                    <span data-simple-title="Built-up Footprint" data-detailed-title="Main series (normalised)">Main series (normalised)</span> (<span id="metric-cur-year">2024</span>)
                     <button class="info-btn" data-calc-info="builtup-footprint" aria-label="How built-up footprint is calculated" title="How this is calculated">i</button>
                   </div>
                 </div>
                 <div id="metric-builtup-val" class="metric-value">474.9 km²</div>
                 <div id="metric-builtup-sub" class="metric-delta">
-                  <span>Mapped built-up (TLS series)</span>
+                  <span>Main series (normalised)</span>
                 </div>
                 <div class="card-meaning-line">
-                  Total ground covered by buildings and concrete in <span class="glossary-term" data-term="km2">km²</span>.
+                  Buildings, roads and other paved surfaces, estimated from 60 m pixels.
                 </div>
               </div>
 
@@ -320,10 +323,10 @@
                 </div>
                 <div id="metric-entropy-val" class="metric-value">0.9501</div>
                 <div class="metric-delta delta-up">
-                  <span>High Radial Dispersion</span>
+                  <span>Spatial Distribution</span>
                 </div>
                 <div class="card-meaning-line">
-                  <span class="glossary-term" data-term="shannon-entropy">Shannon Entropy</span> near 1.0 indicates leapfrog outward sprawl.
+                  How evenly built-up land is spread across distance rings from the centre. Values near 1 mean it is not concentrated near the centre; this does not measure leapfrog development.
                 </div>
               </div>
 
@@ -344,7 +347,7 @@
                   <div id="metric-periph-val" class="font-mono font-bold" style="font-size: 13px; color: var(--color-accent-primary); margin-top: 2px;">-</div>
                 </div>
                 <div class="card-meaning-line">
-                  Dense historical core vs rapidly expanding <span class="glossary-term" data-term="core-vs-periphery">outer periphery</span>.
+                  Dense historical core vs expanding <span class="glossary-term" data-term="core-vs-periphery">outer periphery</span>.
                 </div>
               </div>
 
@@ -365,7 +368,7 @@
               <div class="chart-legend-box">
                 <div class="legend-pill">
                   <span class="legend-pill-dot" style="background: var(--color-accent-primary);"></span>
-                  <span style="font-weight: 600;"><span class="glossary-term" data-term="normalisation-tls">TLS Normalised</span> (Main)</span>
+                  <span style="font-weight: 600;"><span class="glossary-term" data-term="normalisation-tls">Main series (normalised)</span></span>
                 </div>
                 <div class="legend-pill depth-detailed-only">
                   <span class="legend-pill-dot" style="background: #10b981;"></span>
@@ -381,7 +384,7 @@
                 </div>
               </div>
               <div class="chart-read-line">
-                <span><strong>How to read:</strong> Each point is an annual satellite measurement. Steeper upward slope indicates faster expansion. Example: steady green curve shows continuous growth from 2020 to 2024.</span>
+                <span id="growth-chart-how-to-read"><strong>How to read:</strong> Each point is an annual satellite measurement. Steeper upward slope indicates faster expansion.</span>
               </div>
             </div>
 
@@ -398,7 +401,7 @@
                 <canvas id="ringDensityChart"></canvas>
               </div>
               <div class="chart-read-line">
-                <span><strong>How to read:</strong> Bars show built-up percentage across <span class="glossary-term" data-term="distance-ring">distance rings</span> from city center (left) outward. Example: inner 0–2 km is &gt;90% built-up, dropping to &lt;20% at 14 km.</span>
+                <span id="ring-chart-how-to-read"><strong>How to read:</strong> Bars show built-up percentage across <span class="glossary-term" data-term="distance-ring">distance rings</span> from city center (left) outward.</span>
               </div>
             </div>
 
@@ -484,7 +487,7 @@
                 <span style="color: var(--color-text-muted); font-size: 11px;">Open Access (MIT)</span>
               </div>
               <div style="color: var(--color-text-muted); font-size: 11px; text-align: center;">
-                UrbanPulse &copy; 2026 &bull; Open-Source Geospatial Analytics &bull; MIT License
+                UrbanPulse &copy; 2026 &bull; Code: MIT. Data: see credits.
               </div>
             </div>
 
@@ -493,25 +496,20 @@
       </section>
 
       <!-- ====================================================================
-           VIEW 2: KEY FINDINGS (Phase 3 Content View)
+           VIEW 2: KEY FINDINGS
            ==================================================================== -->
       <section id="view-findings" class="view-container" tabindex="0" role="tabpanel" aria-label="Key Findings">
         <div class="page-container">
           <header class="page-header">
             <h1 class="page-title">Key Findings</h1>
-            <p class="page-lead">Rigorous multi-year urban growth findings synthesized from Sentinel-2 satellite observations and stratified ground-truth validation.</p>
+            <p class="page-lead">What the satellite data shows, and how sure we are.</p>
           </header>
-          <div id="findings-content-container" style="display: flex; flex-direction: column; gap: 20px;">
-            <div class="chart-box">
-              <h2 style="font-size: var(--text-lg); margin-bottom: 8px;">Urban Footprint & Expansion</h2>
-              <p style="color: var(--color-text-secondary); line-height: 1.6;">Content will be dynamically rendered here from stats.json and content definitions in Phase 3.</p>
-            </div>
-          </div>
+          <div id="findings-content-container" style="display: flex; flex-direction: column; gap: 20px;"></div>
         </div>
       </section>
 
       <!-- ====================================================================
-           VIEW 3: HOW IT'S MADE (Phase 3 Content View)
+           VIEW 3: HOW IT'S MADE
            ==================================================================== -->
       <section id="view-how" class="view-container" tabindex="0" role="tabpanel" aria-label="How It's Made">
         <div class="page-container">
@@ -526,9 +524,21 @@
         </div>
       </section>
 
+      <!-- ====================================================================
+           VIEW 4: CAN I TRUST THIS?
+           ==================================================================== -->
+      <section id="view-trust" class="view-container" tabindex="0" role="tabpanel" aria-label="Can I trust this?">
+        <div class="page-container">
+          <header class="page-header">
+            <h1 class="page-title">Can I Trust This? Data Quality &amp; Limitations</h1>
+            <p class="page-lead">What the satellite data shows, and how sure we are.</p>
+          </header>
+          <div id="trust-content-container" style="display: flex; flex-direction: column; gap: 20px;"></div>
+        </div>
+      </section>
 
       <!-- ====================================================================
-           VIEW 5: GLOSSARY (Phase 2 Component)
+           VIEW 5: GLOSSARY
            ==================================================================== -->
       <section id="view-glossary" class="view-container" tabindex="0" role="tabpanel" aria-label="Glossary of Terms">
         <div class="page-container">
@@ -564,7 +574,10 @@
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
         <span>Process</span>
       </button>
-
+      <button class="bottom-tab-item" data-nav-target="trust" role="tab" aria-selected="false" aria-label="Trust Tab">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        <span>Trust</span>
+      </button>
       <button class="bottom-tab-item" data-nav-target="glossary" role="tab" aria-selected="false" aria-label="Glossary Tab">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
         <span>Glossary</span>

@@ -4,7 +4,7 @@
 [![CD](https://img.shields.io/github/actions/workflow/status/HUSAINTRIVEDI52/urban-pulse-geospatial/cd.yml?branch=main&label=CD&logo=github&style=flat-square)](https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial/actions/workflows/cd.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Automated satellite analytics pipeline measuring urban sprawl, land cover transitions, and radial growth dynamics across metropolitan areas using multi-temporal Sentinel-2 Earth observation data and spatial machine learning.**
+> **Shows how Ahmedabad and Pune grew from 2020 to 2024, measured from free Sentinel-2 satellite images. What the satellite data shows, and how sure we are.**
 
 📖 **Read the Comprehensive Project Report**: [HTML Report](docs/report/index.html) | [PDF Report](docs/report/UrbanPulse_Report.pdf)
 
@@ -21,8 +21,8 @@
 
 ## 📸 Interface & Spatial Visualizations
 
-| Interactive Web Map & Multi-Series Growth | Classified Land Cover Output |
-| :---: | :---: |
+|           Interactive Web Map & Multi-Series Growth           |                   Classified Land Cover Output                   |
+| :-----------------------------------------------------------: | :--------------------------------------------------------------: |
 | ![UrbanPulse Web Interface](data/preview_2024_classified.png) | ![Land Cover Map](data/ahmedabad/ahmedabad_change_2018_2024.png) |
 
 ---
@@ -30,8 +30,9 @@
 ## 📊 Key Results (2020–2024 Analysis Window)
 
 > **Framing Note**: All core analytics are evaluated strictly over the **2020–2024** window. 2018-2019 excluded: too few clear scenes in the Nov-Feb window. 2022 covers October-December 2021 only (no January-February) (query window Oct 1, 2021 – Mar 31, 2022; last acquisition date Dec 23, 2021 for Ahmedabad; query window Nov 1, 2021 – Feb 28, 2022; last acquisition date Dec 25, 2021 for Pune; scale and offset are derived directly from STAC item metadata).
-> 
+>
 > **Real Composite Observation Windows & Scene Counts**:
+>
 > - **Ahmedabad**:
 >   - **2020**: Dec 1, 2019 – Feb 15, 2020 (9 dates, 14 scenes, 0 outside Nov–Feb).
 >   - **2021**: Oct 1, 2020 – Mar 31, 2021 (12 dates [9 in-window], 20-scene cap, 5 scenes outside Nov–Feb on Oct 29, Mar 23, Mar 28).
@@ -47,41 +48,41 @@
 
 ---
 
-### 1. Ahmedabad (Gujarat, India) — 45 × 45 km AOI (2,167.83 km²)
+### 1. Ahmedabad (Gujarat, India) — 46.6 × 46.6 km AOI (2,167.83 km²)
 
-- **Headline 2020–2024 Expansion Range**: **+53.0 to +84.0 km²** across processing methods (TLS: **+58.91 km²** / +14.2%).
-- **2021 Benchmark Anchor**: ESA WorldCover 2021 built-up ground truth = **393.73 km²** (18.19% of AOI) vs. 2021 TLS Normalised Estimate of **413.61 km²**.
-- **2024 Footprint**: Validated TLS built-up area of **474.88 km²** (21.91% of AOI; Cleaned sensitivity: 468.54 km²).
-- **Radial Dispersion & Entropy**: Core (0–6 km) built-up share: **21.9%**, Peripheral (>12 km) share: **32.5%**. Shannon spatial entropy: **0.9501**.
+- **Headline 2020–2024 Expansion Range**: **+53.0 to +84.0 km²** across three ways of measuring: raw, cleaned and normalised (Main series: **+58.91 km²** / +14.2%).
+- **2021 Benchmark Anchor**: ESA WorldCover 2021 built-up ground truth = **393.73 km²** (18.19% of AOI) vs. 2021 Main series (normalised) estimate of **413.61 km²**.
+- **2024 Footprint**: Main series (normalised) built-up area of **474.88 km²** (21.91% of AOI; Cleaned sensitivity: 468.54 km²).
+- **Radial Dispersion & Entropy**: Core (0–6 km) built-up share: **21.9%**, Peripheral (>12 km) share: **32.5%**. Shannon spatial entropy: **0.9501** (how evenly built-up land is spread across distance rings from the centre; values near 1 mean it is not concentrated near the centre, not measuring leapfrog development).
 
 #### Multi-Series Growth & Method Sensitivity Band (Ahmedabad)
 
-| Year | Cleaned (sensitivity, km²) | Raw Classified (km²) | TLS Normalised (km²) | Method Sensitivity Spread | WorldCover 2021 Anchor |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **2020** | 384.51 | 421.06 | 415.97 | [384.5 – 421.1 km²] | — |
-| **2021** | 414.07 | 413.61 | 413.61 | [413.6 – 414.1 km²] | **393.73 km²** |
-| **2022 (partial season)** | 441.91 | 423.91 | 426.94 | [423.9 – 441.9 km²] | — |
-| **2023** | 474.54 | 504.42 | 451.61 | [451.6 – 504.4 km²] | — |
-| **2024** | **468.54** | **474.02** | **474.88** | **[468.5 – 474.9 km²]** | — |
+| Year                            | Cleaned (sensitivity, km²) | Raw Classified (km²) | Main series (normalised) (km²) |    Method Sensitivity Spread    | WorldCover 2021 Anchor |
+| :------------------------------ | :-------------------------: | :-------------------: | :-----------------------------: | :-----------------------------: | :--------------------: |
+| **2020**                  |           384.51           |        421.06        |             415.97             |      [384.5 – 421.1 km²]      |           —           |
+| **2021**                  |           414.07           |        413.61        |             413.61             |      [413.6 – 414.1 km²]      | **393.73 km²** |
+| **2022 (partial season)** |           441.91           |        423.91        |             426.94             |      [423.9 – 441.9 km²]      |           —           |
+| **2023**                  |           474.54           |        504.42        |             451.61             |      [451.6 – 504.4 km²]      |           —           |
+| **2024**                  |      **468.54**      |   **474.02**   |        **474.88**        | **[468.5 – 474.9 km²]** |           —           |
 
 ---
 
-### 2. Pune (Maharashtra, India) — 45 × 45 km AOI (2,057.53 km²)
+### 2. Pune (Maharashtra, India) — 45.4 × 45.4 km AOI (2,057.53 km²)
 
-- **Headline 2020–2024 Expansion Range**: **+62.7 to +92.1 km²** across processing methods (TLS: **+62.68 km²** / +15.4%).
-- **2021 Benchmark Anchor**: ESA WorldCover 2021 built-up ground truth = **378.08 km²** (18.43% of AOI) vs. 2021 TLS Normalised Estimate of **386.55 km²**.
-- **2024 Footprint**: Validated TLS built-up area of **469.80 km²** (22.83% of AOI; Cleaned sensitivity: 448.31 km²).
+- **Headline 2020–2024 Expansion Range**: **+62.7 to +92.1 km²** across three ways of measuring: raw, cleaned and normalised (Main series: **+62.68 km²** / +15.4%).
+- **2021 Benchmark Anchor**: ESA WorldCover 2021 built-up ground truth = **378.08 km²** (18.43% of AOI) vs. 2021 Main series (normalised) estimate of **386.55 km²**.
+- **2024 Footprint**: Main series (normalised) built-up area of **469.80 km²** (22.83% of AOI; Cleaned sensitivity: 448.31 km²).
 - **Radial Dispersion & Entropy**: Core (0–6 km) built-up share: **11.0%**, Peripheral (>12 km) share: **51.7%**. Shannon spatial entropy: **0.9544**.
 
 #### Multi-Series Growth & Method Sensitivity Band (Pune)
 
-| Year | Cleaned (sensitivity, km²) | Raw Classified (km²) | TLS Normalised (km²) | Method Sensitivity Spread | WorldCover 2021 Anchor |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **2020** | 356.19 | 332.13 | 407.12 | [332.1 – 407.1 km²] | — |
-| **2021** | 421.99 | 386.55 | 386.55 | [386.6 – 422.0 km²] | **378.08 km²** |
-| **2022 (partial season)** | 443.75 | 692.99* | 393.07 | [393.1 – 443.8 km²] | — |
-| **2023** | 479.78 | 359.65 | 440.15 | [359.7 – 479.8 km²] | — |
-| **2024** | **448.31** | **406.65** | **469.80** | **[406.7 – 469.8 km²]** | — |
+| Year                            | Cleaned (sensitivity, km²) | Raw Classified (km²) | Main series (normalised) (km²) |    Method Sensitivity Spread    | WorldCover 2021 Anchor |
+| :------------------------------ | :-------------------------: | :-------------------: | :-----------------------------: | :-----------------------------: | :--------------------: |
+| **2020**                  |           356.19           |        332.13        |             407.12             |      [332.1 – 407.1 km²]      |           —           |
+| **2021**                  |           421.99           |        386.55        |             386.55             |      [386.6 – 422.0 km²]      | **378.08 km²** |
+| **2022 (partial season)** |           443.75           |        692.99*        |             393.07             |      [393.1 – 443.8 km²]      |           —           |
+| **2023**                  |           479.78           |        359.65        |             440.15             |      [359.7 – 479.8 km²]      |           —           |
+| **2024**                  |      **448.31**      |   **406.65**   |        **469.80**        | **[406.7 – 469.8 km²]** |           —           |
 
 *\*2022 raw point (692.99 km²) is excluded from sensitivity bounds (5-date composite containing an anomalous scene, 2021-12-05).*
 
@@ -91,24 +92,25 @@
 
 ### Leave-One-Year-Out (LOYO) Validation (All Held-Out Points)
 
-To rigorously test temporal generalization and prevent data leakage, spatial classifiers were trained with one year completely held out. Performance was evaluated on **all held-out points** ($N = 400\text{ to }414$ points per fold), with area estimation and 95% confidence intervals computed via stratified area-weighted adjustment (Olofsson et al. 2014):
+To test temporal generalization and prevent data leakage, spatial classifiers were trained with one year completely held out. Performance was evaluated on **all held-out points** ($N = 400\text{ to }414$ points per fold), with area estimation and 95% confidence intervals computed via stratified area-weighted adjustment (Olofsson et al. 2014):
 
-| City | Held-Out Year | Test Points ($N$) | Raw Built-up F1 | Raw Adjusted Area (95% CI) | TLS Norm Built-up F1 | Norm Adjusted Area (95% CI) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Ahmedabad** | 2018 *(outside window)* | 400 | 0.7079 | 393.6 ± 64.9 km² | 0.7543 | 403.8 ± 61.5 km² |
-| **Ahmedabad** | 2021 | 400 | 0.7953 | 414.9 ± 65.3 km² | 0.7791 | 378.3 ± 55.5 km² |
-| **Ahmedabad** | 2024 | 400 | 0.7513 | 415.4 ± 67.8 km² | 0.7213 | 407.3 ± 69.0 km² |
-| **Pune** | 2018 *(outside window)* | 414 | 0.3191 | 177.4 ± 61.0 km² | 0.3226 | 199.7 ± 65.0 km² |
-| **Pune** | 2021 | 414 | 0.6173 | 339.6 ± 77.4 km² | 0.6582 | 353.1 ± 76.0 km² |
-| **Pune** | 2024 | 414 | 0.5591 | 291.3 ± 72.9 km² | 0.5800 | 306.6 ± 74.6 km² |
+| City                |      Held-Out Year      | Test Points ($N$) | Raw Built-up F1 | Raw Adjusted Area (95% CI) | Main series Built-up F1 | Norm Adjusted Area (95% CI) |
+| :------------------ | :----------------------: | :-----------------: | :-------------: | :------------------------: | :---------------------: | :-------------------------: |
+| **Ahmedabad** | 2018*(outside window)* |         400         |     0.7079     |     393.6 ± 64.9 km²     |         0.7543         |     403.8 ± 61.5 km²     |
+| **Ahmedabad** |           2021           |         400         |     0.7953     |     414.9 ± 65.3 km²     |         0.7791         |     378.3 ± 55.5 km²     |
+| **Ahmedabad** |           2024           |         400         |     0.7513     |     415.4 ± 67.8 km²     |         0.7213         |     407.3 ± 69.0 km²     |
+| **Pune**      | 2018*(outside window)* |         414         |     0.3191     |     177.4 ± 61.0 km²     |         0.3226         |     199.7 ± 65.0 km²     |
+| **Pune**      |           2021           |         414         |     0.6173     |     339.6 ± 77.4 km²     |         0.6582         |     353.1 ± 76.0 km²     |
+| **Pune**      |           2024           |         414         |     0.5591     |     291.3 ± 72.9 km²     |         0.5800         |     306.6 ± 74.6 km²     |
 
 > **Note on LOYO Validation**: Reference labels are WorldCover 2021 for every fold, so adjusted areas for 2018 and 2024 are not comparable with the change-validation estimates.
 
 ### 🔍 4-Stratum Change Validation (2020–2024) & Area Adjustment
 
-To independently validate multi-temporal land cover transitions and compute rigorous error-adjusted area estimates, a probability sample of $N=300$ verification points across 4 spatial strata was visually audited following Olofsson et al. (2014).
+To independently validate multi-temporal land cover transitions and compute error-adjusted area estimates, a probability sample of $N=300$ verification points across 4 spatial strata was visually audited following Olofsson et al. (2014).
 
 #### Labelling Protocol & History
+
 - **Interpreter**: Single interpreter (the project author); first pass blind to strata, recheck of 10 discordant points was unblinded.
 - **Imagery Sources**: Paired Sentinel-2 10m dry-season RGB surface reflectance chips (2020 vs 2024) corroborated against high-resolution Google Earth Pro historical satellite imagery.
 - **Ambiguity Rule**: Points exhibiting mixed-pixel ambiguity or low visual contrast were flagged as `unclear` (3 points) and excluded from primary estimation; sensitivity bounds were evaluated treating all unclear points as built vs. non-built.
@@ -121,24 +123,25 @@ To independently validate multi-temporal land cover transitions and compute rigo
 
 #### Per-Stratum Evaluation & Area Adjustment (Ahmedabad)
 
-| Stratum | Mapped Area (km²) | Evaluated ($N$) | $(0,0)$ Persistent Non-built | $(0,1)$ True Gain | $(1,0)$ True Loss | $(1,1)$ Persistent Built | Unclear | Stratum Accuracy |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Stratum A (Mapped Gain)** | 116.65 | 99 | 40 | 41 | 0 | 18 | 1 | **41.41%** |
-| **Stratum B (Persistent Built)** | 358.23 | 50 | 2 | 1 | 1 | 46 | 0 | **92.00%** |
-| **Stratum C (Persistent Non-built)** | 1635.22 | 98 | 94 | 2 | 0 | 2 | 2 | **95.92%** |
-| **Stratum D (Mapped Loss)** | 57.74 | 50 | 45 | 0 | 0 | 5 | 0 | **0.00%** |
+| Stratum                                    | Mapped Area (km²) | Evaluated ($N$) | $(0,0)$ Persistent Non-built | $(0,1)$ True Gain | $(1,0)$ True Loss | $(1,1)$ Persistent Built | Unclear | Stratum Accuracy |
+| :----------------------------------------- | :----------------: | :---------------: | :----------------------------: | :-----------------: | :-----------------: | :------------------------: | :-----: | :--------------: |
+| **Stratum A (Mapped Gain)**          |       116.65       |        99        |               40               |         41         |          0          |             18             |    1    | **41.41%** |
+| **Stratum B (Persistent Built)**     |       358.23       |        50        |               2               |          1          |          1          |             46             |    0    | **92.00%** |
+| **Stratum C (Persistent Non-built)** |      1635.22      |        98        |               94               |          2          |          0          |             2             |    2    | **95.92%** |
+| **Stratum D (Mapped Loss)**          |       57.74       |        50        |               45               |          0          |          0          |             5             |    0    | **0.00%** |
 
 #### Olofsson Adjusted Change & Extent Estimates (95% Confidence Intervals)
 
-| Metric | Mapped (km²) | Area-Adjusted Estimate (km²) | Standard Error (SE) | 95% Confidence Interval |
-| :--- | :---: | :---: | :---: | :---: |
-| **Gross Built-up Gain** | 116.65 | **88.85** | ±25.25 | **[39.36, 138.33] km²** |
-| **Gross Built-up Loss** | 57.74 | **7.16** | ±18.00 | **[0.00, 42.45] km²** |
-| **Net Built-up Change** | +58.91 | **+81.68** | ±26.31 | **[+30.12, +133.24] km²** |
-| **Built-up Footprint (2020)** | 415.97 | **397.09** | ±26.94 | **[344.29, 449.88] km²** |
-| **Built-up Footprint (2024)** | 474.88 | **478.77** | ±35.59 | **[409.02, 548.52] km²** |
+| Metric                              | Mapped (km²) | Area-Adjusted Estimate (km²) | Standard Error (SE) |     95% Confidence Interval     |
+| :---------------------------------- | :-----------: | :---------------------------: | :-----------------: | :------------------------------: |
+| **Gross Built-up Gain**       |    116.65    |        **88.85**        |       ±25.25       |  **[39.36, 138.33] km²**  |
+| **Gross Built-up Loss**       |     57.74     |        **7.16**        |       ±18.00       |   **[0.00, 42.45] km²**   |
+| **Net Built-up Change**       |    +58.91    |       **+81.68**       |       ±26.31       | **[+30.12, +133.24] km²** |
+| **Built-up Footprint (2020)** |    415.97    |       **397.09**       |       ±26.94       | **[344.29, 449.88] km²** |
+| **Built-up Footprint (2024)** |    474.88    |       **478.77**       |       ±35.59       | **[409.02, 548.52] km²** |
 
 #### Sensitivity & Baseline Scenarios
+
 - **Pre-recheck Baseline**: Net Change = `+14.9 ± 83.6 km²` (dominated by apparent loss variance in Stratum C).
 - **Without Stratum C Gains (IDs 50 & 172 as errors)**: Net Change = `+48.3 ± 23.1 km²`.
 - **Post-recheck Adjusted Net (Primary)**: Net Change = `+81.7 ± 51.6 km²` ($95\%\text{ CI}: [+30.12, +133.24]\text{ km}^2$).
@@ -152,7 +155,7 @@ To independently validate multi-temporal land cover transitions and compute rigo
 
 ### ⚠️ Negative Result: Cross-Year Radiometric Normalisation
 
-Cross-year Total Least Squares (TLS) pseudo-invariant feature (PIF) radiometric normalisation was implemented and systematically benchmarked against raw surface reflectance composites. 
+Cross-year Total Least Squares (TLS) pseudo-invariant feature (PIF) radiometric normalisation was implemented and systematically benchmarked against raw surface reflectance composites.
 
 **Finding**: Radiometric normalisation **did not reduce year-to-year classification drift** across held-out evaluation folds; the displayed series has no temporal filtering, and the cleaned series is a sensitivity comparison. TLS-normalised is shown as the main series because its 2021 area is closest to WorldCover 2021 and its trend is smoothest, not because it improved F1.
 
@@ -188,6 +191,7 @@ make up
 - 📊 **Monitoring Stack**: `docker compose --profile monitoring up -d` (Grafana at `http://localhost:3000`, admin/admin)
 
 ### Run Pipeline & Generate Reports:
+
 ```bash
 # Execute end-to-end pipeline for any city
 python -m pipeline.run_city --city pune
@@ -204,33 +208,37 @@ make report-pdf
 UrbanPulse provides an end-to-end blind visual accuracy validation and area-adjustment suite based on **Olofsson et al. (2014)**:
 
 1. **Stratified Sampling** (A: Gain, B: Persistent Built, C: Persistent Non-Built, D: Loss):
+
    ```bash
    python pipeline/make_change_validation_sample.py --city ahmedabad --start 2020 --end 2024 --seed 42
    ```
+
    - Filters out pixels within 2 pixels of stratum edges.
    - Enforces pairwise spacing $\ge 500\text{ m}$.
    - Exports `change_sample_blind.csv`, `change_sample_key.csv`, and Google Earth `change_sample.kml`.
-
 2. **Generate 10m True Colour Chips & Standalone Labeller**:
+
    ```bash
    python pipeline/make_label_chips.py --city ahmedabad --start 2020 --end 2024
    ```
+
    - Builds 10 m true colour (B04, B03, B02) composites with SCL cloud mask and 2%-98% fixed percentile stretch.
    - Cuts $128\times 128$ chips, upscales 4x with bicubic resampling, and overlays the 60m center classifier pixel.
    - Generates `data/{city}/validation/labeller.html` (single self-contained file with offline shortcuts and Google Maps satellite integration).
-
 3. **Label Samples with Keyboard Shortcuts**:
    Open `data/{city}/validation/labeller.html` in any web browser:
+
    - `Q` / `W` / `E` = Start year Built (`Y`) / Not built (`N`) / Unclear (`unclear`)
    - `I` / `O` / `P` = End year Built (`Y`) / Not built (`N`) / Unclear (`unclear`)
    - `←` / `→` = Previous / Next point
    - `S` = Edit notes
    - Click **Download CSV** to export labelled answers.
-
 4. **Score Accuracy & Compute Area-Adjusted Change**:
+
    ```bash
    python pipeline/score_change_validation.py --sample-csv data/ahmedabad/validation/change_sample_labelled_ahmedabad.csv
    ```
+
    - Computes per-stratum accuracy matrix.
    - Estimates area-adjusted **Gross Gain**, **Gross Loss**, and **NET Change** with 95% CIs and continuity correction for boundary proportions ($p=0$ or $1$).
 

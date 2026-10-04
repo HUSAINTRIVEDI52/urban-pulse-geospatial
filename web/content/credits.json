@@ -2,6 +2,7 @@
   "title": "Data Sources, Attributions & Credits",
   "disclaimer": "UrbanPulse is an independent academic and open-source geospatial observatory. It is NOT an official government source, municipal census, or statutory planning record. Data is intended for research, public education, and urban policy analysis only.",
   "license": "Open Source Software licensed under the MIT License. Derived data and analytical outputs released under Creative Commons Attribution 4.0 International (CC BY 4.0).",
+  "footer_text": "Code: MIT. Data: see credits.",
   "sources": [
     {
       "name": "Copernicus Sentinel-2",

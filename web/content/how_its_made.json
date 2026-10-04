@@ -45,7 +45,7 @@
       "step_number": 1,
       "title": "Satellite Imagery Ingestion",
       "headline": "Gathering calibrated surface reflectance from Copernicus Sentinel-2",
-      "what_happens": "The pipeline queries the Earth Search STAC API for multispectral Sentinel-2 Level-2A imagery covering the 45x45 km Area of Interest (AOI) during the winter dry-season observation window.",
+      "what_happens": "The pipeline queries the Earth Search STAC API for multispectral Sentinel-2 Level-2A imagery covering the metropolitan Area of Interest (AOI) during the winter dry-season observation window.",
       "why": "Bottom-Of-Atmosphere (BOA) reflectance corrects for atmospheric haze and ozone absorption, providing physically consistent surface reflectances across years.",
       "limitation": "The observation window must balance cloud-free skies against crop phenology; unseasonal rain or persistent winter smog can limit the number of clean scenes available.",
       "report_link": "report/index.html#data-sources"
@@ -82,7 +82,7 @@
       "title": "Spatial Metrics & Sprawl Measurement",
       "headline": "Concentric distance rings and Shannon Entropy calculation",
       "what_happens": "Built-up density is measured across nine concentric 2-km distance rings radiating outward from the municipal center. Relative Shannon Entropy is computed to quantify outward radial dispersion.",
-      "why": "Tracking expansion across distance zones distinguishes compact transit-oriented densification from rapid, vehicle-dependent leapfrog sprawl.",
+      "why": "Tracking expansion across distance zones distinguishes compact central densification from outward radial dispersion across distance rings.",
       "limitation": "Concentric circular rings assume roughly isotropic radial growth; natural barriers like rivers or hills can cause asymmetrical expansion.",
       "report_link": "report/index.html#sprawl-analysis"
     },
