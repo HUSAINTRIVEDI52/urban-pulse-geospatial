@@ -980,7 +980,11 @@ def export_web_data(
                         "c01_gain": sm["c01"],
                         "c10_loss": sm["c10"],
                         "c11_built": sm["c11"],
-                        "unclear": cv_res["unclear_per_stratum"][st] if st in cv_res["unclear_per_stratum"] else 0,
+                        "unclear": (
+                            cv_res["unclear_per_stratum"][st]
+                            if st in cv_res["unclear_per_stratum"]
+                            else 0
+                        ),
                         "accuracy_pct": round(sm["accuracy"] * 100.0, 2),
                         "estimated_gain_km2": sm["estimated_gain_km2"],
                         "estimated_loss_km2": sm["estimated_loss_km2"],

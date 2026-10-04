@@ -1,23 +1,23 @@
 ---
 - name: Ensure remote project directory exists
   ansible.builtin.file:
-    path: "{{ project_remote_dir }}/infra/k8s"
+    path: "{{ deploy_project_remote_dir }}/infra/k8s"
     state: directory
-    owner: "{{ deploy_user | default('urbanpulse') }}"
-    group: "{{ deploy_user | default('urbanpulse') }}"
+    owner: "{{ common_deploy_user | default(deploy_user | default('urbanpulse')) }}"
+    group: "{{ common_deploy_user | default(deploy_user | default('urbanpulse')) }}"
     mode: "0755"
 
 - name: Copy Kubernetes manifests to remote server
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../k8s/"
-    dest: "{{ project_remote_dir }}/infra/k8s/"
-    owner: "{{ deploy_user | default('urbanpulse') }}"
-    group: "{{ deploy_user | default('urbanpulse') }}"
+    dest: "{{ deploy_project_remote_dir }}/infra/k8s/"
+    owner: "{{ common_deploy_user | default(deploy_user | default('urbanpulse')) }}"
+    group: "{{ common_deploy_user | default(deploy_user | default('urbanpulse')) }}"
     mode: "0644"
 
 - name: Apply Kubernetes Kustomize overlay to k3s cluster
   ansible.builtin.command:
-    cmd: "kubectl apply -k {{ k8s_overlay_dir }}"
+    cmd: "kubectl apply -k {{ deploy_k8s_overlay_dir }}"
   environment:
     KUBECONFIG: "/etc/rancher/k3s/k3s.yaml"
   register: kubectl_apply

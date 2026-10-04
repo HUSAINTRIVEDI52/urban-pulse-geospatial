@@ -1,7 +1,7 @@
 ---
-deploy_user: urbanpulse
-deploy_user_shell: /bin/bash
-ssh_public_key_file: "~/.ssh/id_ed25519.pub"
+common_deploy_user: "{{ deploy_user | default('urbanpulse') }}"
+common_deploy_user_shell: "{{ deploy_user_shell | default('/bin/bash') }}"
+common_ssh_public_key_file: "{{ ssh_public_key_file | default('~/.ssh/id_ed25519.pub') }}"
 common_packages:
   - apt-transport-https
   - ca-certificates

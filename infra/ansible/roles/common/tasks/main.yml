@@ -12,8 +12,8 @@
 
 - name: Create non-root deployment user
   ansible.builtin.user:
-    name: "{{ deploy_user }}"
-    shell: "{{ deploy_user_shell }}"
+    name: "{{ common_deploy_user }}"
+    shell: "{{ common_deploy_user_shell }}"
     groups: sudo
     append: true
     state: present
@@ -21,16 +21,16 @@
 
 - name: Enable passwordless sudo for deployment user
   ansible.builtin.copy:
-    content: "{{ deploy_user }} ALL=(ALL) NOPASSWD:ALL\n"
-    dest: "/etc/sudoers.d/{{ deploy_user }}"
+    content: "{{ common_deploy_user }} ALL=(ALL) NOPASSWD:ALL\n"
+    dest: "/etc/sudoers.d/{{ common_deploy_user }}"
     mode: "0440"
     validate: "visudo -cf %s"
 
 - name: Set up authorized SSH key for deployment user
   ansible.posix.authorized_key:
-    user: "{{ deploy_user }}"
+    user: "{{ common_deploy_user }}"
     key: >-
-      {{ lookup('file', ssh_public_key_file, errors='ignore')
+      {{ lookup('file', common_ssh_public_key_file, errors='ignore')
          | default(lookup('file',
                    '/root/.ssh/authorized_keys', errors='ignore'))
          | default(omit) }}

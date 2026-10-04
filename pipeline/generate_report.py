@@ -1230,7 +1230,11 @@ def render_html_report(
                     tls_2024 = m_list[-1].get("builtup_km2", 0.0)
 
             stat_sub_2024 = "Analysis Window: 2020–2024"
-            if ckey == "ahmedabad" and "change_validation" in cdata and cdata["change_validation"].get("status") == "validated":
+            if (
+                ckey == "ahmedabad"
+                and "change_validation" in cdata
+                and cdata["change_validation"].get("status") == "validated"
+            ):
                 cv = cdata["change_validation"]
                 adj24 = cv.get("adjusted_built_2024_km2", 478.8)
                 ci_low = cv.get("ci_lower_built_2024_km2", 409.0)

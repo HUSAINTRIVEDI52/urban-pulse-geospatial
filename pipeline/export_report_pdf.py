@@ -4,11 +4,10 @@ Converts docs/report/index.html to docs/report/UrbanPulse_Report.pdf using Playw
 """
 
 import argparse
+import shutil
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
-
-import shutil
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 

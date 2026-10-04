@@ -1,9 +1,9 @@
 ---
-firewall_allowed_tcp_ports:
+security_firewall_allowed_tcp_ports:
   - 22
   - 80
   - 443
   - 6443
-fail2ban_bantime: 3600
-fail2ban_findtime: 600
-fail2ban_maxretry: 5
+security_fail2ban_bantime: 3600
+security_fail2ban_findtime: 600
+security_fail2ban_maxretry: 5
