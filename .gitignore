@@ -59,6 +59,7 @@ Thumbs.db
 htmlcov/
 data/**/control_rebuild/
 node_modules/
-
-data/**/test_b_strict_uncapped/
+reports/
 scratch/
+cache/
+*.jp2

@@ -92,13 +92,15 @@ export function initCharts(statsData, currentYear) {
         maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
-          tooltip: {
-            mode: 'index',
-            intersect: false,
             callbacks: {
-              label: (ctx) => `${ctx.dataset.label}: ${ctx.raw != null ? Number(ctx.raw).toFixed(1) + ' km²' : 'N/A'}`
+              label: (ctx) => {
+                const item = gs[ctx.dataIndex];
+                if (ctx.dataset.label === 'Raw Classified' && item && item.raw_excluded) {
+                  return `${ctx.dataset.label}: ${Number(ctx.raw).toFixed(1)} km² (Excluded: ${item.raw_excluded_reason || '5-date composite containing an anomalous scene, 2021-12-05'})`;
+                }
+                return `${ctx.dataset.label}: ${ctx.raw != null ? Number(ctx.raw).toFixed(1) + ' km²' : 'N/A'}`;
+              }
             }
-          }
         },
         scales: {
           x: { grid: { color: gridColor }, ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 10 } } },

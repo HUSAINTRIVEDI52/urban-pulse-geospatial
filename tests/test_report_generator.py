@@ -214,7 +214,7 @@ def test_missing_input_skips_gracefully_with_note(tmp_path: Path):
 
     # Should register missing sections
     assert len(city_data["missing_sections"]) > 0
-    assert any("cleanup_summary.csv missing" in s for s in city_data["missing_sections"])
+    assert any("rings.csv missing" in s or "metrics.csv missing" in s for s in city_data["missing_sections"])
 
     # Generating report should not crash
     render_html_report(

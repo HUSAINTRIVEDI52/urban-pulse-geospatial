@@ -402,3 +402,71 @@ def test_dashboard_builtup_equals_validation_strata(city_stats):
     assert (
         abs(norm_2024 - expected_2024) < 0.05
     ), f"Dashboard 2024 built-up ({norm_2024} km²) != Stratum A+B ({expected_2024:.2f} km²) for {city}"
+
+
+def test_readme_key_results_match_stats_json():
+    """
+    Asserts that every km2 and % figure in README Key Results matches the
+    corresponding metric in stats.json for both Ahmedabad and Pune.
+    """
+    readme_path = PROJECT_ROOT / "README.md"
+    assert readme_path.exists(), "README.md file missing"
+    readme_content = readme_path.read_text(encoding="utf-8")
+
+    for city in ["ahmedabad", "pune"]:
+        stats_path = WEB_DATA_DIR / city / "stats.json"
+        assert stats_path.exists(), f"stats.json missing for {city}"
+        with open(stats_path, encoding="utf-8") as f:
+            stats = json.load(f)
+
+        # 1. Check AOI Area
+        aoi_val = stats["aoi_area_km2"]
+        assert f"{aoi_val:,.2f} km²" in readme_content or f"{aoi_val:.2f} km²" in readme_content
+
+        # 2. Check headline range and TLS expansion
+        headline = stats["headline_2020_2024_expansion"]
+        min_exp = headline["net_growth_range_km2"][0]
+        max_exp = headline["net_growth_range_km2"][1]
+        assert f"+{min_exp:.1f} to +{max_exp:.1f} km²" in readme_content
+
+        tls_change_km2 = headline["methods_breakdown"]["tls_norm"]["change_km2"]
+        tls_change_pct = headline["methods_breakdown"]["tls_norm"]["change_pct"]
+        assert f"+{tls_change_km2:.2f} km²" in readme_content
+        assert f"+{tls_change_pct:.1f}%" in readme_content
+
+        # 3. Check 2021 WorldCover Anchor
+        wc_km2 = headline["worldcover_2021_anchor_km2"]
+        assert f"{wc_km2:.2f} km²" in readme_content
+
+        # 4. Check 2021 TLS estimate
+        tls_2021 = headline["estimate_2021_norm_km2"]
+        assert f"{tls_2021:.2f} km²" in readme_content
+
+        # 5. Check 2024 Footprint
+        metrics = stats["metrics"]
+        m_2024 = next(m for m in metrics if m["year"] == 2024)
+        growth = stats["growth_series"]
+        g_2024 = next(g for g in growth if g["year"] == 2024)
+        b_km2 = m_2024["builtup_km2"]
+        b_pct = round((b_km2 / aoi_val) * 100, 2)
+        c_km2 = g_2024["clean_builtup_km2"]
+        assert f"{b_km2:.2f} km²" in readme_content
+        assert f"{b_pct:.2f}%" in readme_content
+        assert f"{c_km2:.2f} km²" in readme_content
+
+        # 6. Check Core and Peripheral Shares
+        core_pct = m_2024["core_share_pct"]
+        periph_pct = m_2024["periphery_share_pct"]
+        ent = m_2024["shannon_entropy"]
+        assert f"{core_pct:.1f}%" in readme_content
+        assert f"{periph_pct:.1f}%" in readme_content
+        assert f"{ent:.4f}" in readme_content
+
+        # 7. Check Growth Series Table figures
+        for g in growth:
+            cl = g["clean_builtup_km2"]
+            raw = g["raw_builtup_km2"]
+            norm = g["norm_builtup_km2"]
+            assert f"{cl:.2f}" in readme_content
+            assert f"{raw:.2f}" in readme_content
+            assert f"{norm:.2f}" in readme_content

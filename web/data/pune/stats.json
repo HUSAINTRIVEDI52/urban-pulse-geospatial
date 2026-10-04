@@ -5,8 +5,8 @@
   "pixel_area_km2": 0.0036,
   "provenance": {
     "script": "pipeline/export_web.py",
-    "git_sha": "942afdf",
-    "generated_at": "2026-10-03T20:09:05.095869+00:00",
+    "git_sha": "c7590ad",
+    "generated_at": "2026-10-03T22:40:00.001953+00:00",
     "input_files": {
       "raw_classified_rasters": {
         "2018": "3b15db2631fe",
@@ -112,10 +112,12 @@
       "clean_builtup_km2": 443.75,
       "norm_builtup_km2": 393.07,
       "band_min_km2": 393.07,
-      "band_max_km2": 692.99,
-      "band_spread_km2": 299.92,
+      "band_max_km2": 443.75,
+      "band_spread_km2": 50.68,
       "is_provisional": false,
-      "is_reference": false
+      "is_reference": false,
+      "raw_excluded": true,
+      "raw_excluded_reason": "5-date composite containing an anomalous scene, 2021-12-05"
     },
     {
       "year": 2023,
@@ -146,7 +148,7 @@
     "variant": "TLS-retrained variant",
     "test_set_description": "ALL held-out spatial block test points (N=414 pts/year) from test_points_pooled.geojson",
     "method": "Stratified Area-Weighted Estimator (Olofsson et al. 2014) with 95% Confidence Intervals",
-    "note": "Ground-reference labels come from ESA WorldCover 2021 for all validation folds (2018 is evaluated as a temporal fold only). Note: The LOYO table evaluates the TLS-retrained variant (single-year RF models retrained on TLS-normalised composites across held-out folds). The displayed operational series differs, using the pooled multi-year RF model with 3x3 majority filter and no temporal cleanup.",
+    "note": "Ground-reference labels come from ESA WorldCover 2021 for all validation folds (2018 is evaluated as a temporal fold only); reference labels are WorldCover 2021 for every fold, so adjusted areas for 2018 and 2024 are not comparable with the change-validation estimates. Note: The LOYO table evaluates the TLS-retrained variant (single-year RF models retrained on TLS-normalised composites across held-out folds). The displayed operational series differs, using the pooled multi-year RF model with 3x3 majority filter and no temporal cleanup.",
     "table": [
       {
         "year": 2018,
@@ -291,9 +293,9 @@
     "loss_to_gain_ratio": 0.469
   },
   "ci_status": {
-    "tests_passing": 93,
-    "total_tests": 93,
-    "coverage_pct": 100.0,
+    "tests_passing": 97,
+    "total_tests": 97,
+    "coverage_pct": 17.6,
     "workflow_url": "https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial/actions",
     "badge_url": "https://img.shields.io/github/actions/workflow/status/HUSAINTRIVEDI52/urban-pulse-geospatial/ci.yml?branch=main&label=CI&logo=github&style=flat-square&color=38bdf8"
   },

@@ -69,7 +69,15 @@ export function updateMetricCards(statsData, currentYear) {
     bValEl.textContent = `${curGrowth.norm_builtup_km2.toFixed(1)} km²`;
   }
   if (bSubEl && curGrowth) {
-    bSubEl.innerHTML = `<span style="color: var(--color-accent-primary);">TLS Validated Series (Cleaned: ${curGrowth.clean_builtup_km2.toFixed(1)} km²)</span>`;
+    if (statsData.city === 'Ahmedabad' && currentYear === 2024 && statsData.change_validation?.status === 'validated') {
+      const cv = statsData.change_validation;
+      const adj24 = cv.adjusted_built_2024_km2 != null ? cv.adjusted_built_2024_km2.toFixed(1) : '478.8';
+      const ciLower = cv.ci_lower_built_2024_km2 != null ? cv.ci_lower_built_2024_km2.toFixed(1) : '409.0';
+      const ciUpper = cv.ci_upper_built_2024_km2 != null ? cv.ci_upper_built_2024_km2.toFixed(1) : '549.0';
+      bSubEl.innerHTML = `<span style="color: var(--color-accent-primary);">Mapped built-up (TLS series) &bull; Adjusted 2024: ~${adj24} km² (95% CI ${ciLower}-${ciUpper})</span>`;
+    } else {
+      bSubEl.innerHTML = `<span style="color: var(--color-accent-primary);">Mapped built-up (TLS series) (Cleaned: ${curGrowth.clean_builtup_km2.toFixed(1)} km²)</span>`;
+    }
   }
 
   // 4. Sprawl Metrics (Entropy, Core, Periphery)
@@ -172,12 +180,15 @@ export function updateChangeValidation(statsData) {
   const totalEvaluated = cv.sample_points_evaluated || cv.sample_points_total || 297;
   const adjNet = cv.adjusted_net_km2 != null ? cv.adjusted_net_km2.toFixed(1) : '81.7';
   const ciNet = cv.ci95_net_km2 != null ? cv.ci95_net_km2.toFixed(1) : '51.6';
+  const adj24 = cv.adjusted_built_2024_km2 != null ? cv.adjusted_built_2024_km2.toFixed(1) : '478.8';
+  const ciLower24 = cv.ci_lower_built_2024_km2 != null ? cv.ci_lower_built_2024_km2.toFixed(1) : '409.0';
+  const ciUpper24 = cv.ci_upper_built_2024_km2 != null ? cv.ci_upper_built_2024_km2.toFixed(1) : '549.0';
   const lossNote = cv.mapped_loss_note || '45 of 50 mapped-loss points were never built-up: the 2020 map falsely marks about 52 km² as built-up.';
 
   container.innerHTML = `
     <div style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 8px;">
       Olofsson (2014) 4-stratum design (<em>N=${totalEvaluated}</em> audited points):
-      <strong>Adjusted Net: +${adjNet} ± ${ciNet} km²</strong>
+      <strong>Adjusted Net: +${adjNet} ± ${ciNet} km²</strong> &bull; <strong>Adjusted 2024: ${adj24} km² (95% CI ${ciLower24}-${ciUpper24})</strong>
     </div>
     <div class="data-table-wrap" tabindex="0" role="region" aria-label="Stratified change validation table">
       <table class="editorial-table">
@@ -206,7 +217,8 @@ export function updateChangeValidation(statsData) {
       </table>
     </div>
     <div style="font-size: 11px; color: var(--color-text-muted); margin-top: 6px; font-style: italic;">
-      ${lossNote}
+      ${lossNote}<br>
+      Note: &plusmn; values denote the 95% CI half-width.
     </div>
   `;
 }

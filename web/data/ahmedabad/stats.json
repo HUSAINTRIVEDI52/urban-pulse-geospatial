@@ -5,8 +5,8 @@
   "pixel_area_km2": 0.0036,
   "provenance": {
     "script": "pipeline/export_web.py",
-    "git_sha": "942afdf",
-    "generated_at": "2026-10-03T20:09:03.008767+00:00",
+    "git_sha": "c7590ad",
+    "generated_at": "2026-10-03T22:39:51.628620+00:00",
     "input_files": {
       "raw_classified_rasters": {
         "2018": "25ec5cc639ea",
@@ -146,7 +146,7 @@
     "variant": "TLS-retrained variant",
     "test_set_description": "ALL held-out spatial block test points (N=400 pts/year) from test_points_pooled.geojson",
     "method": "Stratified Area-Weighted Estimator (Olofsson et al. 2014) with 95% Confidence Intervals",
-    "note": "Ground-reference labels come from ESA WorldCover 2021 for all validation folds (2018 is evaluated as a temporal fold only). Note: The LOYO table evaluates the TLS-retrained variant (single-year RF models retrained on TLS-normalised composites across held-out folds). The displayed operational series differs, using the pooled multi-year RF model with 3x3 majority filter and no temporal cleanup.",
+    "note": "Ground-reference labels come from ESA WorldCover 2021 for all validation folds (2018 is evaluated as a temporal fold only); reference labels are WorldCover 2021 for every fold, so adjusted areas for 2018 and 2024 are not comparable with the change-validation estimates. Note: The LOYO table evaluates the TLS-retrained variant (single-year RF models retrained on TLS-normalised composites across held-out folds). The displayed operational series differs, using the pooled multi-year RF model with 3x3 majority filter and no temporal cleanup.",
     "table": [
       {
         "year": 2018,
@@ -291,9 +291,9 @@
     "loss_to_gain_ratio": 0.495
   },
   "ci_status": {
-    "tests_passing": 93,
-    "total_tests": 93,
-    "coverage_pct": 100.0,
+    "tests_passing": 97,
+    "total_tests": 97,
+    "coverage_pct": 17.6,
     "workflow_url": "https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial/actions",
     "badge_url": "https://img.shields.io/github/actions/workflow/status/HUSAINTRIVEDI52/urban-pulse-geospatial/ci.yml?branch=main&label=CI&logo=github&style=flat-square&color=38bdf8"
   },
@@ -1057,6 +1057,16 @@
     "mapped_net_km2": 58.9104,
     "mapped_built_2020_km2": 415.9656,
     "mapped_built_2024_km2": 474.876,
+    "adjusted_built_2020_km2": 397.0867,
+    "ci95_built_2020_km2": 52.7958,
+    "ci_lower_built_2020_km2": 344.291,
+    "ci_upper_built_2020_km2": 449.8825,
+    "adjusted_built_2024_km2": 478.7685,
+    "se_built_2024_km2": 35.5878,
+    "ci95_built_2024_km2": 69.7522,
+    "ci_lower_built_2024_km2": 409.0,
+    "ci_upper_built_2024_km2": 549.0,
+    "ci_note": "+/- denotes the 95% CI half-width (SE * 1.96).",
     "is_distinguishable_from_zero": true,
     "summary_sentence": "Validated on 297 points (Ahmedabad only); net change is distinguishable from zero post-recheck (+81.7 \u00b1 51.6 km\u00b2), but depends on the recheck (pre-recheck: +14.9 \u00b1 83.6 km\u00b2; without Stratum C gains: +48.3 \u00b1 23.1 km\u00b2).",
     "sensitivities": {
@@ -1081,6 +1091,7 @@
       },
       "mapped_vs_series_reconciliation": "Mapped areas (415.97 and 474.88 km\u00b2) match the dashboard TLS series (415.97 and 474.88 km\u00b2), both generated from the 3x3 majority filtered TLS classification pipeline without temporal filtering.",
       "continuity_correction": "Gross loss standard error applies Laplace (add-one) smoothing for zero-count sample proportions.",
+      "labeller_protocol": "single interpreter (the project author); first pass blind to strata, recheck of 10 discordant points was unblinded",
       "labelling_history": "26 of 291 start labels (12 built to not built, 14 not built to built) changed between the first and second passes (labeller change rate ~9%). The third pass rechecked 10 discordant points (apparent losses and gains) using Google Earth historical imagery; the 6 corrected labels persisted through the second pass, while concordant points were not rechecked.",
       "uncertainty_disclaimer": "Intervals reflect sampling error only; labelling inconsistency (about 9% between passes) is not included.",
       "validated_series": "TLS-normalised classification series."

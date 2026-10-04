@@ -106,27 +106,59 @@ def get_env_versions() -> dict[str, str]:
 
 
 def collect_test_stats() -> dict[str, Any]:
-    """Runs pytest in dry-run/collection mode to get test counts."""
-    stats = {"total_tests": 93, "status": "Available"}
-    try:
-        res = subprocess.run(
-            [sys.executable, "-m", "pytest", "--collect-only", "-q"],
-            cwd=PROJECT_ROOT,
-            capture_output=True,
-            text=True,
-            timeout=15,
-        )
-        output = res.stdout + res.stderr
-        for line in output.splitlines():
-            if "test" in line and ("collected" in line or "selected" in line):
-                parts = line.strip().split()
-                for p in parts:
-                    if p.isdigit():
-                        stats["total_tests"] = int(p)
-                        break
-    except Exception:
-        stats["total_tests"] = 93  # Fallback verified count
-    return stats
+    """Returns test counts and coverage statistics from junit XML and coverage XML written by make test."""
+    total_tests = 0
+    passing_tests = 0
+    coverage_pct = 0.0
+
+    junit_candidates = [
+        PROJECT_ROOT / "reports" / "junit.xml",
+        PROJECT_ROOT / "junit.xml",
+    ]
+    for jp in junit_candidates:
+        if jp.exists():
+            try:
+                import xml.etree.ElementTree as ET
+
+                tree = ET.parse(jp)
+                root = tree.getroot()
+                suite = root.find("testsuite")
+                if suite is None and root.tag == "testsuite":
+                    suite = root
+                if suite is not None:
+                    total_tests = int(suite.attrib.get("tests", 0))
+                    failures = int(suite.attrib.get("failures", 0))
+                    errors = int(suite.attrib.get("errors", 0))
+                    skipped = int(suite.attrib.get("skipped", 0))
+                    passing_tests = total_tests - failures - errors - skipped
+                    break
+            except Exception:
+                pass
+
+    cov_candidates = [
+        PROJECT_ROOT / "reports" / "coverage.xml",
+        PROJECT_ROOT / "coverage.xml",
+    ]
+    for cp in cov_candidates:
+        if cp.exists():
+            try:
+                import xml.etree.ElementTree as ET
+
+                tree = ET.parse(cp)
+                root = tree.getroot()
+                if "line-rate" in root.attrib:
+                    line_rate = float(root.attrib["line-rate"])
+                    coverage_pct = round(line_rate * 100.0, 1)
+                    break
+            except Exception:
+                pass
+
+    return {
+        "total_tests": total_tests,
+        "passing_tests": passing_tests,
+        "coverage_pct": coverage_pct,
+        "status": "Passing" if passing_tests == total_tests and total_tests > 0 else "Pending",
+    }
 
 
 def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any]:
@@ -169,7 +201,7 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
         except Exception as e:
             city_data["warnings"].append(f"Failed loading {stats_json_path.name}: {e}")
 
-    # 1. Class Areas & Temporal Cleanup Summary
+    # 1. Class Areas & Temporal Cleanup Summary (only if available; displayed series needs no cleanup)
     cleanup_csv_candidates = [
         data_dir / city_key / "cleanup_summary.csv",
         data_dir / f"{city_key}_cleanup_summary.csv",
@@ -186,10 +218,6 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
     if df_cleanup is not None:
         city_data["cleanup_summary"] = df_cleanup.to_dict(orient="records")
         city_data["df_cleanup"] = df_cleanup
-    else:
-        city_data["missing_sections"].append(
-            "Temporal Cleanup & Built-up Comparison Table (cleanup_summary.csv missing)"
-        )
 
     # 2. Concentric Rings Analysis
     rings_csv_candidates = [
@@ -407,162 +435,7 @@ def extract_city_data(city: str, data_dir: Path, web_dir: Path) -> dict[str, Any
                 "Satellite Diagnostics Table (composite_report_*.json missing)"
             )
 
-    # 7. Quality Gate Validation Execution (fallback if stats.json missing)
-    if "quality_gate" not in city_data and df_cleanup is not None:
-        try:
-            checks = []
-            # Check 1: NoData
-            nodata_col = next(
-                (
-                    c
-                    for c in ["Composite_NoData_pct", "nodata_pct", "NoData_pct"]
-                    if c in df_cleanup.columns
-                ),
-                None,
-            )
-            if nodata_col:
-                bad_nd = df_cleanup[df_cleanup[nodata_col] > 5.0]
-                if not bad_nd.empty:
-                    checks.append(
-                        {
-                            "name": "NoData Gaps",
-                            "status": "FAIL",
-                            "detail": f"{len(bad_nd)} year(s) > 5.0% NoData",
-                        }
-                    )
-                else:
-                    checks.append(
-                        {
-                            "name": "NoData Gaps",
-                            "status": "PASS",
-                            "detail": "All years ≤ 5.0% NoData",
-                        }
-                    )
-            else:
-                checks.append(
-                    {
-                        "name": "NoData Gaps",
-                        "status": "PASS",
-                        "detail": "All composites within nominal threshold (≤5%)",
-                    }
-                )
-
-            # Check 2: YoY Built-up Change <= 15%
-            b_col = next(
-                (
-                    c
-                    for c in ["Clean_Builtup_km2", "Built-up", "builtup_km2"]
-                    if c in df_cleanup.columns
-                ),
-                None,
-            )
-            if b_col and len(df_cleanup) > 1:
-                df_sorted = df_cleanup.sort_values("Year").reset_index(drop=True)
-                yoy_fails = []
-                for i in range(1, len(df_sorted)):
-                    p_val = float(df_sorted.loc[i - 1, b_col])
-                    c_val = float(df_sorted.loc[i, b_col])
-                    yr = int(df_sorted.loc[i, "Year"])
-                    if p_val > 0:
-                        chg = abs(c_val - p_val) / p_val * 100.0
-                        if chg > 15.0:
-                            yoy_fails.append(f"{yr} ({chg:.1f}%)")
-                if yoy_fails:
-                    checks.append(
-                        {
-                            "name": "YoY Volatility",
-                            "status": "FAIL",
-                            "detail": f"Exceeded in: {', '.join(yoy_fails)}",
-                        }
-                    )
-                else:
-                    checks.append(
-                        {
-                            "name": "YoY Volatility",
-                            "status": "PASS",
-                            "detail": "All YoY changes ≤ 15.0%",
-                        }
-                    )
-            else:
-                checks.append(
-                    {
-                        "name": "YoY Volatility",
-                        "status": "PASS",
-                        "detail": "Cleaned time series monotonic",
-                    }
-                )
-
-            # Check 3: Per-Year Accuracy >= 70%
-            py_acc = city_data.get("model_metrics", {}).get("per_year_accuracy", {})
-            if py_acc:
-                acc_fails = [f"{y} ({v*100:.1f}%)" for y, v in py_acc.items() if v < 0.70]
-                if acc_fails:
-                    checks.append(
-                        {
-                            "name": "Per-Year Accuracy",
-                            "status": "FAIL",
-                            "detail": f"Sub-70% in: {', '.join(acc_fails)}",
-                        }
-                    )
-                else:
-                    checks.append(
-                        {
-                            "name": "Per-Year Accuracy",
-                            "status": "PASS",
-                            "detail": "All evaluated years ≥ 70.0%",
-                        }
-                    )
-            else:
-                checks.append(
-                    {
-                        "name": "Per-Year Accuracy",
-                        "status": "PASS",
-                        "detail": "Baseline agreement verified",
-                    }
-                )
-
-            # Check 4: Loss/Gain Ratio <= 30%
-            if "gain_loss" in city_data:
-                loss_ratio = city_data["gain_loss"].get("loss_to_gain_ratio", 0.0)
-                if loss_ratio > 0.30:
-                    checks.append(
-                        {
-                            "name": "Loss/Gain Ratio",
-                            "status": "FAIL",
-                            "detail": f"{loss_ratio*100:.1f}% > 30.0% max",
-                        }
-                    )
-                else:
-                    checks.append(
-                        {
-                            "name": "Loss/Gain Ratio",
-                            "status": "PASS",
-                            "detail": f"{loss_ratio*100:.1f}% ≤ 30.0% threshold",
-                        }
-                    )
-            else:
-                checks.append(
-                    {
-                        "name": "Loss/Gain Ratio",
-                        "status": "PASS",
-                        "detail": "Transition loss verified",
-                    }
-                )
-
-            has_fail = any(c["status"] == "FAIL" for c in checks)
-            city_data["quality_gate"] = {
-                "status": "FAILED" if has_fail else "PASSED",
-                "checks": checks,
-            }
-        except Exception as e:
-            city_data["quality_gate"] = {
-                "status": "ERROR",
-                "checks": [{"name": "Execution", "status": "FAIL", "detail": str(e)}],
-            }
-    else:
-        city_data["missing_sections"].append(
-            "Data Quality Gate Assessment (cleanup_summary.csv missing)"
-        )
+    # 7. Quality Gate (loaded directly from stats.json)
 
     # 8. Visual Assets (Charts & Maps)
     {
@@ -1109,7 +982,7 @@ def render_html_report(
         <a href="https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial" class="badge" target="_blank">&#128187; GitHub Repository</a>
         <span class="badge">&#128197; Generated: {generation_time}</span>
         <span class="badge">&#128278; Git Commit: <code>{commit_short}</code></span>
-        <span class="badge badge-green">&#10004; CI/CD: 93/93 Passing</span>
+        <span class="badge badge-green">&#10004; CI/CD: {test_stats.get('passing_tests', 0)}/{test_stats.get('total_tests', 0)} tests passing, {test_stats.get('coverage_pct', 0.0):.0f}% line coverage</span>
       </div>
     </div>
 """)
@@ -1356,6 +1229,14 @@ def render_html_report(
                 if m_list:
                     tls_2024 = m_list[-1].get("builtup_km2", 0.0)
 
+            stat_sub_2024 = "Analysis Window: 2020–2024"
+            if ckey == "ahmedabad" and "change_validation" in cdata and cdata["change_validation"].get("status") == "validated":
+                cv = cdata["change_validation"]
+                adj24 = cv.get("adjusted_built_2024_km2", 478.8)
+                ci_low = cv.get("ci_lower_built_2024_km2", 409.0)
+                ci_high = cv.get("ci_upper_built_2024_km2", 549.0)
+                stat_sub_2024 = f"Adjusted 2024: ~{adj24:.1f} km&sup2; (95% CI {ci_low:.1f}&ndash;{ci_high:.1f})"
+
             html_parts.append(f"""
         <div style="margin-top:20px; background:rgba(56, 189, 248, 0.05); border:1px solid rgba(56, 189, 248, 0.3); border-radius:10px; padding:16px;">
           <h4 style="color:var(--accent-blue); margin-bottom:6px;">&#128200; 2020–2024 Headline Urban Expansion</h4>
@@ -1371,9 +1252,9 @@ def render_html_report(
               <div class="stat-sub">Independent Benchmark (2021)</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">2024 Validated Built-up Footprint (TLS)</div>
+              <div class="stat-label">2024 Mapped built-up (TLS series)</div>
               <div class="stat-value" style="color:var(--text-bright); font-size:1.6rem;">{tls_2024:.2f} km&sup2;</div>
-              <div class="stat-sub">Analysis Window: 2020–2024</div>
+              <div class="stat-sub">{stat_sub_2024}</div>
             </div>
           </div>
           <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">
@@ -1453,7 +1334,7 @@ def render_html_report(
           To evaluate temporal stability without data leakage, classifiers were trained excluding each fold year, and tested on <strong>all held-out points</strong> (not restricted to stable points). Area estimates are adjusted using Olofsson et al. (2014) area-weighted stratified estimation with 95% confidence intervals.
         </p>
         <p style="font-size:0.85rem; color:var(--text-muted); font-style:italic; margin-bottom:10px;">
-          <strong>TLS-retrained variant:</strong> The LOYO table evaluates the TLS-retrained variant (single-year RF models retrained on TLS-normalised composites across held-out folds). The displayed operational series differs, using the pooled multi-year RF model with 3x3 majority filter and no temporal cleanup.
+          <strong>TLS-retrained variant:</strong> The LOYO table evaluates the TLS-retrained variant (single-year RF models retrained on TLS-normalised composites across held-out folds). Reference labels are WorldCover 2021 for every fold, so adjusted areas for 2018 and 2024 are not comparable with the change-validation estimates. The displayed operational series differs, using the pooled multi-year RF model with 3x3 majority filter and no temporal cleanup.
         </p>
         <div class="table-container">
           <table>
@@ -1609,6 +1490,8 @@ def render_html_report(
             <li><strong>Pre-recheck Baseline:</strong> Net Change = <code>+14.90 &plusmn; 83.60 km&sup2;</code> (dominated by false loss variance in Stratum C).</li>
             <li><strong>Without Stratum C Gains (IDs 50 &amp; 172 treated as errors):</strong> Net Change = <code>+48.31 &plusmn; 23.10 km&sup2;</code>.</li>
             <li><strong>Post-recheck Adjusted Net (Primary):</strong> Net Change = <code>+81.68 &plusmn; 51.56 km&sup2;</code> (95% CI: [+30.12, +133.24] km&sup2;).</li>
+            <li><strong>Adjusted 2024 Built-up Footprint:</strong> <strong>478.8 km&sup2; (95% CI 409.0&ndash;549.0)</strong>.</li>
+            <li><em>Note: &plusmn; values denote the 95% CI half-width (SE &times; 1.96).</em></li>
           </ul>
         </div>
 
@@ -1618,7 +1501,7 @@ def render_html_report(
             {summary_sentence}
           </p>
           <div style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; line-height:1.45;">
-            <strong>Labelling Protocol:</strong> Single independent human interpreter; paired Sentinel-2 10m dry-season RGB surface reflectance composites (2020 vs 2024) corroborated against high-resolution Google Earth Pro historical timeline imagery. Ambiguous points with mixed-pixel confusion or low visual contrast were marked as <em>unclear</em> (3 points) and excluded from primary estimation.
+            <strong>Labelling Protocol:</strong> Single interpreter (the project author); first pass blind to strata, recheck of 10 discordant points was unblinded; paired Sentinel-2 10m dry-season RGB surface reflectance composites (2020 vs 2024) corroborated against high-resolution Google Earth Pro historical timeline imagery. Ambiguous points with mixed-pixel confusion or low visual contrast were marked as <em>unclear</em> (3 points) and excluded from primary estimation.
           </div>
           <div style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; line-height:1.45;">
             <strong>Labelling History:</strong> (1) First pass was conducted on initial 2024 chips; (2) Second pass was conducted with corrected reflectance stretch chips (26 of 291 start labels changed: 12 built to not built, 14 not built to built, establishing the labeller's change rate at ~9%, and 30 end labels changed from not built to built); (3) Third pass rechecked 10 discordant points (apparent losses and gains) against Google Earth Pro historical timeline imagery, updating 6 labels (IDs 81, 91, 94, 123 in Stratum C; IDs 151, 226 in Stratum D). The 6 corrected labels persisted through the second pass, and concordant points were not rechecked. These initial discrepancies were labelling errors in the first pass (bare or ploughed soil read as built-up on 2020 Sentinel-2 chips), corrected using Google Earth historical imagery (not classifier errors).
@@ -1735,7 +1618,7 @@ def render_html_report(
             <thead>
               <tr>
                 <th>Year</th>
-                <th class="text-right">Built-up (TLS Normalised, km&sup2;)</th>
+                <th class="text-right">Built-up (TLS series, km&sup2;)</th>
                 <th class="text-right">Cleaned (sensitivity, km&sup2;)</th>
                 <th class="text-right">Shannon Entropy (H<sub>n</sub>)</th>
                 <th class="text-right">Core Share (0-6 km)</th>
@@ -2053,7 +1936,7 @@ stac:
         <li><strong>Ahmedabad Window Discrepancy:</strong> Ahmedabad's windows differ between 2020 (built earlier with strict Dec 1&ndash;Feb 15) and 2021&ndash;2024 (Oct 1&ndash;Mar 31).</li>
         <li><strong>Partial 2022 Season:</strong> 2022 covers October&ndash;December 2021 only (partial season with no January&ndash;February scenes).</li>
         <li><strong>Pune Validation Status:</strong> Pune is not independently validated with hand-labelled reference points; its metrics reflect WorldCover agreement only.</li>
-        <li><strong>Pune 2021 Trajectory Dip:</strong> Pune's validated series dips in 2021 (from 407.12 km&sup2; in 2020 to 386.55 km&sup2; in 2021) due to sensor viewing geometry and inter-annual reflectance shifts before recovering to 469.80 km&sup2; in 2024.</li>
+        <li><strong>Pune 2021 Trajectory Dip:</strong> Pune's built-up series dips in 2021 (from 407.12 km&sup2; in 2020 to 386.55 km&sup2; in 2021); cause not established; consistent with classifier noise (Pune built-up F1 0.58).</li>
         <li><strong>Spatial Resolution Limits:</strong> 10&ndash;60 m Sentinel-2 pixel resolution limits detection of narrow roads, informal settlements, and sub-pixel urban canopy.</li>
       </ul>
     </div>
@@ -2067,9 +1950,9 @@ stac:
       <h2 class="section-title">&#128640; 8. Future Roadmap</h2>
       <div class="grid-2">
         <div class="stat-card">
-          <h4 style="color:var(--accent-blue); margin-bottom:6px;">1. Historical Landsat Integration (2000–2016)</h4>
+          <h4 style="color:var(--accent-blue); margin-bottom:6px;">1. Extended Multi-Sensor Integration (2000–2016)</h4>
           <p style="font-size:0.9rem; color:var(--text-muted);">
-            Extend the temporal horizon by 16 years using harmonized Landsat 5/7/8 surface reflectance stacks with cross-calibration regression.
+            Extend the temporal horizon by 16 years using harmonized multi-satellite surface reflectance stacks with cross-calibration regression.
           </p>
         </div>
         <div class="stat-card">
@@ -2151,9 +2034,17 @@ make docs</code></pre>
 </html>
 """)
 
+    html_content = "".join(html_parts)
     output_html_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_html_path, "w", encoding="utf-8") as f:
-        f.write("".join(html_parts))
+        f.write(html_content)
+
+    # Also sync to docs/report/index.html to ensure identical single source of truth
+    docs_report_path = PROJECT_ROOT / "docs" / "report" / "index.html"
+    if output_html_path.resolve() != docs_report_path.resolve():
+        docs_report_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(docs_report_path, "w", encoding="utf-8") as f:
+            f.write(html_content)
 
     print(f"[+] Successfully generated self-contained HTML report: {output_html_path.resolve()}")
 
@@ -2184,8 +2075,8 @@ def main():
     parser.add_argument(
         "--output",
         type=Path,
-        default=PROJECT_ROOT / "docs" / "report" / "index.html",
-        help="Output HTML path (default: docs/report/index.html)",
+        default=PROJECT_ROOT / "web" / "report" / "index.html",
+        help="Output HTML path (default: web/report/index.html)",
     )
 
     args = parser.parse_args()

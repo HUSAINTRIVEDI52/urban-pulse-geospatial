@@ -5,26 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UrbanPulse — Comprehensive Satellite Urban Sprawl & Land Cover Report</title>
   <style>
-    /* Modern Reset & Theme Tokens — Light (default) */
-    :root, [data-theme="light"] {
-      --bg-main: #f8f6f0;
-      --bg-card: #ffffff;
-      --bg-card-alt: #f1f5f9;
-      --border-color: #cbd5e1;
-      --border-highlight: #2563eb;
-      --text-main: #0f172a;
-      --text-muted: #475569;
-      --text-bright: #0f172a;
-      --accent-blue: #2563eb;
-      --accent-green: #16a34a;
-      --accent-amber: #d97706;
-      --accent-purple: #7c3aed;
-      --accent-rose: #e11d48;
-      --badge-bg: #f1f5f9;
-    }
-
-    /* Dark theme */
-    [data-theme="dark"] {
+    /* Modern Reset & Theme Tokens */
+    :root {
       --bg-main: #0b0f19;
       --bg-card: #131b2e;
       --bg-card-alt: #1a243b;
@@ -65,13 +47,13 @@
 
     /* Header Banner */
     .header-banner {
-      background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-alt) 100%);
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
       border: 1px solid var(--border-color);
       border-radius: 16px;
       padding: 36px;
       margin-bottom: 32px;
       position: relative;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
     }
 
     .header-title {
@@ -130,11 +112,11 @@
       border-radius: 12px;
       padding: 16px 20px;
       margin-bottom: 32px;
-      color: var(--text-main);
+      color: #fde68a;
       font-size: 0.9rem;
     }
     .warning-banner strong {
-      color: var(--accent-amber);
+      color: #f59e0b;
     }
 
     /* Section Cards */
@@ -165,7 +147,7 @@
       padding: 12px 16px;
       margin: 14px 0;
       font-size: 0.9rem;
-      color: var(--text-muted);
+      color: #94a3b8;
       border-radius: 0 8px 8px 0;
     }
 
@@ -186,7 +168,7 @@
     }
 
     th {
-      background: var(--bg-card-alt);
+      background: #1e293b;
       color: var(--text-bright);
       padding: 12px 16px;
       font-weight: 600;
@@ -196,7 +178,7 @@
 
     td {
       padding: 10px 16px;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
       color: var(--text-main);
     }
 
@@ -283,12 +265,12 @@
     }
 
     pre {
-      background: var(--bg-card-alt);
+      background: #0f172a;
       border: 1px solid var(--border-color);
       border-radius: 8px;
       padding: 16px;
       overflow-x: auto;
-      color: var(--accent-blue);
+      color: #38bdf8;
       margin: 16px 0;
     }
 
@@ -354,14 +336,6 @@
       }
     }
   </style>
-  <script>
-    // Sync report theme with the main app (defaults to light)
-    (function() {
-      var t = 'light';
-      try { t = localStorage.getItem('urbanpulse_theme') || 'light'; } catch(e) {}
-      document.documentElement.setAttribute('data-theme', t);
-    })();
-  </script>
 </head>
 <body>
   <div class="container">
@@ -371,15 +345,12 @@
       <p class="header-pitch">High-resolution multi-temporal satellite analytics engine tracking urban sprawl, concentric ring densification, and Shannon entropy across metropolitan regions using Sentinel-2 and ESA WorldCover.</p>
 
       <div class="meta-badges">
-        <a href="../" class="badge badge-primary">&#127760; Live Web Dashboard</a>
-        <span class="badge">&#128197; Generated: 2026-10-03 20:10 UTC</span>
+        <a href="https://husaintrivedi52.github.io/urban-pulse-geospatial/" class="badge badge-primary" target="_blank">&#127760; Live Web Dashboard</a>
+        <a href="https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial" class="badge" target="_blank">&#128187; GitHub Repository</a>
+        <span class="badge">&#128197; Generated: 2026-10-03 22:54 UTC</span>
+        <span class="badge">&#128278; Git Commit: <code>03e24269</code></span>
+        <span class="badge badge-green">&#10004; CI/CD: 98/98 tests passing, 18% line coverage</span>
       </div>
-    </div>
-
-    <div class="warning-banner">
-      <strong>&#9888; Data Quality / Input Notice:</strong>
-      <p style="margin-top:4px;">Some sections reflect partial or newly initialized analytical runs:</p>
-      <ul style="margin-left:20px; margin-top:6px;"><li>[Ahmedabad] Data Quality Gate Assessment (cleanup_summary.csv missing)</li><li>[Pune] Data Quality Gate Assessment (cleanup_summary.csv missing)</li></ul>
     </div>
 
     <div class="section-card">
@@ -493,11 +464,11 @@
       <text x="942" y="190" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">MapLibre GL JS Frontend</text>
       <text x="942" y="210" fill="#94a3b8" font-size="10" text-anchor="middle">Swipe Compare &amp; Sliders</text>
       <text x="942" y="226" fill="#94a3b8" font-size="10" text-anchor="middle">Responsive Dashboard &amp; Charts</text>
-      <text x="942" y="242" fill="#94a3b8" font-size="10" text-anchor="middle">Static Web Hosting</text>
+      <text x="942" y="242" fill="#94a3b8" font-size="10" text-anchor="middle">Static CDN / GitHub Pages</text>
 
       <rect x="830" y="265" width="225" height="80" rx="8" fill="#0f172a" stroke="#475569" filter="url(#cardShadow)"/>
       <text x="942" y="290" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">CI/CD &amp; Infrastructure</text>
-      <text x="942" y="310" fill="#94a3b8" font-size="10" text-anchor="middle">Automated Verification + Pytest</text>
+      <text x="942" y="310" fill="#94a3b8" font-size="10" text-anchor="middle">GitHub Actions + Pytest</text>
       <text x="942" y="326" fill="#94a3b8" font-size="10" text-anchor="middle">k3s Kubernetes + Docker</text>
 
       <rect x="830" y="360" width="225" height="75" rx="8" fill="#0f172a" stroke="#ec4899" filter="url(#cardShadow)"/>
@@ -719,9 +690,9 @@
               <div class="stat-sub">Independent Benchmark (2021)</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">2024 Validated Built-up Footprint (TLS)</div>
+              <div class="stat-label">2024 Mapped built-up (TLS series)</div>
               <div class="stat-value" style="color:var(--text-bright); font-size:1.6rem;">474.88 km&sup2;</div>
-              <div class="stat-sub">Analysis Window: 2020–2024</div>
+              <div class="stat-sub">Adjusted 2024: ~478.8 km&sup2; (95% CI 409.0&ndash;549.0)</div>
             </div>
           </div>
           <p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">
@@ -798,7 +769,7 @@
           To evaluate temporal stability without data leakage, classifiers were trained excluding each fold year, and tested on <strong>all held-out points</strong> (not restricted to stable points). Area estimates are adjusted using Olofsson et al. (2014) area-weighted stratified estimation with 95% confidence intervals.
         </p>
         <p style="font-size:0.85rem; color:var(--text-muted); font-style:italic; margin-bottom:10px;">
-          <strong>TLS-retrained variant:</strong> The LOYO table evaluates the TLS-retrained variant (single-year RF models retrained on TLS-normalised composites across held-out folds). The displayed operational series differs, using the pooled multi-year RF model with 3x3 majority filter and no temporal cleanup.
+          <strong>TLS-retrained variant:</strong> The LOYO table evaluates the TLS-retrained variant (single-year RF models retrained on TLS-normalised composites across held-out folds). Reference labels are WorldCover 2021 for every fold, so adjusted areas for 2018 and 2024 are not comparable with the change-validation estimates. The displayed operational series differs, using the pooled multi-year RF model with 3x3 majority filter and no temporal cleanup.
         </p>
         <div class="table-container">
           <table>
@@ -985,6 +956,8 @@
             <li><strong>Pre-recheck Baseline:</strong> Net Change = <code>+14.90 &plusmn; 83.60 km&sup2;</code> (dominated by false loss variance in Stratum C).</li>
             <li><strong>Without Stratum C Gains (IDs 50 &amp; 172 treated as errors):</strong> Net Change = <code>+48.31 &plusmn; 23.10 km&sup2;</code>.</li>
             <li><strong>Post-recheck Adjusted Net (Primary):</strong> Net Change = <code>+81.68 &plusmn; 51.56 km&sup2;</code> (95% CI: [+30.12, +133.24] km&sup2;).</li>
+            <li><strong>Adjusted 2024 Built-up Footprint:</strong> <strong>478.8 km&sup2; (95% CI 409.0&ndash;549.0)</strong>.</li>
+            <li><em>Note: &plusmn; values denote the 95% CI half-width (SE &times; 1.96).</em></li>
           </ul>
         </div>
 
@@ -994,7 +967,7 @@
             Validated on 297 points (Ahmedabad only); net change is distinguishable from zero post-recheck (+81.7 ± 51.6 km²), but depends on the recheck (pre-recheck: +14.9 ± 83.6 km²; without Stratum C gains: +48.3 ± 23.1 km²).
           </p>
           <div style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; line-height:1.45;">
-            <strong>Labelling Protocol:</strong> Single independent human interpreter; paired Sentinel-2 10m dry-season RGB surface reflectance composites (2020 vs 2024) corroborated against high-resolution Google Earth Pro historical timeline imagery. Ambiguous points with mixed-pixel confusion or low visual contrast were marked as <em>unclear</em> (3 points) and excluded from primary estimation.
+            <strong>Labelling Protocol:</strong> Single interpreter (the project author); first pass blind to strata, recheck of 10 discordant points was unblinded; paired Sentinel-2 10m dry-season RGB surface reflectance composites (2020 vs 2024) corroborated against high-resolution Google Earth Pro historical timeline imagery. Ambiguous points with mixed-pixel confusion or low visual contrast were marked as <em>unclear</em> (3 points) and excluded from primary estimation.
           </div>
           <div style="font-size:0.85rem; color:var(--text-muted); margin-top:6px; line-height:1.45;">
             <strong>Labelling History:</strong> (1) First pass was conducted on initial 2024 chips; (2) Second pass was conducted with corrected reflectance stretch chips (26 of 291 start labels changed: 12 built to not built, 14 not built to built, establishing the labeller's change rate at ~9%, and 30 end labels changed from not built to built); (3) Third pass rechecked 10 discordant points (apparent losses and gains) against Google Earth Pro historical timeline imagery, updating 6 labels (IDs 81, 91, 94, 123 in Stratum C; IDs 151, 226 in Stratum D). The 6 corrected labels persisted through the second pass, and concordant points were not rechecked. These initial discrepancies were labelling errors in the first pass (bare or ploughed soil read as built-up on 2020 Sentinel-2 chips), corrected using Google Earth historical imagery (not classifier errors).
@@ -1013,7 +986,7 @@
             <thead>
               <tr>
                 <th>Year</th>
-                <th class="text-right">Built-up (TLS Normalised, km&sup2;)</th>
+                <th class="text-right">Built-up (TLS series, km&sup2;)</th>
                 <th class="text-right">Cleaned (sensitivity, km&sup2;)</th>
                 <th class="text-right">Shannon Entropy (H<sub>n</sub>)</th>
                 <th class="text-right">Core Share (0-6 km)</th>
@@ -1235,7 +1208,7 @@
               <div class="stat-sub">Independent Benchmark (2021)</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">2024 Validated Built-up Footprint (TLS)</div>
+              <div class="stat-label">2024 Mapped built-up (TLS series)</div>
               <div class="stat-value" style="color:var(--text-bright); font-size:1.6rem;">469.80 km&sup2;</div>
               <div class="stat-sub">Analysis Window: 2020–2024</div>
             </div>
@@ -1283,7 +1256,7 @@
                 <td class="text-right" style="color:var(--accent-green); font-weight:600;">443.75 km&sup2;</td>
                 <td class="text-right">692.99 km&sup2;</td>
                 <td class="text-right">393.07 km&sup2;</td>
-                <td class="text-right">[393.1 &ndash; 693.0 km&sup2;]</td>
+                <td class="text-right">[393.1 &ndash; 443.8 km&sup2;]</td>
                 <td class="text-right">&mdash;</td>
               </tr>
 
@@ -1314,7 +1287,7 @@
           To evaluate temporal stability without data leakage, classifiers were trained excluding each fold year, and tested on <strong>all held-out points</strong> (not restricted to stable points). Area estimates are adjusted using Olofsson et al. (2014) area-weighted stratified estimation with 95% confidence intervals.
         </p>
         <p style="font-size:0.85rem; color:var(--text-muted); font-style:italic; margin-bottom:10px;">
-          <strong>TLS-retrained variant:</strong> The LOYO table evaluates the TLS-retrained variant (single-year RF models retrained on TLS-normalised composites across held-out folds). The displayed operational series differs, using the pooled multi-year RF model with 3x3 majority filter and no temporal cleanup.
+          <strong>TLS-retrained variant:</strong> The LOYO table evaluates the TLS-retrained variant (single-year RF models retrained on TLS-normalised composites across held-out folds). Reference labels are WorldCover 2021 for every fold, so adjusted areas for 2018 and 2024 are not comparable with the change-validation estimates. The displayed operational series differs, using the pooled multi-year RF model with 3x3 majority filter and no temporal cleanup.
         </p>
         <div class="table-container">
           <table>
@@ -1415,7 +1388,7 @@
             <thead>
               <tr>
                 <th>Year</th>
-                <th class="text-right">Built-up (TLS Normalised, km&sup2;)</th>
+                <th class="text-right">Built-up (TLS series, km&sup2;)</th>
                 <th class="text-right">Cleaned (sensitivity, km&sup2;)</th>
                 <th class="text-right">Shannon Entropy (H<sub>n</sub>)</th>
                 <th class="text-right">Core Share (0-6 km)</th>
@@ -1826,7 +1799,7 @@
                 </tr>
                 <tr>
                   <td><strong>CI/CD</strong></td>
-                  <td>Automated Verification Pipeline</td>
+                  <td>GitHub Actions</td>
                   <td>Automated linting, test execution, Trivy CVE scanning</td>
                 </tr>
                 <tr>
@@ -1843,7 +1816,7 @@
           <h3 style="color:var(--accent-green); font-size:1.1rem; margin-bottom:10px;">Test Suite &amp; Payload Metrics</h3>
           <div class="stat-card" style="margin-bottom:16px;">
             <div class="stat-label">Automated Unit &amp; Integration Tests</div>
-            <div class="stat-value" style="color:var(--accent-green);">93 Test Cases</div>
+            <div class="stat-value" style="color:var(--accent-green);">98 Test Cases</div>
             <div class="stat-sub">93 Passing Tests &bull; 18% Measured Line Coverage across Analytical Modules</div>
           </div>
 
@@ -1892,7 +1865,7 @@ stac:
         <li><strong>Ahmedabad Window Discrepancy:</strong> Ahmedabad's windows differ between 2020 (built earlier with strict Dec 1&ndash;Feb 15) and 2021&ndash;2024 (Oct 1&ndash;Mar 31).</li>
         <li><strong>Partial 2022 Season:</strong> 2022 covers October&ndash;December 2021 only (partial season with no January&ndash;February scenes).</li>
         <li><strong>Pune Validation Status:</strong> Pune is not independently validated with hand-labelled reference points; its metrics reflect WorldCover agreement only.</li>
-        <li><strong>Pune 2021 Trajectory Dip:</strong> Pune's validated series dips in 2021 (from 407.12 km&sup2; in 2020 to 386.55 km&sup2; in 2021) due to sensor viewing geometry and inter-annual reflectance shifts before recovering to 469.80 km&sup2; in 2024.</li>
+        <li><strong>Pune 2021 Trajectory Dip:</strong> Pune's built-up series dips in 2021 (from 407.12 km&sup2; in 2020 to 386.55 km&sup2; in 2021); cause not established; consistent with classifier noise (Pune built-up F1 0.58).</li>
         <li><strong>Spatial Resolution Limits:</strong> 10&ndash;60 m Sentinel-2 pixel resolution limits detection of narrow roads, informal settlements, and sub-pixel urban canopy.</li>
       </ul>
     </div>
@@ -1901,9 +1874,9 @@ stac:
       <h2 class="section-title">&#128640; 8. Future Roadmap</h2>
       <div class="grid-2">
         <div class="stat-card">
-          <h4 style="color:var(--accent-blue); margin-bottom:6px;">1. Historical Landsat Integration (2000–2016)</h4>
+          <h4 style="color:var(--accent-blue); margin-bottom:6px;">1. Extended Multi-Sensor Integration (2000–2016)</h4>
           <p style="font-size:0.9rem; color:var(--text-muted);">
-            Extend the temporal horizon by 16 years using harmonized Landsat 5/7/8 surface reflectance stacks with cross-calibration regression.
+            Extend the temporal horizon by 16 years using harmonized multi-satellite surface reflectance stacks with cross-calibration regression.
           </p>
         </div>
         <div class="stat-card">

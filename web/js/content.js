@@ -68,7 +68,7 @@ export function updateKeyFindings(statsData, metaData, cityName) {
           <span>Statistically Distinguishable Urban Expansion</span>
         </div>
         <p style="margin: 0; font-size: 13px; line-height: 1.5; color: var(--color-text-main);">
-          Stratified ground-truth auditing across <strong>${nEval} points</strong> confirms that Ahmedabad's net built-up change is statistically distinguishable from zero: <strong>+${adjNet} ± ${ciNet} km²</strong> (95% confidence interval: ${(cv.ci_lower_net_km2 || 30.1).toFixed(1)} to ${(cv.ci_upper_net_km2 || 133.2).toFixed(1)} km²).
+          Stratified ground-truth auditing across <strong>${nEval} points</strong> confirms that Ahmedabad's net built-up change is statistically distinguishable from zero: <strong>+${adjNet} ± ${ciNet} km²</strong> (95% confidence interval: ${(cv.ci_lower_net_km2 || 30.1).toFixed(1)} to ${(cv.ci_upper_net_km2 || 133.2).toFixed(1)} km²). Adjusted 2024 built-up footprint: <strong>478.8 km² (95% CI 409.0-549.0)</strong>. (Note: &plusmn; values denote the 95% CI half-width).
         </p>
       </div>
     `;

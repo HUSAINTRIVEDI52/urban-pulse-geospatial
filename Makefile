@@ -31,7 +31,7 @@ logs:
 	docker compose logs -f
 
 test:
-	pytest -v
+	pytest -v --junitxml=reports/junit.xml --cov=pipeline --cov=api --cov-report=xml:reports/coverage.xml
 
 pipeline:
 	docker compose run --rm pipeline --city $(CITY) --year $(YEAR)

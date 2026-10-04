@@ -70,6 +70,63 @@ def load_city_config(
         return yaml.safe_load(f)
 
 
+def load_ci_status() -> dict[str, Any]:
+    """Reads test and coverage status from junit XML and coverage XML written by make test."""
+    total_tests = 0
+    passing_tests = 0
+    coverage_pct = 0.0
+
+    junit_candidates = [
+        PROJECT_ROOT / "reports" / "junit.xml",
+        PROJECT_ROOT / "junit.xml",
+    ]
+    for jp in junit_candidates:
+        if jp.exists():
+            try:
+                import xml.etree.ElementTree as ET
+
+                tree = ET.parse(jp)
+                root = tree.getroot()
+                suite = root.find("testsuite")
+                if suite is None and root.tag == "testsuite":
+                    suite = root
+                if suite is not None:
+                    total_tests = int(suite.attrib["tests"]) if "tests" in suite.attrib else 0
+                    failures = int(suite.attrib["failures"]) if "failures" in suite.attrib else 0
+                    errors = int(suite.attrib["errors"]) if "errors" in suite.attrib else 0
+                    skipped = int(suite.attrib["skipped"]) if "skipped" in suite.attrib else 0
+                    passing_tests = total_tests - failures - errors - skipped
+                    break
+            except Exception:
+                pass
+
+    cov_candidates = [
+        PROJECT_ROOT / "reports" / "coverage.xml",
+        PROJECT_ROOT / "coverage.xml",
+    ]
+    for cp in cov_candidates:
+        if cp.exists():
+            try:
+                import xml.etree.ElementTree as ET
+
+                tree = ET.parse(cp)
+                root = tree.getroot()
+                if "line-rate" in root.attrib:
+                    line_rate = float(root.attrib["line-rate"])
+                    coverage_pct = round(line_rate * 100.0, 1)
+                    break
+            except Exception:
+                pass
+
+    return {
+        "tests_passing": passing_tests,
+        "total_tests": total_tests,
+        "coverage_pct": coverage_pct,
+        "workflow_url": "https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial/actions",
+        "badge_url": "https://img.shields.io/github/actions/workflow/status/HUSAINTRIVEDI52/urban-pulse-geospatial/ci.yml?branch=main&label=CI&logo=github&style=flat-square&color=38bdf8",
+    }
+
+
 def reproject_raster_to_wgs84(
     src_path: Path, dst_crs: str = "EPSG:4326"
 ) -> tuple[np.ndarray, list[float]]:
@@ -229,8 +286,10 @@ def export_web_data(
     spatial_cfg = config.get("spatial", {})
     city_cfg = config.get("city", {})
 
-    center_lat = spatial_cfg.get("center_lat") or city_cfg.get("latitude", 23.0225)
-    center_lon = spatial_cfg.get("center_lon") or city_cfg.get("longitude", 72.5714)
+    default_lat = 23.0225 if city_key == "ahmedabad" else 18.5204
+    default_lon = 72.5714 if city_key == "ahmedabad" else 73.8567
+    center_lat = spatial_cfg.get("center_lat") or city_cfg.get("latitude") or default_lat
+    center_lon = spatial_cfg.get("center_lon") or city_cfg.get("longitude") or default_lon
     bbox_config = spatial_cfg.get("bbox", exported_bounds)
 
     meta_payload = {
@@ -412,25 +471,34 @@ def export_web_data(
     # Time series growth series
     time_series_data = []
     for y in sorted_years:
-        r_val = raw_dict.get(y, 400.0)
-        c_val = clean_dict.get(y, 400.0)
-        n_val = norm_dict.get(y, 400.0)
-        min_v = min(r_val, c_val, n_val)
-        max_v = max(r_val, c_val, n_val)
-        time_series_data.append(
-            {
-                "year": y,
-                "display_year": "2022 - partial season, no Jan-Feb" if y == 2022 else str(y),
-                "raw_builtup_km2": round(r_val, 2),
-                "clean_builtup_km2": round(c_val, 2),
-                "norm_builtup_km2": round(n_val, 2),
-                "band_min_km2": round(min_v, 2),
-                "band_max_km2": round(max_v, 2),
-                "band_spread_km2": round(max_v - min_v, 2),
-                "is_provisional": False,
-                "is_reference": y == 2021,
-            }
-        )
+        r_val = raw_dict[y]
+        c_val = clean_dict[y]
+        n_val = norm_dict[y]
+        is_pune_2022_raw_excluded = city_key == "pune" and y == 2022
+        if is_pune_2022_raw_excluded:
+            band_candidates = [c_val, n_val]
+        else:
+            band_candidates = [r_val, c_val, n_val]
+        min_v = min(band_candidates)
+        max_v = max(band_candidates)
+        entry = {
+            "year": y,
+            "display_year": "2022 - partial season, no Jan-Feb" if y == 2022 else str(y),
+            "raw_builtup_km2": round(r_val, 2),
+            "clean_builtup_km2": round(c_val, 2),
+            "norm_builtup_km2": round(n_val, 2),
+            "band_min_km2": round(min_v, 2),
+            "band_max_km2": round(max_v, 2),
+            "band_spread_km2": round(max_v - min_v, 2),
+            "is_provisional": False,
+            "is_reference": y == 2021,
+        }
+        if is_pune_2022_raw_excluded:
+            entry["raw_excluded"] = True
+            entry["raw_excluded_reason"] = (
+                "5-date composite containing an anomalous scene, 2021-12-05"
+            )
+        time_series_data.append(entry)
 
     # Percentage and km2 changes across methods (2020 to 2024)
     delta_raw_km2 = round(raw_dict[2024] - raw_dict[2020], 2)
@@ -460,7 +528,7 @@ def export_web_data(
             o_val = ca["open"]
             nodata_v = ca["nodata"]
         else:
-            b_val = norm_dict.get(yr, 400.0)
+            b_val = norm_dict[yr]
             rem = aoi_km2 - b_val
             v_val, w_val, a_val, o_val, nodata_v = (
                 round(rem * 0.25, 2),
@@ -641,7 +709,7 @@ def export_web_data(
         "variant": "TLS-retrained variant",
         "test_set_description": f"ALL held-out spatial block test points (N={400 if city_key == 'ahmedabad' else 414} pts/year) from test_points_pooled.geojson",
         "method": "Stratified Area-Weighted Estimator (Olofsson et al. 2014) with 95% Confidence Intervals",
-        "note": "Ground-reference labels come from ESA WorldCover 2021 for all validation folds (2018 is evaluated as a temporal fold only). Note: The LOYO table evaluates the TLS-retrained variant (single-year RF models retrained on TLS-normalised composites across held-out folds). The displayed operational series differs, using the pooled multi-year RF model with 3x3 majority filter and no temporal cleanup.",
+        "note": "Ground-reference labels come from ESA WorldCover 2021 for all validation folds (2018 is evaluated as a temporal fold only); reference labels are WorldCover 2021 for every fold, so adjusted areas for 2018 and 2024 are not comparable with the change-validation estimates. Note: The LOYO table evaluates the TLS-retrained variant (single-year RF models retrained on TLS-normalised composites across held-out folds). The displayed operational series differs, using the pooled multi-year RF model with 3x3 majority filter and no temporal cleanup.",
         "table": val_rows,
         "negative_result": "Negative Result: Per-band radiometric normalisation against pseudo-invariant features (PIFs) was tested to resolve inter-annual spectral drift, but did not eliminate year-to-year classification noise; the displayed series has no temporal filtering, and the cleaned series is a sensitivity comparison. TLS-normalised is shown as the main series because its 2021 area is closest to WorldCover 2021 and its trend is smoothest, not because it improved F1.",
     }
@@ -863,13 +931,7 @@ def export_web_data(
             "heldout_accuracy_pct": lowest_f1_pct,
             "loss_to_gain_ratio": mapped_loss_gain_ratio,
         },
-        "ci_status": {
-            "tests_passing": 93,
-            "total_tests": 93,
-            "coverage_pct": 100.0,
-            "workflow_url": "https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial/actions",
-            "badge_url": "https://img.shields.io/github/actions/workflow/status/HUSAINTRIVEDI52/urban-pulse-geospatial/ci.yml?branch=main&label=CI&logo=github&style=flat-square&color=38bdf8",
-        },
+        "ci_status": load_ci_status(),
         "years": sorted_years,
         "class_areas": class_areas_list,
         "metrics": metrics_list,
@@ -918,7 +980,7 @@ def export_web_data(
                         "c01_gain": sm["c01"],
                         "c10_loss": sm["c10"],
                         "c11_built": sm["c11"],
-                        "unclear": cv_res["unclear_per_stratum"].get(st, 0),
+                        "unclear": cv_res["unclear_per_stratum"][st] if st in cv_res["unclear_per_stratum"] else 0,
                         "accuracy_pct": round(sm["accuracy"] * 100.0, 2),
                         "estimated_gain_km2": sm["estimated_gain_km2"],
                         "estimated_loss_km2": sm["estimated_loss_km2"],
@@ -961,6 +1023,16 @@ def export_web_data(
                 "mapped_net_km2": cv_res["mapped_net_km2"],
                 "mapped_built_2020_km2": cv_res["mapped_built_2020_km2"],
                 "mapped_built_2024_km2": cv_res["mapped_built_2024_km2"],
+                "adjusted_built_2020_km2": cv_res["adjusted_built_2020_km2"],
+                "ci95_built_2020_km2": cv_res["ci95_built_2020_km2"],
+                "ci_lower_built_2020_km2": cv_res["ci_lower_built_2020_km2"],
+                "ci_upper_built_2020_km2": cv_res["ci_upper_built_2020_km2"],
+                "adjusted_built_2024_km2": cv_res["adjusted_built_2024_km2"],
+                "se_built_2024_km2": cv_res["se_built_2024_km2"],
+                "ci95_built_2024_km2": cv_res["ci95_built_2024_km2"],
+                "ci_lower_built_2024_km2": cv_res["ci_lower_built_2024_km2"],
+                "ci_upper_built_2024_km2": cv_res["ci_upper_built_2024_km2"],
+                "ci_note": "+/- denotes the 95% CI half-width (SE * 1.96).",
                 "is_distinguishable_from_zero": is_distinguishable,
                 "summary_sentence": summary_sentence,
                 "sensitivities": {
@@ -976,6 +1048,7 @@ def export_web_data(
                     },
                     "mapped_vs_series_reconciliation": "Mapped areas (415.97 and 474.88 km²) match the dashboard TLS series (415.97 and 474.88 km²), both generated from the 3x3 majority filtered TLS classification pipeline without temporal filtering.",
                     "continuity_correction": "Gross loss standard error applies Laplace (add-one) smoothing for zero-count sample proportions.",
+                    "labeller_protocol": "single interpreter (the project author); first pass blind to strata, recheck of 10 discordant points was unblinded",
                     "labelling_history": "26 of 291 start labels (12 built to not built, 14 not built to built) changed between the first and second passes (labeller change rate ~9%). The third pass rechecked 10 discordant points (apparent losses and gains) using Google Earth historical imagery; the 6 corrected labels persisted through the second pass, while concordant points were not rechecked.",
                     "uncertainty_disclaimer": "Intervals reflect sampling error only; labelling inconsistency (about 9% between passes) is not included.",
                     "validated_series": "TLS-normalised classification series.",
