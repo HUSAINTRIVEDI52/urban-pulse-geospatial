@@ -626,13 +626,17 @@ def render_html_report(
     html_parts = []
 
     # Document Head with Inline CSS
-    html_parts.append("""<!DOCTYPE html>
+    html_parts.append(f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UrbanPulse — Comprehensive Satellite Urban Sprawl & Land Cover Report</title>
-  <style>
+  <meta name="generator-git-commit" content="{commit_short}">
+  <meta name="generation-time" content="{generation_time}">
+  <title>UrbanPulse — Comprehensive Satellite Urban Sprawl &amp; Land Cover Report</title>
+""")
+
+    html_parts.append("""  <style>
     /* Modern Reset & Theme Tokens */
     :root {
       --bg-main: #0b0f19;
@@ -979,9 +983,6 @@ def render_html_report(
 
       <div class="meta-badges">
         <a href="https://husaintrivedi52.github.io/urban-pulse-geospatial/" class="badge badge-primary" target="_blank">&#127760; Live Web Dashboard</a>
-        <a href="https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial" class="badge" target="_blank">&#128187; GitHub Repository</a>
-        <span class="badge">&#128197; Generated: {generation_time}</span>
-        <span class="badge">&#128278; Git Commit: <code>{commit_short}</code></span>
         <span class="badge badge-green">&#10004; CI/CD: {test_stats.get('total_tests', 99)} Automated Tests Verified &bull; Production Ready</span>
       </div>
     </div>
