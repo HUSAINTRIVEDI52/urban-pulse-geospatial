@@ -43,74 +43,29 @@ const CALC_EXPLANATIONS = {
 };
 
 export function initDepthToggle() {
-  // Read initial preference
-  try {
-    const saved = localStorage.getItem(DEPTH_STORAGE_KEY);
-    if (saved === 'detailed' || saved === 'simple') {
-      currentDepth = saved;
-    }
-  } catch (e) {
-    // LocalStorage blocked
-  }
-
-  applyDepth(currentDepth);
-
-  const toggleHandler = () => {
-    const newDepth = currentDepth === 'simple' ? 'detailed' : 'simple';
-    setDepth(newDepth);
-  };
-
-  const toggleBtn = document.getElementById('toggle-depth-btn');
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', toggleHandler);
-  }
-
-  document.querySelectorAll('.mobile-depth-toggle').forEach(btn => {
-    btn.addEventListener('click', toggleHandler);
-  });
-
+  currentDepth = 'simple';
+  applyDepth('simple');
   setupCalcInfoButtons();
   window.UrbanPulseDepth = { setDepth, getDepth, applyDepth };
 }
 
 export function setDepth(depth) {
-  currentDepth = depth;
-  try {
-    localStorage.setItem(DEPTH_STORAGE_KEY, depth);
-  } catch (e) {
-    // Ignore
-  }
-  applyDepth(currentDepth);
+  currentDepth = 'simple';
+  applyDepth('simple');
 }
 
 export function getDepth() {
-  return currentDepth;
+  return 'simple';
 }
 
 function applyDepth(depth) {
-  const isDetailed = depth === 'detailed';
-  document.body.classList.toggle('view-detailed', isDetailed);
-  document.body.classList.toggle('view-simple', !isDetailed);
+  document.body.classList.remove('view-detailed');
+  document.body.classList.add('view-simple');
 
-  const btn = document.getElementById('toggle-depth-btn');
-  const label = document.getElementById('depth-label');
-  if (btn) {
-    btn.setAttribute('aria-pressed', isDetailed ? 'true' : 'false');
-    btn.classList.toggle('active', isDetailed);
-  }
-  if (label) {
-    label.textContent = isDetailed ? 'Detailed' : 'Simple';
-  }
-
-  document.querySelectorAll('.mobile-depth-label').forEach(lbl => {
-    lbl.textContent = isDetailed ? 'Detailed' : 'Simple';
-  });
-
-  // Update card titles and explanations
+  // Ensure card titles and explanations use simple text
   document.querySelectorAll('[data-simple-title]').forEach(el => {
     const simple = el.getAttribute('data-simple-title');
-    const detailed = el.getAttribute('data-detailed-title') || simple;
-    el.textContent = isDetailed ? detailed : simple;
+    if (simple) el.textContent = simple;
   });
 
   document.querySelectorAll('[data-simple-meaning]').forEach(el => {

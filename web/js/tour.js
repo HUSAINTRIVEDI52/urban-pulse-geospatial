@@ -25,7 +25,7 @@ const TOUR_STEPS = [
   {
     target: '#dashboard',
     title: '4. The Analytics Dashboard',
-    content: 'This panel shows error-adjusted growth calculations, independent ESA WorldCover benchmarks, spatial entropy (sprawl dispersion), and concentric density rings. Switch between Simple and Detailed view anytime!',
+    content: 'This panel shows built-up growth metrics, independent ESA WorldCover benchmarks, spatial entropy (sprawl dispersion), and concentric density rings.',
     position: 'left'
   }
 ];

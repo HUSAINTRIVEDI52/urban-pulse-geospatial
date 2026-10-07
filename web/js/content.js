@@ -1,21 +1,18 @@
 import { renderMethodologyDiagram } from './methodology-diagram.js';
 
 let howItsMadeData = null;
-let trustData = null;
 let creditsData = null;
 let templatesData = null;
 
 export async function initContentPages() {
   try {
-    const [howRes, trustRes, credRes, tmplRes] = await Promise.all([
+    const [howRes, credRes, tmplRes] = await Promise.all([
       fetch('content/how_its_made.json'),
-      fetch('content/trust.json'),
       fetch('content/credits.json'),
       fetch('content/findings_templates.json')
     ]);
 
     if (howRes.ok) howItsMadeData = await howRes.json();
-    if (trustRes.ok) trustData = await trustRes.json();
     if (credRes.ok) creditsData = await credRes.json();
     if (tmplRes.ok) templatesData = await tmplRes.json();
   } catch (err) {
@@ -24,7 +21,6 @@ export async function initContentPages() {
 
   renderMethodologyDiagram('how-diagram-root');
   renderHowItsMade();
-  renderTrust(window.UrbanPulseState?.statsData, window.UrbanPulseState?.currentCity || 'ahmedabad');
   renderCredits();
   setupShareAndDownloads();
 }
@@ -222,108 +218,6 @@ function renderHowItsMade() {
   `;
 }
 
-export function renderTrust(statsData, cityName) {
-  const container = document.getElementById('trust-content-container');
-  if (!container || !trustData) return;
-
-  const cityDisplay = cityName === 'ahmedabad' ? 'Ahmedabad' : (cityName === 'pune' ? 'Pune' : (cityName || 'Ahmedabad'));
-  const aoiArea = statsData?.aoi_area_km2 || (cityName === 'ahmedabad' ? 2167.83 : 2057.53);
-  const sideKm = Math.sqrt(aoiArea).toFixed(1);
-  const aoiKm2 = aoiArea.toFixed(1);
-
-  const why = trustData.why_a_range || {};
-  const vSum = trustData.validation_summary || {};
-  const claims = trustData.claims || [];
-  const sens = trustData.sensitivity_analysis || {};
-
-  container.innerHTML = `
-    <!-- Why a range, not one number? -->
-    <div class="chart-box">
-      <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: 8px;">
-        ${why.title || 'Why a range, not one number?'}
-      </h3>
-      <div style="font-size: 14px; color: var(--color-text-secondary); line-height: 1.6; display: flex; flex-direction: column; gap: 8px;">
-        <p style="margin: 0;">${why.sentence_1}</p>
-        <p style="margin: 0;">${why.sentence_2}</p>
-        <p style="margin: 0;">${why.sentence_3}</p>
-      </div>
-    </div>
-
-    <!-- Audit Summary (What was checked, How many points, What was found, What is not covered) -->
-    <div class="chart-box" style="margin-top: 16px;">
-      <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: 12px;">Ground-Truth Validation &amp; Quality Audit</h3>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
-        <div style="background: var(--color-bg-subtle); padding: 12px 14px; border-radius: var(--radius-md); border-left: 3px solid var(--color-accent-primary);">
-          <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--color-accent-primary); letter-spacing: 0.05em; margin-bottom: 4px;">What Was Checked</div>
-          <div style="font-size: 13px; color: var(--color-text-main); line-height: 1.5;">${vSum.what_was_checked} (Metropolitan footprint: ${sideKm} &times; ${sideKm} km, ${aoiKm2} km²).</div>
-        </div>
-        <div style="background: var(--color-bg-subtle); padding: 12px 14px; border-radius: var(--radius-md); border-left: 3px solid #0288d1;">
-          <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #0288d1; letter-spacing: 0.05em; margin-bottom: 4px;">How Many Points</div>
-          <div style="font-size: 13px; color: var(--color-text-main); line-height: 1.5;">${vSum.how_many_points}</div>
-        </div>
-        <div style="background: var(--color-bg-subtle); padding: 12px 14px; border-radius: var(--radius-md); border-left: 3px solid #2e7d32;">
-          <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #2e7d32; letter-spacing: 0.05em; margin-bottom: 4px;">What Was Found</div>
-          <div style="font-size: 13px; color: var(--color-text-main); line-height: 1.5;">${vSum.what_was_found}</div>
-        </div>
-        <div style="background: var(--color-bg-subtle); padding: 12px 14px; border-radius: var(--radius-md); border-left: 3px solid #d97706;">
-          <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #d97706; letter-spacing: 0.05em; margin-bottom: 4px;">What Is Not Covered</div>
-          <div style="font-size: 13px; color: var(--color-text-main); line-height: 1.5;">${vSum.what_is_not_covered}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Sensitivity & Robustness Variations -->
-    ${sens.rows ? `
-    <div class="chart-box" style="margin-top: 16px;">
-      <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: 8px;">${sens.title}</h3>
-      <p style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 12px;">
-        To evaluate sensitivity to interpretation changes and background gain assumptions, we report net expansion under alternative audit scenarios:
-      </p>
-      <div style="overflow-x: auto;">
-        <table class="data-table" style="width: 100%; font-size: 13px;">
-          <thead>
-            <tr>
-              <th style="text-align: left;">Scenario</th>
-              <th style="text-align: right;">Net Change (95% CI)</th>
-              <th style="text-align: left;">Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${sens.rows.map(r => `
-              <tr>
-                <td><strong>${r.scenario}</strong></td>
-                <td style="text-align: right; font-family: var(--font-mono); font-weight: 700; color: var(--color-accent-primary);">${r.net_change}</td>
-                <td style="color: var(--color-text-secondary);">${r.note}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    ` : ''}
-
-    <!-- Verified Analytical Claims & Evidence with Status Chips -->
-    <div class="chart-box" style="margin-top: 16px;">
-      <h3 style="font-family: var(--font-display); font-size: var(--text-lg); margin-bottom: 12px;">Evidence &amp; Reliability by Finding</h3>
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        ${claims.map(c => `
-          <div style="border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 14px 16px; background: var(--color-bg-surface);">
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
-              <h4 style="font-size: 14px; font-weight: 700; margin: 0; color: var(--color-text-main);">${c.claim}</h4>
-              <span class="status-chip chip-${c.status_type}">${c.status}</span>
-            </div>
-            <div style="font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 6px;">
-              <strong>Evidence:</strong> ${c.evidence}
-            </div>
-            <div style="font-size: 12px; color: var(--color-text-muted); line-height: 1.4; background: var(--color-bg-subtle); padding: 6px 10px; border-radius: var(--radius-sm);">
-              <strong>Caveat:</strong> ${c.caveat}
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
-}
 
 function renderCredits() {
   let footerContainer = document.getElementById('app-footer-credits');

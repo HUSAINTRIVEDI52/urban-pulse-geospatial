@@ -38,7 +38,7 @@ def test_ui_user_flows_and_numbers():
         page.wait_for_timeout(2000)
 
         # 1. Test Glossary Interaction (use a term in #dashboard which is always visible)
-        term_el = page.query_selector("#dashboard .glossary-term[data-term='olofsson-estimator']")
+        term_el = page.query_selector("#dashboard .glossary-term[data-term='land-cover']")
         if term_el is None:
             term_el = page.query_selector("#dashboard .glossary-term")
         assert term_el is not None
@@ -56,25 +56,14 @@ def test_ui_user_flows_and_numbers():
         page.wait_for_timeout(300)
         assert not page.is_visible("#compare-container")
 
-        # 3. Test Simple / Detailed Toggle
-        toggle_btn = page.query_selector("#toggle-depth-btn")
-        assert toggle_btn is not None
-        toggle_btn.click()
-        page.wait_for_timeout(400)
-        assert page.evaluate("window.UrbanPulseDepth.getDepth()") == "detailed"
-        toggle_btn.click()
-        page.wait_for_timeout(400)
+        # 3. Test Simple Mode
         assert page.evaluate("window.UrbanPulseDepth.getDepth()") == "simple"
 
         # 4. Test City Switch to Pune
         page.select_option("#city-select", "pune")
         page.wait_for_timeout(2000)
         assert page.evaluate("window.UrbanPulseState.currentCity") == "pune"
-        change_text = page.text_content("#change-val-content")
-        assert (
-            "calibrated machine learning" in change_text.lower()
-            or "worldcover" in change_text.lower()
-        )
+        assert page.evaluate("window.UrbanPulseState.statsData.city") == "Pune"
 
         # Switch back
         page.select_option("#city-select", "ahmedabad")

@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>UrbanPulse — Satellite Urban Sprawl & Land Cover Analytics</title>
-  <meta name="description" content="Shows how Ahmedabad and Pune grew from 2020 to 2024, measured from free Sentinel-2 satellite images.">
-  
+  <meta name="description"
+    content="Shows how Ahmedabad and Pune grew from 2020 to 2024, measured from free Sentinel-2 satellite images.">
+
   <!-- Self-Hosted Typography (SIL OFL, Offline & Subpath Ready) -->
   <link rel="stylesheet" href="vendor/fonts/fonts.css">
-  
+
   <!-- Local Vendor Styles & Scripts -->
   <link rel="stylesheet" href="vendor/maplibre-gl.css">
   <script src="vendor/maplibre-gl.js"></script>
@@ -22,6 +24,7 @@
   <link rel="stylesheet" href="css/map.css">
   <link rel="stylesheet" href="css/methodology.css">
 </head>
+
 <body>
   <!-- Accessible Skip Link -->
   <a href="#main-workspace" class="skip-link">Skip to main content</a>
@@ -34,7 +37,9 @@
       <div class="header-left">
         <a href="#explore" class="brand-wrapper" aria-label="UrbanPulse Homepage">
           <div class="brand-icon">
-            <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
           </div>
           <div class="brand-text">
             <span class="brand-name">UrbanPulse</span>
@@ -45,23 +50,31 @@
         <!-- Desktop Navigation Tabs -->
         <nav class="nav-tabs" role="tablist" aria-label="Main Navigation">
           <button class="nav-tab-btn active" data-nav-target="explore" role="tab" aria-selected="true">
-            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+            </svg>
             Explore
           </button>
           <button class="nav-tab-btn" data-nav-target="findings" role="tab" aria-selected="false">
-            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M13 2v7h7"/></svg>
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
+              <path d="M13 2v7h7" />
+            </svg>
             Key findings
           </button>
           <button class="nav-tab-btn" data-nav-target="how" role="tab" aria-selected="false">
-            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path
+                d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+            </svg>
             How it's made
           </button>
-          <button class="nav-tab-btn" data-nav-target="trust" role="tab" aria-selected="false">
-            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            Can I trust this?
-          </button>
           <button class="nav-tab-btn" data-nav-target="glossary" role="tab" aria-selected="false">
-            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
             Glossary
           </button>
         </nav>
@@ -76,24 +89,25 @@
             <option value="pune">Pune, India</option>
           </select>
           <div class="city-select-icon">
-            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path d="M19 9l-7 7-7-7" />
+            </svg>
           </div>
         </div>
 
-        <!-- Simple / Detailed Depth Toggle -->
-        <div class="depth-toggle-wrapper" title="Switch between Simple summary and Detailed technical breakdown">
-          <button id="toggle-depth-btn" class="depth-toggle-btn" aria-label="Toggle Simple or Detailed View" aria-pressed="false">
-            <span id="depth-label">Simple</span>
-          </button>
-        </div>
 
         <!-- Guided Tour Trigger Button -->
-        <button id="tour-help-btn" class="tool-btn" style="padding: 6px 11px; font-weight: 700; border-radius: var(--radius-full);" aria-label="Start Guided Tour" title="Start Guided Tour">?</button>
+        <button id="tour-help-btn" class="tool-btn"
+          style="padding: 6px 11px; font-weight: 700; border-radius: var(--radius-full);" aria-label="Start Guided Tour"
+          title="Start Guided Tour">?</button>
 
         <!-- Theme Toggle Button -->
-        <button id="theme-toggle-btn" class="tool-btn" style="padding: 7px 10px;" aria-label="Toggle Light and Dark Mode" title="Toggle Light / Dark Mode">
+        <button id="theme-toggle-btn" class="tool-btn" style="padding: 7px 10px;"
+          aria-label="Toggle Light and Dark Mode" title="Toggle Light / Dark Mode">
           <span id="theme-toggle-icon">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+            </svg>
           </span>
         </button>
       </div>
@@ -103,15 +117,22 @@
     <div class="hero-strip" id="hero-strip">
       <div class="hero-strip-text">
         <span class="hero-badge">Satellite Observatory</span>
-        <span>Shows how Ahmedabad and Pune grew from 2020 to 2024, measured from free Sentinel-2 satellite images.</span>
+        <span>Shows how Ahmedabad and Pune grew from 2020 to 2024, measured from free Sentinel-2 satellite
+          images.</span>
       </div>
       <div class="hero-actions">
         <button class="hero-btn hero-btn-primary" id="hero-explore-btn">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+          </svg>
           Explore the map
         </button>
         <button class="hero-btn hero-btn-ghost" id="hero-how-btn">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path
+              d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+          </svg>
           How it's made
         </button>
       </div>
@@ -123,7 +144,8 @@
         <span id="error-title" style="font-weight: 700;">⚠️ Application Notice</span>
         <span id="error-content"></span>
       </div>
-      <button id="error-close-btn" class="tool-btn" style="padding: 2px 8px; color: inherit; border-color: currentColor;" title="Dismiss">&times;</button>
+      <button id="error-close-btn" class="tool-btn"
+        style="padding: 2px 8px; color: inherit; border-color: currentColor;" title="Dismiss">&times;</button>
     </div>
 
     <!-- Main Application Workspace -->
@@ -133,14 +155,15 @@
            VIEW 1: EXPLORE (Interactive Map + Analytics Panel)
            ==================================================================== -->
       <section id="view-explore" class="view-container active" role="tabpanel" aria-label="Explore Map and Analytics">
-        
+
         <!-- Map Viewport Wrapper -->
         <div id="map-wrapper">
           <div id="map"></div>
 
           <!-- Focus Mode Restore Widget -->
           <div id="focus-restore-bar" class="focus-restore-bar">
-            <span style="font-size: 12px; font-weight: 600;">Focus Mode &bull; <span id="focus-year-display">2024</span></span>
+            <span style="font-size: 12px; font-weight: 600;">Focus Mode &bull; <span
+                id="focus-year-display">2024</span></span>
             <button id="restore-focus-btn" class="hero-btn hero-btn-primary" aria-label="Exit Focus Mode (Esc)">
               Restore Panel <kbd style="font-size: 10px; margin-left: 4px; opacity: 0.8;">Esc</kbd>
             </button>
@@ -148,24 +171,47 @@
 
           <!-- Map Tools Floating Toolbar -->
           <div class="map-tools" aria-label="Map Tools">
-            <button id="toggle-overlay-btn" class="tool-btn active" title="Overlay: Toggle satellite classification layer visibility on the map" aria-label="Overlay: Toggle satellite classification layer visibility" aria-pressed="true">
-              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <button id="toggle-overlay-btn" class="tool-btn active"
+              title="Overlay: Toggle satellite classification layer visibility on the map"
+              aria-label="Overlay: Toggle satellite classification layer visibility" aria-pressed="true">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
               <span class="btn-text">Overlay</span>
             </button>
-            <button id="toggle-change-btn" class="tool-btn" title="Change Layer: Highlights newly developed land (gain), lost built-up (loss), and persistent areas" aria-label="Change Layer: Highlights newly developed and persistent areas" aria-pressed="false">
-              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <button id="toggle-change-btn" class="tool-btn"
+              title="Change Layer: Highlights newly developed land (gain), lost built-up (loss), and persistent areas"
+              aria-label="Change Layer: Highlights newly developed and persistent areas" aria-pressed="false">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
               <span class="btn-text">Change Layer</span>
             </button>
-            <button id="toggle-compare-btn" class="tool-btn" title="Compare Mode: Swipe left and right to inspect how urban boundaries shifted between any two years" aria-label="Compare Mode: Swipe left and right to compare two years" aria-pressed="false">
-              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <button id="toggle-compare-btn" class="tool-btn"
+              title="Compare Mode: Swipe left and right to inspect how urban boundaries shifted between any two years"
+              aria-label="Compare Mode: Swipe left and right to compare two years" aria-pressed="false">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
               <span class="btn-text">Compare Mode</span>
             </button>
-            <button id="recenter-btn" class="tool-btn" title="Recenter AOI: Re-centers the viewport over the metropolitan Area of Interest" aria-label="Recenter AOI">
-              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+            <button id="recenter-btn" class="tool-btn"
+              title="Recenter AOI: Re-centers the viewport over the metropolitan Area of Interest"
+              aria-label="Recenter AOI">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+              </svg>
               <span class="btn-text">Recenter AOI</span>
             </button>
-            <button id="toggle-focus-btn" class="tool-btn" title="Focus Mode: Collapses the analytics sidebar for a full-screen map view" aria-label="Focus: Toggle full screen map" aria-pressed="false">
-              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+            <button id="toggle-focus-btn" class="tool-btn"
+              title="Focus Mode: Collapses the analytics sidebar for a full-screen map view"
+              aria-label="Focus: Toggle full screen map" aria-pressed="false">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
               <span class="btn-text">Focus</span>
             </button>
           </div>
@@ -186,7 +232,9 @@
             <div id="map-after"></div>
             <div id="swipe-divider" class="swipe-divider">
               <div class="swipe-handle">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path d="M8 7l-5 5 5 5M16 7l5 5-5 5" />
+                </svg>
               </div>
             </div>
             <div id="compare-tag-left" class="compare-tag compare-tag-left">2020</div>
@@ -207,19 +255,27 @@
           <div id="timeline-container" class="timeline-bar">
             <div class="timeline-controls">
               <button id="play-pause-btn" class="play-btn" title="Play / Pause Annual Timeline Animation">
-                <svg id="play-icon" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <svg id="pause-icon" width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="display: none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                <svg id="play-icon" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                <svg id="pause-icon" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"
+                  style="display: none;">
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                </svg>
               </button>
               <div id="year-display" class="year-display">2024</div>
               <div class="slider-track-wrap">
-                <input type="range" id="year-slider" class="year-slider" min="0" max="4" value="4" step="1" aria-label="Select Analysis Year">
+                <input type="range" id="year-slider" class="year-slider" min="0" max="4" value="4" step="1"
+                  aria-label="Select Analysis Year">
                 <div id="timeline-ticks" class="timeline-ticks"></div>
               </div>
             </div>
           </div>
 
           <!-- Mobile Dashboard Toggle Button -->
-          <button id="dashToggle" class="tool-btn" style="position: absolute; bottom: 12px; right: 12px; z-index: 60; display: none;" aria-label="Open Dashboard" aria-expanded="false">
+          <button id="dashToggle" class="tool-btn"
+            style="position: absolute; bottom: 12px; right: 12px; z-index: 60; display: none;"
+            aria-label="Open Dashboard" aria-expanded="false">
             <span>Analytics Panel</span>
           </button>
         </div>
@@ -229,47 +285,50 @@
           <div id="sheet-handle-bar" class="sheet-handle-bar" title="Swipe or click to expand/collapse">
             <div class="sheet-handle"></div>
           </div>
-          
+
           <div class="sidebar-header">
             <div class="sidebar-title">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 20V10M12 20V4M6 20v-6" />
+              </svg>
               <span id="dashboard-city-title">Ahmedabad Growth Analytics</span>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span id="aoi-meta-badge" style="font-size: 11px; font-family: var(--font-mono); color: var(--color-text-muted); background: var(--color-bg-subtle); padding: 3px 6px; border-radius: var(--radius-sm);">-</span>
-              <button class="depth-toggle-btn mobile-depth-toggle" style="font-size: 11px; padding: 2px 8px; border: 1px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-bg-subtle); color: var(--color-text-main);" title="Toggle Simple/Detailed View" aria-label="Toggle Simple or Detailed View">
-                <span class="mobile-depth-label">Simple</span>
-              </button>
-              <button id="close-dashboard-btn" class="tool-btn" style="display: none; padding: 4px;" aria-label="Close Dashboard">&times;</button>
+              <span id="aoi-meta-badge"
+                style="font-size: 11px; font-family: var(--font-mono); color: var(--color-text-muted); background: var(--color-bg-subtle); padding: 3px 6px; border-radius: var(--radius-sm);">-</span>
+              <button id="close-dashboard-btn" class="tool-btn" style="display: none; padding: 4px;"
+                aria-label="Close Dashboard">&times;</button>
             </div>
           </div>
 
           <div class="sidebar-content">
-            
+
             <!-- Framing Notice -->
             <div class="note-box">
               <div class="note-box-title">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4M12 8h.01" />
+                </svg>
                 <span>Analysis Window: 2020–2024</span>
-              </div>
-              <div id="analysis-note-text">
-                2018-2019 excluded: too few clear scenes in the Nov-Feb window.
               </div>
             </div>
 
             <!-- Headline Metrics Grid -->
             <div class="metrics-grid">
-              
+
               <!-- 2020-2024 Change Range Card -->
               <div class="metric-card metric-card-primary tooltip-container">
                 <div class="metric-header">
                   <div class="metric-label">
-                    <span data-simple-title="Urban Expansion (2020–2024)" data-detailed-title="2020–2024 Expansion Range">Urban Expansion (2020–2024)</span>
-                    <button class="info-btn" data-calc-info="expansion-range" aria-label="How 2020-2024 expansion is calculated" title="How this is calculated">i</button>
+                    <span data-simple-title="Urban Expansion (2020–2024)"
+                      data-detailed-title="2020–2024 Expansion Range">Urban Expansion (2020–2024)</span>
+                    <button class="info-btn" data-calc-info="expansion-range"
+                      aria-label="How 2020-2024 expansion is calculated" title="How this is calculated">i</button>
                   </div>
-                  <span class="depth-detailed-only" style="font-size: 11px; color: var(--color-text-muted);">Spread across methods</span>
                 </div>
-                <div id="metric-expansion-val" class="metric-value" style="color: var(--color-accent-primary);">12.6 to 21.9 %</div>
+                <div id="metric-expansion-val" class="metric-value" style="color: var(--color-accent-primary);">12.6 to
+                  21.9 %</div>
                 <div class="metric-delta">
                   <span id="metric-expansion-sub">Range across methods</span>
                 </div>
@@ -283,8 +342,10 @@
               <div class="metric-card">
                 <div class="metric-header">
                   <div class="metric-label">
-                    <span data-simple-title="ESA Benchmark (2021)" data-detailed-title="WorldCover 2021 Reference Anchor">ESA Benchmark (2021)</span>
-                    <button class="info-btn" data-calc-info="worldcover-anchor" aria-label="How WorldCover anchor is calculated" title="How this is calculated">i</button>
+                    <span data-simple-title="ESA Benchmark (2021)"
+                      data-detailed-title="WorldCover 2021 Reference Anchor">ESA Benchmark (2021)</span>
+                    <button class="info-btn" data-calc-info="worldcover-anchor"
+                      aria-label="How WorldCover anchor is calculated" title="How this is calculated">i</button>
                   </div>
                 </div>
                 <div id="metric-anchor-val" class="metric-value">393.7 km²</div>
@@ -300,8 +361,10 @@
               <div class="metric-card">
                 <div class="metric-header">
                   <div class="metric-label">
-                    <span data-simple-title="Built-up Footprint" data-detailed-title="Main series (normalised)">Main series (normalised)</span> (<span id="metric-cur-year">2024</span>)
-                    <button class="info-btn" data-calc-info="builtup-footprint" aria-label="How built-up footprint is calculated" title="How this is calculated">i</button>
+                    <span data-simple-title="Built-up Footprint" data-detailed-title="Main series (normalised)">Main
+                      series (normalised)</span> (<span id="metric-cur-year">2024</span>)
+                    <button class="info-btn" data-calc-info="builtup-footprint"
+                      aria-label="How built-up footprint is calculated" title="How this is calculated">i</button>
                   </div>
                 </div>
                 <div id="metric-builtup-val" class="metric-value">474.9 km²</div>
@@ -317,8 +380,10 @@
               <div class="metric-card">
                 <div class="metric-header">
                   <div class="metric-label">
-                    <span data-simple-title="Sprawl Dispersion Score" data-detailed-title="Shannon Entropy (Hn)">Sprawl Dispersion</span>
-                    <button class="info-btn" data-calc-info="shannon-entropy" aria-label="How Shannon Entropy is calculated" title="How this is calculated">i</button>
+                    <span data-simple-title="Sprawl Dispersion Score" data-detailed-title="Shannon Entropy (Hn)">Sprawl
+                      Dispersion</span>
+                    <button class="info-btn" data-calc-info="shannon-entropy"
+                      aria-label="How Shannon Entropy is calculated" title="How this is calculated">i</button>
                   </div>
                 </div>
                 <div id="metric-entropy-val" class="metric-value">0.9501</div>
@@ -326,7 +391,8 @@
                   <span>Spatial Distribution</span>
                 </div>
                 <div class="card-meaning-line">
-                  How evenly built-up land is spread across distance rings from the centre. Values near 1 mean it is not concentrated near the centre; this does not measure leapfrog development.
+                  How evenly built-up land is spread across distance rings from the centre. Values near 1 mean it is not
+                  concentrated near the centre; this does not measure leapfrog development.
                 </div>
               </div>
 
@@ -334,20 +400,25 @@
               <div class="metric-card">
                 <div class="metric-header" style="margin-bottom: 4px;">
                   <div class="metric-label">
-                    <span data-simple-title="Center vs Outskirts" data-detailed-title="Core vs Periphery Distribution">Center vs Outskirts</span>
-                    <button class="info-btn" data-calc-info="core-periphery" aria-label="How Core vs Periphery is calculated" title="How this is calculated">i</button>
+                    <span data-simple-title="Center vs Outskirts"
+                      data-detailed-title="Core vs Periphery Distribution">Center vs Outskirts</span>
+                    <button class="info-btn" data-calc-info="core-periphery"
+                      aria-label="How Core vs Periphery is calculated" title="How this is calculated">i</button>
                   </div>
                 </div>
                 <div style="margin-bottom: 6px;">
                   <div class="metric-label" style="font-size: 11px;">Core (0–6 km)</div>
-                  <div id="metric-core-val" class="font-mono font-bold" style="font-size: 13px; margin-top: 2px;">-</div>
+                  <div id="metric-core-val" class="font-mono font-bold" style="font-size: 13px; margin-top: 2px;">-
+                  </div>
                 </div>
                 <div style="border-top: 1px solid var(--color-border-subtle); padding-top: 6px;">
                   <div class="metric-label" style="font-size: 11px;">Periphery (&gt;12 km)</div>
-                  <div id="metric-periph-val" class="font-mono font-bold" style="font-size: 13px; color: var(--color-accent-primary); margin-top: 2px;">-</div>
+                  <div id="metric-periph-val" class="font-mono font-bold"
+                    style="font-size: 13px; color: var(--color-accent-primary); margin-top: 2px;">-</div>
                 </div>
                 <div class="card-meaning-line">
-                  Dense historical core vs expanding <span class="glossary-term" data-term="core-vs-periphery">outer periphery</span>.
+                  Dense historical core vs expanding <span class="glossary-term" data-term="core-vs-periphery">outer
+                    periphery</span>.
                 </div>
               </div>
 
@@ -357,9 +428,13 @@
             <div class="chart-box">
               <div class="chart-header">
                 <div class="chart-title">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3v18h18M7 14l4-4 4 4 6-6"/></svg>
-                  <span data-simple-title="Built-up Growth Over Time" data-detailed-title="Multi-Series Built-up Footprint">Built-up Growth Over Time</span>
-                  <button class="info-btn" data-calc-info="growth-chart" aria-label="How growth chart is calculated" title="How to read this chart">i</button>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M3 3v18h18M7 14l4-4 4 4 6-6" />
+                  </svg>
+                  <span data-simple-title="Built-up Growth Over Time"
+                    data-detailed-title="Multi-Series Built-up Footprint">Built-up Growth Over Time</span>
+                  <button class="info-btn" data-calc-info="growth-chart" aria-label="How growth chart is calculated"
+                    title="How to read this chart">i</button>
                 </div>
               </div>
               <div class="chart-canvas-wrapper">
@@ -368,15 +443,8 @@
               <div class="chart-legend-box">
                 <div class="legend-pill">
                   <span class="legend-pill-dot" style="background: var(--color-accent-primary);"></span>
-                  <span style="font-weight: 600;"><span class="glossary-term" data-term="normalisation-tls">Main series (normalised)</span></span>
-                </div>
-                <div class="legend-pill depth-detailed-only">
-                  <span class="legend-pill-dot" style="background: #10b981;"></span>
-                  <span>Cleaned (sensitivity)</span>
-                </div>
-                <div class="legend-pill depth-detailed-only">
-                  <span class="legend-pill-dot" style="background: #f59e0b;"></span>
-                  <span>Raw</span>
+                  <span style="font-weight: 600;"><span class="glossary-term" data-term="normalisation-tls">Main series
+                      (normalised)</span></span>
                 </div>
                 <div class="legend-pill">
                   <span class="legend-pill-dot" style="background: #a855f7;"></span>
@@ -384,7 +452,8 @@
                 </div>
               </div>
               <div class="chart-read-line">
-                <span id="growth-chart-how-to-read"><strong>How to read:</strong> Each point is an annual satellite measurement. Steeper upward slope indicates faster expansion.</span>
+                <span id="growth-chart-how-to-read"><strong>How to read:</strong> Each point is an annual satellite
+                  measurement. Steeper upward slope indicates faster expansion.</span>
               </div>
             </div>
 
@@ -392,16 +461,24 @@
             <div class="chart-box">
               <div class="chart-header">
                 <div class="chart-title">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
-                  <span data-simple-title="Urban Density by Distance" data-detailed-title="Concentric Ring Built-up Density (%)">Urban Density by Distance</span>
-                  <button class="info-btn" data-calc-info="ring-chart" aria-label="How ring chart is calculated" title="How to read this chart">i</button>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9" />
+                    <circle cx="12" cy="12" r="5" />
+                    <circle cx="12" cy="12" r="1" />
+                  </svg>
+                  <span data-simple-title="Urban Density by Distance"
+                    data-detailed-title="Concentric Ring Built-up Density (%)">Urban Density by Distance</span>
+                  <button class="info-btn" data-calc-info="ring-chart" aria-label="How ring chart is calculated"
+                    title="How to read this chart">i</button>
                 </div>
               </div>
               <div class="chart-canvas-wrapper">
                 <canvas id="ringDensityChart"></canvas>
               </div>
               <div class="chart-read-line">
-                <span id="ring-chart-how-to-read"><strong>How to read:</strong> Bars show built-up percentage across <span class="glossary-term" data-term="distance-ring">distance rings</span> from city center (left) outward.</span>
+                <span id="ring-chart-how-to-read"><strong>How to read:</strong> Bars show built-up percentage across
+                  <span class="glossary-term" data-term="distance-ring">distance rings</span> from city center (left)
+                  outward.</span>
               </div>
             </div>
 
@@ -409,11 +486,16 @@
             <div class="chart-box">
               <div class="chart-header">
                 <div class="chart-title">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-                  <span><span class="glossary-term" data-term="land-cover">Land Cover</span> Distribution (<span id="table-year-lbl">2024</span>)</span>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <path d="M3 9h18M9 21V9" />
+                  </svg>
+                  <span><span class="glossary-term" data-term="land-cover">Land Cover</span> Distribution (<span
+                      id="table-year-lbl">2024</span>)</span>
                 </div>
               </div>
-              <div class="data-table-wrap" tabindex="0" role="region" aria-label="Land cover classification distribution table">
+              <div class="data-table-wrap" tabindex="0" role="region"
+                aria-label="Land cover classification distribution table">
                 <table class="editorial-table">
                   <thead>
                     <tr>
@@ -427,59 +509,34 @@
               </div>
             </div>
 
-            <!-- Validation: Leave-One-Year-Out -->
-            <div class="chart-box">
-              <div class="chart-header">
-                <div class="chart-title">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  <span data-simple-title="Model Accuracy Audit" data-detailed-title="LOYO Cross-Validation (Held-Out Folds)">Model Accuracy Audit</span>
-                </div>
-              </div>
-              <div style="font-size: 12px; color: var(--color-text-secondary); line-height: 1.45;">
-                Evaluated on held-out spatial block test points with <span class="glossary-term" data-term="olofsson-estimator">Olofsson et al. (2014)</span> area weighting and <span class="glossary-term" data-term="f1-score">F1 score</span> auditing.
-              </div>
-              <div class="data-table-wrap" tabindex="0" role="region" aria-label="Model cross-validation accuracy table">
-                <table class="editorial-table">
-                  <thead>
-                    <tr>
-                      <th>Fold</th>
-                      <th>Stage</th>
-                      <th><span class="glossary-term" data-term="f1-score">F1</span></th>
-                      <th class="text-right">Mapped</th>
-                      <th class="text-right">Adjusted (<span class="glossary-term" data-term="confidence-interval">95% CI</span>)</th>
-                    </tr>
-                  </thead>
-                  <tbody id="validation-table-body"></tbody>
-                </table>
-              </div>
-
-            </div>
-
-            <!-- Change Validation Box -->
-            <div class="chart-box" id="change-validation-card">
-              <div class="chart-header">
-                <div class="chart-title">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                  <span data-simple-title="Ground-Truth Audit (2020–2024)" data-detailed-title="4-Stratum Change Validation (2020–2024)">Ground-Truth Audit (2020–2024)</span>
-                </div>
-              </div>
-              <div id="change-val-content"></div>
-            </div>
 
             <!-- Action & Download Buttons in panel footer -->
-            <div style="padding-top: 14px; border-top: 1px solid var(--color-border); font-size: 12px; display: flex; flex-direction: column; gap: 10px;">
+            <div
+              style="padding-top: 14px; border-top: 1px solid var(--color-border); font-size: 12px; display: flex; flex-direction: column; gap: 10px;">
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button id="share-view-btn" class="hero-btn hero-btn-ghost" style="flex: 1; font-size: 11px; padding: 6px 8px; justify-content: center;" title="Copy shareable link with current view state" aria-label="Share view">
-                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                <button id="share-view-btn" class="hero-btn hero-btn-ghost"
+                  style="flex: 1; font-size: 11px; padding: 6px 8px; justify-content: center;"
+                  title="Copy shareable link with current view state" aria-label="Share view">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path
+                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
                   Share
                 </button>
-                <a id="download-data-btn" href="data/ahmedabad/stats.json" download="ahmedabad_urbanpulse_stats.json" class="hero-btn hero-btn-ghost" style="flex: 1; font-size: 11px; padding: 6px 8px; text-decoration: none; justify-content: center;" title="Download raw statistics as JSON">
-                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <a id="download-data-btn" href="data/ahmedabad/stats.json" download="ahmedabad_urbanpulse_stats.json"
+                  class="hero-btn hero-btn-ghost"
+                  style="flex: 1; font-size: 11px; padding: 6px 8px; text-decoration: none; justify-content: center;"
+                  title="Download raw statistics as JSON">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
                   Data (JSON)
                 </a>
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <a href="./report/" target="_blank" rel="noopener" style="font-weight: 600; color: var(--color-accent-primary); text-decoration: none;">Interactive Technical Report &rarr;</a>
+                <a href="./report/" target="_blank" rel="noopener"
+                  style="font-weight: 600; color: var(--color-accent-primary); text-decoration: none;">Interactive
+                  Technical Report &rarr;</a>
                 <span style="color: var(--color-text-muted); font-size: 11px;">Open Access (MIT)</span>
               </div>
               <div style="color: var(--color-text-muted); font-size: 11px; text-align: center;">
@@ -511,7 +568,8 @@
         <div class="page-container">
           <header class="page-header">
             <h1 class="page-title">How It's Made</h1>
-            <p class="page-lead">From raw Copernicus Sentinel-2 pixels to validated metropolitan sprawl metrics in six verifiable engineering stages.</p>
+            <p class="page-lead">From raw Copernicus Sentinel-2 pixels to validated metropolitan sprawl metrics in six
+              verifiable engineering stages.</p>
           </header>
           <!-- Visual Architecture & Methodology Diagram -->
           <div id="how-diagram-root"></div>
@@ -520,18 +578,6 @@
         </div>
       </section>
 
-      <!-- ====================================================================
-           VIEW 4: CAN I TRUST THIS?
-           ==================================================================== -->
-      <section id="view-trust" class="view-container" tabindex="0" role="tabpanel" aria-label="Can I trust this?">
-        <div class="page-container">
-          <header class="page-header">
-            <h1 class="page-title">Can I Trust This? Data Quality &amp; Limitations</h1>
-            <p class="page-lead">What the satellite data shows, and how sure we are.</p>
-          </header>
-          <div id="trust-content-container" style="display: flex; flex-direction: column; gap: 20px;"></div>
-        </div>
-      </section>
 
       <!-- ====================================================================
            VIEW 5: GLOSSARY
@@ -540,12 +586,17 @@
         <div class="page-container">
           <header class="page-header">
             <h1 class="page-title">Glossary of Geospatial Terms</h1>
-            <p class="page-lead">Plain-English definitions for satellite remote sensing, machine learning, and spatial sprawl metrics.</p>
+            <p class="page-lead">Plain-English definitions for satellite remote sensing, machine learning, and spatial
+              sprawl metrics.</p>
             <div style="margin-top: 16px; max-width: 480px;">
-              <input id="glossary-search-input" type="search" placeholder="Search terms (e.g. built-up, NDVI, entropy)..." class="city-select" style="width: 100%; border-radius: var(--radius-md); padding: 10px 14px; background: var(--color-bg-surface); color: var(--color-text-main); border: 1px solid var(--color-border);" aria-label="Search glossary terms">
+              <input id="glossary-search-input" type="search"
+                placeholder="Search terms (e.g. built-up, NDVI, entropy)..." class="city-select"
+                style="width: 100%; border-radius: var(--radius-md); padding: 10px 14px; background: var(--color-bg-surface); color: var(--color-text-main); border: 1px solid var(--color-border);"
+                aria-label="Search glossary terms">
             </div>
           </header>
-          <div id="glossary-empty-msg" style="display: none; padding: 24px; text-align: center; color: var(--color-text-muted);">
+          <div id="glossary-empty-msg"
+            style="display: none; padding: 24px; text-align: center; color: var(--color-text-muted);">
             No matching terms found. Try a different search keyword.
           </div>
           <div id="glossary-terms-container" class="glossary-grid">
@@ -558,24 +609,36 @@
 
     <!-- Mobile Bottom Tab Bar (390px Viewports) -->
     <nav class="bottom-tab-bar" role="tablist" aria-label="Mobile Navigation">
-      <button class="bottom-tab-item active" data-nav-target="explore" role="tab" aria-selected="true" aria-label="Explore Tab">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+      <button class="bottom-tab-item active" data-nav-target="explore" role="tab" aria-selected="true"
+        aria-label="Explore Tab">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+        </svg>
         <span>Explore</span>
       </button>
-      <button class="bottom-tab-item" data-nav-target="findings" role="tab" aria-selected="false" aria-label="Findings Tab">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M13 2v7h7"/></svg>
+      <button class="bottom-tab-item" data-nav-target="findings" role="tab" aria-selected="false"
+        aria-label="Findings Tab">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
+          <path d="M13 2v7h7" />
+        </svg>
         <span>Findings</span>
       </button>
-      <button class="bottom-tab-item" data-nav-target="how" role="tab" aria-selected="false" aria-label="How It's Made Tab">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+      <button class="bottom-tab-item" data-nav-target="how" role="tab" aria-selected="false"
+        aria-label="How It's Made Tab">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path
+            d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+        </svg>
         <span>Process</span>
       </button>
-      <button class="bottom-tab-item" data-nav-target="trust" role="tab" aria-selected="false" aria-label="Trust Tab">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-        <span>Trust</span>
-      </button>
-      <button class="bottom-tab-item" data-nav-target="glossary" role="tab" aria-selected="false" aria-label="Glossary Tab">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+      <button class="bottom-tab-item" data-nav-target="glossary" role="tab" aria-selected="false"
+        aria-label="Glossary Tab">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
         <span>Glossary</span>
       </button>
     </nav>
@@ -585,4 +648,5 @@
   <!-- Application Entrypoint -->
   <script type="module" src="js/main.js"></script>
 </body>
+
 </html>

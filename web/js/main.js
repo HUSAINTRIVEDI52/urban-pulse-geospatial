@@ -20,14 +20,12 @@ import { initCharts, updateChartHighlights } from './charts.js';
 import { 
   updateMetricCards, 
   updateClassTable, 
-  updateValidationTable, 
-  updateChangeValidation, 
   updateQualityGate 
 } from './panels.js';
 import { initGlossary } from './glossary.js';
 import { initTour } from './tour.js';
 import { initDepthToggle } from './depth.js';
-import { initContentPages, updateKeyFindings, renderTrust } from './content.js';
+import { initContentPages, updateKeyFindings } from './content.js';
 
 // Base path helper (supports GitHub Pages subpaths)
 const DATA_BASE = 'data';
@@ -217,17 +215,14 @@ function updateAllViews() {
   // Render cards & charts
   updateMetricCards(state.statsData, year);
   updateClassTable(state.statsData, year);
-  updateValidationTable(state.statsData);
-  updateChangeValidation(state.statsData);
   updateQualityGate(state.statsData);
   initCharts(state.statsData, year);
 
   // Render Legend Items
   renderLegendItems();
 
-  // Update Key Findings & Trust pages
+  // Update Key Findings page
   updateKeyFindings(state.statsData, state.metaData, state.currentCity);
-  renderTrust(state.statsData, state.currentCity);
 
   // Update Download data link
   const downloadDataBtn = document.getElementById('download-data-btn');

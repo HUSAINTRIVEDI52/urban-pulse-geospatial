@@ -9,7 +9,6 @@ export function initNavigation() {
     explore: document.getElementById('view-explore'),
     findings: document.getElementById('view-findings'),
     how: document.getElementById('view-how'),
-    trust: document.getElementById('view-trust'),
     glossary: document.getElementById('view-glossary')
   };
 
