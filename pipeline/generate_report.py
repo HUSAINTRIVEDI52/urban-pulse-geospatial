@@ -2028,13 +2028,6 @@ make docs</code></pre>
     with open(output_html_path, "w", encoding="utf-8") as f:
         f.write(html_content)
 
-    # Also sync to docs/report/index.html to ensure identical single source of truth
-    docs_report_path = PROJECT_ROOT / "docs" / "report" / "index.html"
-    if output_html_path.resolve() != docs_report_path.resolve():
-        docs_report_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(docs_report_path, "w", encoding="utf-8") as f:
-            f.write(html_content)
-
     print(f"[+] Successfully generated self-contained HTML report: {output_html_path.resolve()}")
 
 
@@ -2098,6 +2091,13 @@ def main():
         env_versions=env_versions,
         test_stats=test_stats,
     )
+
+    docs_report = PROJECT_ROOT / "docs" / "report" / "index.html"
+    if args.output.resolve() != docs_report.resolve():
+        docs_report.parent.mkdir(parents=True, exist_ok=True)
+        import shutil
+
+        shutil.copy(args.output, docs_report)
 
 
 if __name__ == "__main__":
