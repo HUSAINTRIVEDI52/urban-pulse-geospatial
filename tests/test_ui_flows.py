@@ -70,7 +70,9 @@ def test_ui_user_flows_and_numbers():
         page.wait_for_timeout(2000)
 
         # 5. Number verification for Ahmedabad
-        all_text = (page.text_content("#dashboard") + " " + page.text_content("#view-findings")).replace(",", "")
+        all_text = (
+            page.text_content("#dashboard") + " " + page.text_content("#view-findings")
+        ).replace(",", "")
         found_tokens = set(re.findall(r"\b\d+(?:\.\d+)?\b", all_text))
 
         with open("web/data/ahmedabad/stats.json", encoding="utf-8") as f:

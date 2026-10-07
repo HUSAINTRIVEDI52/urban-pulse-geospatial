@@ -526,8 +526,13 @@ def test_how_to_read_examples_numbers_in_stats_json(city_stats):
         r0 = year_rings[0]
         r_far = year_rings[7] if len(year_rings) >= 8 else year_rings[-1]
 
-        r0_label = r0.get("ring_label", f"{r0.get('ring_start_km', 0):.0f}-{r0.get('ring_end_km', 2):.0f} km")
-        r_far_label = r_far.get("ring_label", f"{r_far.get('ring_start_km', 14):.0f}-{r_far.get('ring_end_km', 16):.0f} km")
+        r0_label = r0.get(
+            "ring_label", f"{r0.get('ring_start_km', 0):.0f}-{r0.get('ring_end_km', 2):.0f} km"
+        )
+        r_far_label = r_far.get(
+            "ring_label",
+            f"{r_far.get('ring_start_km', 14):.0f}-{r_far.get('ring_end_km', 16):.0f} km",
+        )
 
         r0_val = r0.get("builtup_pct", r0.get("builtup_density_pct"))
         r_far_val = r_far.get("builtup_pct", r_far.get("builtup_density_pct"))
@@ -552,4 +557,3 @@ def test_how_to_read_examples_numbers_in_stats_json(city_stats):
                 assert r_far_label == "14-16 km"
 
         assert float(r0_density_str) > float(r_far_density_str)
-
