@@ -180,13 +180,6 @@ function renderGlossaryPage() {
       <div class="glossary-card-detail">
         <p>${t.detail}</p>
       </div>
-      ${t.report_link ? `
-        <div class="glossary-card-footer">
-          <a href="${t.report_link}" class="glossary-report-link" target="_blank" rel="noopener">
-            View methodology in Report &rarr;
-          </a>
-        </div>
-      ` : ''}
     </article>
   `).join('');
 }

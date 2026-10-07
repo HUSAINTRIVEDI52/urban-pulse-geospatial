@@ -207,11 +207,6 @@ function renderHowItsMade() {
               <strong>Constraint & Limitation:</strong> ${s.limitation}
             </div>
           </div>
-          <div style="margin-top: 10px; text-align: right;">
-            <a href="${s.report_link}" target="_blank" rel="noopener" style="font-size: 11px; font-weight: 600; color: var(--color-accent-primary); text-decoration: none;">
-              Read Technical Details in Report &rarr;
-            </a>
-          </div>
         </article>
       `).join('')}
     </div>
@@ -260,7 +255,6 @@ function renderCredits() {
       <div><strong>${creditsData.footer_text || 'Code: MIT. Data: see credits.'}</strong> &bull; ${creditsData.license}</div>
       <div style="display: flex; gap: 12px;">
         <a href="${creditsData.links.repository}" target="_blank" rel="noopener" style="color: inherit; font-weight: 600;">GitHub Repository</a>
-        <a href="${creditsData.links.report_html}" target="_blank" rel="noopener" style="color: inherit; font-weight: 600;">Technical Report</a>
       </div>
     </div>
   `;

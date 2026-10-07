@@ -42,7 +42,6 @@
   ],
   "links": {
     "repository": "https://github.com/HUSAINTRIVEDI52/urban-pulse-geospatial",
-    "report_html": "./report/",
     "data_json_template": "data/{city}/stats.json"
   }
 }

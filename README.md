@@ -6,14 +6,11 @@
 
 > **Shows how Ahmedabad and Pune grew from 2020 to 2024, measured from free Sentinel-2 satellite images. What the satellite data shows, and how sure we are.**
 
-📖 **Read the Comprehensive Project Report**: [HTML Report](docs/report/index.html) | [PDF Report](docs/report/UrbanPulse_Report.pdf)
-
 ---
 
 ## 🌐 Live Demo & Interactive App
 
 - **Interactive Web Application**: [https://HUSAINTRIVEDI52.github.io/urban-pulse-geospatial/](https://HUSAINTRIVEDI52.github.io/urban-pulse-geospatial/)
-- **Comprehensive Project Report**: [https://HUSAINTRIVEDI52.github.io/urban-pulse-geospatial/report/](https://HUSAINTRIVEDI52.github.io/urban-pulse-geospatial/report/)
 - **FastAPI Documentation**: `http://localhost:8000/docs` (local deployment)
 - **Grafana Monitoring**: `http://localhost:3000` (provisioned with Prometheus metrics)
 

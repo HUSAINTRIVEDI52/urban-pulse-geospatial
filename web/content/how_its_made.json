@@ -47,8 +47,7 @@
       "headline": "Gathering calibrated surface reflectance from Copernicus Sentinel-2",
       "what_happens": "The pipeline queries the Earth Search STAC API for multispectral Sentinel-2 Level-2A imagery covering the metropolitan Area of Interest (AOI) during the winter dry-season observation window.",
       "why": "Bottom-Of-Atmosphere (BOA) reflectance corrects for atmospheric haze and ozone absorption, providing physically consistent surface reflectances across years.",
-      "limitation": "The observation window must balance cloud-free skies against crop phenology; unseasonal rain or persistent winter smog can limit the number of clean scenes available.",
-      "report_link": "report/index.html#data-sources"
+      "limitation": "The observation window must balance cloud-free skies against crop phenology; unseasonal rain or persistent winter smog can limit the number of clean scenes available."
     },
     {
       "step_number": 2,
@@ -56,8 +55,7 @@
       "headline": "Generating clean annual median composite mosaics",
       "what_happens": "Pixels flagged as clouds, cirrus, or cloud shadows by the Scene Classification Layer (SCL) are masked out. For every pixel location, the median reflectance across all valid scenes in the season is computed.",
       "why": "A single satellite pass contains transient clouds, sensor noise, or shadows. Taking the annual dry-season median synthesizes a robust, cloud-free snapshot representing stable ground conditions.",
-      "limitation": "Compositing combines scenes captured across several weeks; rapid ground changes occurring mid-season are blended into a median reflectance.",
-      "report_link": "report/index.html#composite-methodology"
+      "limitation": "Compositing combines scenes captured across several weeks; rapid ground changes occurring mid-season are blended into a median reflectance."
     },
     {
       "step_number": 3,
@@ -65,8 +63,7 @@
       "headline": "Supervised Random Forest mapping into five land cover classes",
       "what_happens": "A Random Forest ensemble classifies each 60-meter pixel into Built-up, Vegetation, Water, Agriculture, or Open Land using 13 spectral bands and derived indices (NDVI, NDBI, MNDWI).",
       "why": "Random Forest handles non-linear spectral interactions between artificial surfaces and surrounding soils effectively while resisting overfitting.",
-      "limitation": "Dry fallow farmland and compacted river sand share similar spectral reflectance signatures with concrete and stone during dry semi-arid winters.",
-      "report_link": "report/index.html#classification-model"
+      "limitation": "Dry fallow farmland and compacted river sand share similar spectral reflectance signatures with concrete and stone during dry semi-arid winters."
     },
     {
       "step_number": 4,
@@ -74,8 +71,7 @@
       "headline": "Strict automated checks halting pipeline execution on anomalies",
       "what_happens": "Five automated quality gates evaluate composite cloud contamination (<2%), inter-annual cloud consistency, baseline classification F1 against test blocks, ESA WorldCover area alignment, and spatial entropy bounds.",
       "why": "Automated gates ensure that corrupted satellite tiles or model training regressions are intercepted immediately in CI/CD before any data reaches publication.",
-      "limitation": "Quality gates catch gross pipeline failures and outliers, but cannot catch subtle single-pixel misclassifications on ambiguous urban fringes.",
-      "report_link": "report/index.html#quality-gates"
+      "limitation": "Quality gates catch gross pipeline failures and outliers, but cannot catch subtle single-pixel misclassifications on ambiguous urban fringes."
     },
     {
       "step_number": 5,
@@ -83,8 +79,7 @@
       "headline": "Concentric distance rings and Shannon Entropy calculation",
       "what_happens": "Built-up density is measured across nine concentric 2-km distance rings radiating outward from the municipal center. Relative Shannon Entropy is computed to quantify outward radial dispersion.",
       "why": "Tracking expansion across distance zones distinguishes compact central densification from outward radial dispersion across distance rings.",
-      "limitation": "Concentric circular rings assume roughly isotropic radial growth; natural barriers like rivers or hills can cause asymmetrical expansion.",
-      "report_link": "report/index.html#sprawl-analysis"
+      "limitation": "Concentric circular rings assume roughly isotropic radial growth; natural barriers like rivers or hills can cause asymmetrical expansion."
     },
     {
       "step_number": 6,
@@ -92,8 +87,7 @@
       "headline": "Olofsson et al. (2014) stratified area estimation",
       "what_happens": "Human auditors independently verify 300 stratified random sample points across Mapped Gain (A), Persistent Built (B), Persistent Non-built (C), and Mapped Loss (D). Mathematical estimators compute true area change with 95% confidence intervals.",
       "why": "Directly counting classified pixels is biased by classification error. Stratified error adjustment is the peer-reviewed gold standard for calculating reliable land change areas.",
-      "limitation": "Confidence intervals reflect statistical sampling uncertainty; subjective human labelling ambiguity (e.g. distinguishing packed gravel from asphalt) contributes non-sampling variance.",
-      "report_link": "report/index.html#change-validation"
+      "limitation": "Confidence intervals reflect statistical sampling uncertainty; subjective human labelling ambiguity (e.g. distinguishing packed gravel from asphalt) contributes non-sampling variance."
     }
   ]
 }
